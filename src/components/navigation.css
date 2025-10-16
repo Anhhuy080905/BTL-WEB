@@ -1,0 +1,39 @@
+.navigation-container1 {
+  display: contents;
+}
+ 
+.navigation-container2 {
+  display: none;
+}
+ 
+.navigation-container3 {
+  display: contents;
+}
+ 
+.navigation-container4 {
+  display: none;
+}
+ 
+.navigation-container5 {
+  display: contents;
+}
+ 
+.navigation-navigation-toggle-icon1 {
+  display: flex;
+  opacity: 1;
+  position: absolute;
+  transform: rotate(0deg);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
+ 
+.navigation-navigation-toggle-icon2 {
+  display: flex;
+  opacity: 0;
+  position: absolute;
+  transform: rotate(90deg);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
