@@ -3,59 +3,59 @@
   display: block;
   min-height: 100vh;
 }
- 
+
 .home-container2 {
   display: none;
 }
- 
+
 .home-container3 {
   display: contents;
 }
- 
+
 .home-container4 {
   display: none;
 }
- 
+
 .home-container5 {
   display: contents;
 }
- 
+
 .home-container6 {
   display: none;
 }
- 
+
 .home-container7 {
   display: contents;
 }
- 
+
 .home-event1 {
   animation-delay: 0s;
 }
- 
+
 .home-event2 {
   animation-delay: 0.1s;
 }
- 
+
 .home-event3 {
   animation-delay: 0.2s;
 }
- 
+
 .home-text16 {
   font-weight: 700;
 }
- 
+
 .home-text41 {
   font-weight: 700;
 }
- 
+
 .home-text44 {
   font-weight: 700;
 }
- 
+
 .home-text47 {
   font-weight: 700;
 }
- 
+
 .home-container8 {
   right: 50px;
   border: 1px solid #ffffff5c;
@@ -74,16 +74,335 @@
   backdrop-filter: blur(6px);
   background-color: rgba(41, 41, 41, 0.41);
 }
- 
+
 .home-icon84 {
   width: 24px;
   margin-right: 4px;
 }
- 
+
 .home-text52 {
   color: white;
   font-size: 13px;
   font-style: normal;
   font-weight: 500;
   line-height: 24px;
+}
+
+/* Hero Search Bar */
+.hero-search-container {
+  position: relative;
+  margin-bottom: 28px;
+  margin-top: 28px;
+  max-width: 600px;
+}
+
+.hero-search-input {
+  width: 100%;
+  padding: 16px 60px 16px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  font-family: inherit;
+}
+
+.hero-search-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.hero-search-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-search-button:hover {
+  background: #3182ce;
+}
+
+/* Hero Action Buttons */
+.hero__ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.hero__ctas .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.hero__ctas .btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.hero__ctas .cta-primary {
+  background: #38a169;
+  color: white;
+}
+
+.hero__ctas .cta-primary:hover {
+  background: #2f855a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(56, 161, 105, 0.3);
+}
+
+.hero__ctas .cta-secondary {
+  background: white;
+  color: #2d3748;
+  border: 2px solid #e2e8f0;
+}
+
+.hero__ctas .cta-secondary:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive for hero search and buttons */
+@media (max-width: 768px) {
+  .hero-search-container {
+    max-width: 100%;
+  }
+
+  .hero__ctas {
+    flex-direction: column;
+  }
+
+  .hero__ctas .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Hero Statistics */
+.hero-statistics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  padding: 60px 20px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  padding: 40px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.hero-stat-item {
+  text-align: center;
+  padding: 10px;
+}
+
+.hero-stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #38a169;
+  margin: 0 0 8px 0;
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: 0.95rem;
+  color: #4a5568;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Responsive for hero statistics */
+@media (max-width: 1024px) {
+  .hero-statistics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    padding: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-statistics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .hero-stat-number {
+    font-size: 2rem;
+  }
+
+  .hero-stat-label {
+    font-size: 0.85rem;
+  }
+}
+
+/* User Info in Footer */
+.upcoming-events__user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+  border-radius: 12px;
+  border: 2px solid #90caf9;
+}
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+}
+
+.user-welcome {
+  color: #1565c0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.user-welcome strong {
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+@media (max-width: 768px) {
+  .upcoming-events__user-info {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+}
+
+/* Current Role Display */
+.current-role-display {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.current-role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 30px;
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+  border-radius: 16px;
+  color: white;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(21, 101, 192, 0.3);
+}
+
+.current-role-card svg {
+  margin-bottom: 16px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.current-role-text {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.current-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.current-role-welcome {
+  text-align: center;
+  color: #1565c0;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 20px;
+  background: #f0f7ff;
+  border-radius: 12px;
+  border: 2px solid #90caf9;
+}
+
+.current-role-welcome strong {
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+@media (max-width: 768px) {
+  .current-role-card {
+    padding: 30px 20px;
+  }
+
+  .current-role-text {
+    font-size: 20px;
+  }
+
+  .current-role-welcome {
+    font-size: 15px;
+  }
+}
+
+/* Personal Statistics Styles */
+.hero-stat-personal .hero-stat-number {
+  color: #10b981;
+}
+
+.hero-stat-personal {
+  border-left: 4px solid #10b981;
+}
+
+.hero-stat-manager .hero-stat-number {
+  color: #3b82f6;
+}
+
+.hero-stat-manager {
+  border-left: 4px solid #3b82f6;
+}
+
+.hero-stat-admin .hero-stat-number {
+  color: #8b5cf6;
+}
+
+.hero-stat-admin {
+  border-left: 4px solid #8b5cf6;
 }

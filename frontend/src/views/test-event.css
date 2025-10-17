@@ -1,0 +1,30 @@
+/* Force display for event management */
+.event-card {
+  background: white !important;
+  border: 2px solid red !important;
+  margin-bottom: 20px !important;
+}
+
+.event-content {
+  display: block !important;
+  padding: 20px !important;
+  background: yellow !important;
+}
+
+.event-title {
+  font-size: 24px !important;
+  color: black !important;
+  display: block !important;
+}
+
+.event-actions {
+  display: flex !important;
+  gap: 10px !important;
+}
+
+.btn {
+  display: inline-block !important;
+  padding: 10px 20px !important;
+  background: blue !important;
+  color: white !important;
+}
