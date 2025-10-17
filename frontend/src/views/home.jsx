@@ -5,13 +5,19 @@ import { Helmet } from "react-helmet";
 
 import Navigation from "../components/navigation.jsx";
 import Footer from "../components/footer.jsx";
+import EventCard from "../components/EventCard.jsx";
 import { authAPI } from "../services/api";
+import { eventsService } from "../services/eventsService";
 import "./home.css";
 
 const Home = (props) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [userName, setUserName] = useState("");
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     // Check if user is logged in
@@ -33,13 +39,103 @@ const Home = (props) => {
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
+  useEffect(() => {
+    // Fetch upcoming events
+    const fetchUpcomingEvents = async () => {
+      try {
+        setLoadingEvents(true);
+        const response = await eventsService.getAllEvents();
+        const events = response.data || response;
+
+        // Lọc và sắp xếp sự kiện sắp tới
+        const upcoming = events
+          .filter((event) => new Date(event.date) >= new Date())
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .slice(0, 5); // Lấy 5 sự kiện đầu tiên
+
+        setUpcomingEvents(upcoming);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        setUpcomingEvents([]);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    fetchUpcomingEvents();
+  }, []);
+
   const getRoleName = (role) => {
     const roleNames = {
       volunteer: "Tình nguyện viên",
       event_manager: "Quản lý sự kiện",
-      admin: "Admin",
+      admin: "Quản trị viên",
     };
     return roleNames[role] || role;
+  };
+
+  const formatEventDate = (dateString) => {
+    const date = new Date(dateString);
+    const month = date.toLocaleString("vi-VN", { month: "short" });
+    const day = date.getDate();
+    return { month, day };
+  };
+
+  const getEventUrl = (eventId) => {
+    return `/events#${eventId}`;
+  };
+
+  const handleRSVP = (eventId) => {
+    if (!isLoggedIn) {
+      alert("Vui lòng đăng nhập để đăng ký sự kiện!");
+      window.location.href = "/login";
+      return;
+    }
+
+    // Tìm và hiển thị chi tiết sự kiện
+    const event = upcomingEvents.find((e) => e._id === eventId);
+    if (event) {
+      setSelectedEvent(event);
+      setShowDetailModal(true);
+    }
+  };
+
+  const handleRegisterEvent = async (eventId) => {
+    try {
+      // Nếu là event_manager hoặc admin, chuyển đến trang quản lý
+      if (userRole === "event_manager" || userRole === "admin") {
+        window.location.href = "/events-manager";
+        return;
+      }
+
+      // Nếu là volunteer, đăng ký sự kiện
+      await eventsService.registerForEvent(eventId);
+      alert("Đăng ký sự kiện thành công!");
+      setShowDetailModal(false);
+
+      // Refresh danh sách sự kiện
+      const response = await eventsService.getAllEvents();
+      const events = response.data || response;
+      const upcoming = events
+        .filter((event) => new Date(event.date) >= new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 5);
+      setUpcomingEvents(upcoming);
+    } catch (error) {
+      console.error("Error registering event:", error);
+      alert(
+        error.response?.data?.message || "Có lỗi xảy ra khi đăng ký sự kiện!"
+      );
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   return (
@@ -230,6 +326,12 @@ transform: translateY(0);}}
               <button
                 aria-label="Khám phá các hoạt động tình nguyện"
                 className="cta-primary btn btn-primary btn-lg"
+                onClick={() =>
+                  (window.location.href =
+                    userRole === "event_manager" || userRole === "admin"
+                      ? "/events-manager"
+                      : "/events")
+                }
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -251,6 +353,7 @@ transform: translateY(0);}}
               <button
                 aria-label="Tìm hiểu cách thức hoạt động"
                 className="cta-secondary btn btn-lg btn-outline"
+                onClick={() => (window.location.href = "/about")}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -891,465 +994,556 @@ transform: translateY(0);}}
                   </button>
                 </div>
               </form>
-              <article
-                aria-labelledby="featured-event-title"
-                className="featured-event"
-              >
-                <img
-                  src="https://images.pexels.com/photos/7656732/pexels-photo-7656732.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
-                  alt="Two volunteers planting trees by a lakeside"
-                  loading="lazy"
-                  className="featured-event__image"
-                />
-                <div className="featured-event__content">
-                  <time dateTime="2025-11-29" className="featured-event__date">
-                    {" "}
-                    29/11/2025
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </time>
-                  <h3
-                    id="featured-event-title"
-                    className="featured-event__title"
-                  >
-                    {" "}
-                    Trồng cây ven sông Hồng
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </h3>
-                  <div className="featured-event__meta">
-                    <span className="meta-item">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
-                        ></path>
-                      </svg>
-                      <span>
-                        {" "}
-                        Long Biên, Hà Nội
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: " ",
-                          }}
-                        />
-                      </span>
-                    </span>
-                    <span className="meta-item">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <g
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                        >
-                          <path d="M12 6v6l4 2"></path>
-                          <circle cx="12" cy="12" r="10"></circle>
-                        </g>
-                      </svg>
-                      <span>
-                        {" "}
-                        08:00–12:00
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: " ",
-                          }}
-                        />
-                      </span>
-                    </span>
-                  </div>
-                  <p className="featured-event__description">
-                    {" "}
-                    Mục tiêu: trồng 1.000 cây xanh, cải thiện hành lang sinh
-                    thái dọc bờ sông. Nhóm quản lý: GreenBridge. Yêu cầu: mang
-                    găng tay, giày bệt.
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </p>
-                  <div className="featured-event__stats">
-                    <span className="stat">
-                      <span>
-                        {" "}
-                        Vị trí còn trống:
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: " ",
-                          }}
-                        />
-                      </span>
-                      <span className="home-text16">24</span>
-                    </span>
-                  </div>
-                  <button
-                    aria-label="RSVP for tree planting event on November 29"
-                    className="btn btn-primary"
-                  >
-                    {" "}
-                    RSVP nhanh
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </button>
+
+              {/* Dynamic Events from Database */}
+              {loadingEvents ? (
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                  <p>Đang tải sự kiện...</p>
                 </div>
-              </article>
+              ) : upcomingEvents.length > 0 ? (
+                <EventCard
+                  event={upcomingEvents[0]}
+                  featured={true}
+                  onRSVP={handleRSVP}
+                />
+              ) : null}
+
+              {/* Fallback to static event if no data */}
+              {!loadingEvents && upcomingEvents.length === 0 && (
+                <article
+                  aria-labelledby="featured-event-title"
+                  className="featured-event"
+                >
+                  <img
+                    src="https://images.pexels.com/photos/7656732/pexels-photo-7656732.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
+                    alt="Two volunteers planting trees by a lakeside"
+                    loading="lazy"
+                    className="featured-event__image"
+                  />
+                  <div className="featured-event__content">
+                    <time
+                      dateTime="2025-11-29"
+                      className="featured-event__date"
+                    >
+                      {" "}
+                      29/11/2025
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: " ",
+                        }}
+                      />
+                    </time>
+                    <h3
+                      id="featured-event-title"
+                      className="featured-event__title"
+                    >
+                      {" "}
+                      Trồng cây ven sông Hồng
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: " ",
+                        }}
+                      />
+                    </h3>
+                    <div className="featured-event__meta">
+                      <span className="meta-item">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
+                          ></path>
+                        </svg>
+                        <span>
+                          {" "}
+                          Long Biên, Hà Nội
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: " ",
+                            }}
+                          />
+                        </span>
+                      </span>
+                      <span className="meta-item">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <g
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                          >
+                            <path d="M12 6v6l4 2"></path>
+                            <circle cx="12" cy="12" r="10"></circle>
+                          </g>
+                        </svg>
+                        <span>
+                          {" "}
+                          08:00–12:00
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: " ",
+                            }}
+                          />
+                        </span>
+                      </span>
+                    </div>
+                    <p className="featured-event__description">
+                      {" "}
+                      Mục tiêu: trồng 1.000 cây xanh, cải thiện hành lang sinh
+                      thái dọc bờ sông. Nhóm quản lý: GreenBridge. Yêu cầu: mang
+                      găng tay, giày bệt.
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: " ",
+                        }}
+                      />
+                    </p>
+                    <div className="featured-event__stats">
+                      <span className="stat">
+                        <span>
+                          {" "}
+                          Vị trí còn trống:
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: " ",
+                            }}
+                          />
+                        </span>
+                        <span className="home-text16">24</span>
+                      </span>
+                    </div>
+                    <button
+                      aria-label="RSVP for tree planting event on November 29"
+                      className="btn btn-primary"
+                      onClick={() =>
+                        (window.location.href =
+                          userRole === "event_manager" || userRole === "admin"
+                            ? "/events-manager"
+                            : "/events")
+                      }
+                    >
+                      {" "}
+                      RSVP nhanh
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: " ",
+                        }}
+                      />
+                    </button>
+                  </div>
+                </article>
+              )}
             </div>
             <div className="upcoming-events__right">
-              <article aria-labelledby="event-1-title" className="event-card">
-                <div className="event-card__image-wrapper">
-                  <img
-                    src="https://images.pexels.com/photos/9037229/pexels-photo-9037229.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
-                    alt="Beach cleanup volunteer activity"
-                    loading="lazy"
-                    className="event-card__image"
-                  />
-                </div>
-                <div className="event-card__content">
-                  <time dateTime="2025-12-06" className="event-card__date">
-                    {" "}
-                    06/12/2025
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
+              {/* Dynamic Events List */}
+              {!loadingEvents &&
+                upcomingEvents.length > 1 &&
+                upcomingEvents
+                  .slice(1, 5)
+                  .map((event) => (
+                    <EventCard
+                      key={event._id}
+                      event={event}
+                      featured={false}
+                      onRSVP={handleRSVP}
                     />
-                  </time>
-                  <h3 id="event-1-title" className="event-card__title">
-                    {" "}
-                    Dọn dẹp bãi biển Cửa Lò
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </h3>
-                  <div className="event-card__meta">
-                    <span className="meta-item">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
-                        ></path>
-                      </svg>
-                      <span>
+                  ))}
+
+              {/* Fallback to static events if no data */}
+              {!loadingEvents && upcomingEvents.length <= 1 && (
+                <>
+                  <article
+                    aria-labelledby="event-1-title"
+                    className="event-card"
+                  >
+                    <div className="event-card__image-wrapper">
+                      <img
+                        src="https://images.pexels.com/photos/9037229/pexels-photo-9037229.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
+                        alt="Beach cleanup volunteer activity"
+                        loading="lazy"
+                        className="event-card__image"
+                      />
+                    </div>
+                    <div className="event-card__content">
+                      <time dateTime="2025-12-06" className="event-card__date">
                         {" "}
-                        Cửa Lò, Nghệ An
+                        06/12/2025
                         <span
                           dangerouslySetInnerHTML={{
                             __html: " ",
                           }}
                         />
-                      </span>
-                    </span>
-                    <span className="meta-item">07:30–11:30</span>
-                  </div>
-                  <p className="event-card__description">
-                    {" "}
-                    Thu gom rác nhựa, phân loại tái chế. Vị trí còn: 40
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </p>
-                  <button
-                    aria-label="RSVP for beach cleanup on December 6"
-                    className="btn btn-secondary btn-sm"
-                  >
-                    {" "}
-                    RSVP nhanh
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </button>
-                </div>
-              </article>
-              <article aria-labelledby="event-2-title" className="event-card">
-                <div className="event-card__image-wrapper">
-                  <img
-                    src="https://images.pexels.com/photos/7265143/pexels-photo-7265143.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
-                    alt="Literacy education program"
-                    loading="lazy"
-                    className="event-card__image"
-                  />
-                </div>
-                <div className="event-card__content">
-                  <time dateTime="2025-12-12" className="event-card__date">
-                    {" "}
-                    12/12/2025
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </time>
-                  <h3 id="event-2-title" className="event-card__title">
-                    {" "}
-                    Chương trình học chữ cho người lớn
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </h3>
-                  <div className="event-card__meta">
-                    <span className="meta-item">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
-                        ></path>
-                      </svg>
-                      <span>
+                      </time>
+                      <h3 id="event-1-title" className="event-card__title">
                         {" "}
-                        Thanh Xuân, Hà Nội
+                        Dọn dẹp bãi biển Cửa Lò
                         <span
                           dangerouslySetInnerHTML={{
                             __html: " ",
                           }}
                         />
-                      </span>
-                    </span>
-                    <span className="meta-item">18:00–20:00</span>
-                  </div>
-                  <p className="event-card__description">
-                    {" "}
-                    Nâng trình độ đọc-viết. Vị trí còn: 12
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </p>
-                  <button
-                    aria-label="RSVP for literacy program on December 12"
-                    className="btn btn-secondary btn-sm"
-                  >
-                    {" "}
-                    RSVP nhanh
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </button>
-                </div>
-              </article>
-              <article aria-labelledby="event-3-title" className="event-card">
-                <div className="event-card__image-wrapper">
-                  <img
-                    src="https://images.pexels.com/photos/6995221/pexels-photo-6995221.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
-                    alt="Charity food distribution"
-                    loading="lazy"
-                    className="event-card__image"
-                  />
-                </div>
-                <div className="event-card__content">
-                  <time dateTime="2025-12-15" className="event-card__date">
-                    {" "}
-                    15/12/2025
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </time>
-                  <h3 id="event-3-title" className="event-card__title">
-                    {" "}
-                    Phân phát nhu yếu phẩm cộng đồng
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </h3>
-                  <div className="event-card__meta">
-                    <span className="meta-item">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
-                        ></path>
-                      </svg>
-                      <span>
+                      </h3>
+                      <div className="event-card__meta">
+                        <span className="meta-item">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
+                            ></path>
+                          </svg>
+                          <span>
+                            {" "}
+                            Cửa Lò, Nghệ An
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: " ",
+                              }}
+                            />
+                          </span>
+                        </span>
+                        <span className="meta-item">07:30–11:30</span>
+                      </div>
+                      <p className="event-card__description">
                         {" "}
-                        Hoàn Kiếm, Hà Nội
+                        Thu gom rác nhựa, phân loại tái chế. Vị trí còn: 40
                         <span
                           dangerouslySetInnerHTML={{
                             __html: " ",
                           }}
                         />
-                      </span>
-                    </span>
-                    <span className="meta-item">14:00–17:00</span>
-                  </div>
-                  <p className="event-card__description">
-                    {" "}
-                    Hỗ trợ gói cứu trợ. Vị trí còn: 18
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </p>
-                  <button
-                    aria-label="RSVP for charity distribution on December 15"
-                    className="btn btn-secondary btn-sm"
-                  >
-                    {" "}
-                    RSVP nhanh
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </button>
-                </div>
-              </article>
-              <article aria-labelledby="event-4-title" className="event-card">
-                <div className="event-card__image-wrapper">
-                  <img
-                    src="https://images.pexels.com/photos/7656729/pexels-photo-7656729.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
-                    alt="Urban tree planting"
-                    loading="lazy"
-                    className="event-card__image"
-                  />
-                </div>
-                <div className="event-card__content">
-                  <time dateTime="2025-12-18" className="event-card__date">
-                    {" "}
-                    18/12/2025
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </time>
-                  <h3 id="event-4-title" className="event-card__title">
-                    {" "}
-                    Trồng cây công viên Thống Nhất
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </h3>
-                  <div className="event-card__meta">
-                    <span className="meta-item">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
+                      </p>
+                      <button
+                        aria-label="RSVP for beach cleanup on December 6"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() =>
+                          (window.location.href =
+                            userRole === "event_manager" || userRole === "admin"
+                              ? "/events-manager"
+                              : "/events")
+                        }
                       >
-                        <path
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
-                        ></path>
-                      </svg>
-                      <span>
                         {" "}
-                        Hai Bà Trưng, HN
+                        RSVP nhanh
                         <span
                           dangerouslySetInnerHTML={{
                             __html: " ",
                           }}
                         />
-                      </span>
-                    </span>
-                    <span className="meta-item">09:00–12:00</span>
-                  </div>
-                  <p className="event-card__description">
-                    {" "}
-                    Mở rộng diện tích xanh. Vị trí còn: 32
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </p>
-                  <button
-                    aria-label="RSVP for park tree planting on December 18"
-                    className="btn btn-secondary btn-sm"
+                      </button>
+                    </div>
+                  </article>
+                  <article
+                    aria-labelledby="event-2-title"
+                    className="event-card"
                   >
-                    {" "}
-                    RSVP nhanh
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: " ",
-                      }}
-                    />
-                  </button>
-                </div>
-              </article>
+                    <div className="event-card__image-wrapper">
+                      <img
+                        src="https://images.pexels.com/photos/7265143/pexels-photo-7265143.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
+                        alt="Literacy education program"
+                        loading="lazy"
+                        className="event-card__image"
+                      />
+                    </div>
+                    <div className="event-card__content">
+                      <time dateTime="2025-12-12" className="event-card__date">
+                        {" "}
+                        12/12/2025
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </time>
+                      <h3 id="event-2-title" className="event-card__title">
+                        {" "}
+                        Chương trình học chữ cho người lớn
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </h3>
+                      <div className="event-card__meta">
+                        <span className="meta-item">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
+                            ></path>
+                          </svg>
+                          <span>
+                            {" "}
+                            Thanh Xuân, Hà Nội
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: " ",
+                              }}
+                            />
+                          </span>
+                        </span>
+                        <span className="meta-item">18:00–20:00</span>
+                      </div>
+                      <p className="event-card__description">
+                        {" "}
+                        Nâng trình độ đọc-viết. Vị trí còn: 12
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </p>
+                      <button
+                        aria-label="RSVP for literacy program on December 12"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() =>
+                          (window.location.href =
+                            userRole === "event_manager" || userRole === "admin"
+                              ? "/events-manager"
+                              : "/events")
+                        }
+                      >
+                        {" "}
+                        RSVP nhanh
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </button>
+                    </div>
+                  </article>
+                  <article
+                    aria-labelledby="event-3-title"
+                    className="event-card"
+                  >
+                    <div className="event-card__image-wrapper">
+                      <img
+                        src="https://images.pexels.com/photos/6995221/pexels-photo-6995221.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
+                        alt="Charity food distribution"
+                        loading="lazy"
+                        className="event-card__image"
+                      />
+                    </div>
+                    <div className="event-card__content">
+                      <time dateTime="2025-12-15" className="event-card__date">
+                        {" "}
+                        15/12/2025
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </time>
+                      <h3 id="event-3-title" className="event-card__title">
+                        {" "}
+                        Phân phát nhu yếu phẩm cộng đồng
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </h3>
+                      <div className="event-card__meta">
+                        <span className="meta-item">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
+                            ></path>
+                          </svg>
+                          <span>
+                            {" "}
+                            Hoàn Kiếm, Hà Nội
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: " ",
+                              }}
+                            />
+                          </span>
+                        </span>
+                        <span className="meta-item">14:00–17:00</span>
+                      </div>
+                      <p className="event-card__description">
+                        {" "}
+                        Hỗ trợ gói cứu trợ. Vị trí còn: 18
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </p>
+                      <button
+                        aria-label="RSVP for charity distribution on December 15"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() =>
+                          (window.location.href =
+                            userRole === "event_manager" || userRole === "admin"
+                              ? "/events-manager"
+                              : "/events")
+                        }
+                      >
+                        {" "}
+                        RSVP nhanh
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </button>
+                    </div>
+                  </article>
+                  <article
+                    aria-labelledby="event-4-title"
+                    className="event-card"
+                  >
+                    <div className="event-card__image-wrapper">
+                      <img
+                        src="https://images.pexels.com/photos/7656729/pexels-photo-7656729.jpeg?auto=compress&amp;cs=tinysrgb&amp;h=650&amp;w=940"
+                        alt="Urban tree planting"
+                        loading="lazy"
+                        className="event-card__image"
+                      />
+                    </div>
+                    <div className="event-card__content">
+                      <time dateTime="2025-12-18" className="event-card__date">
+                        {" "}
+                        18/12/2025
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </time>
+                      <h3 id="event-4-title" className="event-card__title">
+                        {" "}
+                        Trồng cây công viên Thống Nhất
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </h3>
+                      <div className="event-card__meta">
+                        <span className="meta-item">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0zm.894.211v15M9 3.236v15"
+                            ></path>
+                          </svg>
+                          <span>
+                            {" "}
+                            Hai Bà Trưng, HN
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: " ",
+                              }}
+                            />
+                          </span>
+                        </span>
+                        <span className="meta-item">09:00–12:00</span>
+                      </div>
+                      <p className="event-card__description">
+                        {" "}
+                        Mở rộng diện tích xanh. Vị trí còn: 32
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </p>
+                      <button
+                        aria-label="RSVP for park tree planting on December 18"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() =>
+                          (window.location.href =
+                            userRole === "event_manager" || userRole === "admin"
+                              ? "/events-manager"
+                              : "/events")
+                        }
+                      >
+                        {" "}
+                        RSVP nhanh
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: " ",
+                          }}
+                        />
+                      </button>
+                    </div>
+                  </article>
+                </>
+              )}
             </div>
           </div>
           <footer className="upcoming-events__footer">
-            <button className="btn btn-outline">Xem thêm sự kiện</button>
+            <button
+              className="btn btn-outline"
+              onClick={() =>
+                (window.location.href =
+                  userRole === "event_manager" || userRole === "admin"
+                    ? "/events-manager"
+                    : "/events")
+              }
+            >
+              Xem thêm sự kiện
+            </button>
             {isLoggedIn ? (
               <p className="upcoming-events__user-info">
                 <span className="user-role-badge">{getRoleName(userRole)}</span>
@@ -2249,6 +2443,112 @@ transform: translateY(0);}}
           </div>
         </div>
       </section>
+
+      {/* Modal Chi tiết Sự kiện */}
+      {showDetailModal && selectedEvent && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDetailModal(false)}
+        >
+          <div
+            className="modal-content modal-large"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>{selectedEvent.title}</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowDetailModal(false)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="detail-section">
+                <h3>Thông tin chung</h3>
+                <div className="detail-info-grid">
+                  <div className="detail-info-item">
+                    <strong>Ngày:</strong>
+                    <span>{formatDate(selectedEvent.date)}</span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Thời gian:</strong>
+                    <span>{selectedEvent.time || "Chưa xác định"}</span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Địa điểm:</strong>
+                    <span>{selectedEvent.location}</span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Số người đăng ký:</strong>
+                    <span>
+                      {selectedEvent.participants?.length || 0}/
+                      {selectedEvent.maxParticipants} người
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3>Mô tả</h3>
+                <p>{selectedEvent.description || "Chưa có mô tả"}</p>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowDetailModal(false)}
+              >
+                Đóng
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleRegisterEvent(selectedEvent._id)}
+                disabled={
+                  selectedEvent.participants?.length >=
+                  selectedEvent.maxParticipants
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <line x1="19" y1="8" x2="19" y2="14" />
+                  <line x1="22" y1="11" x2="16" y2="11" />
+                </svg>
+                {userRole === "event_manager" || userRole === "admin"
+                  ? "Đi đến trang quản lý"
+                  : "Đăng ký ngay"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer></Footer>
       {/* ...existing code... */}
     </div>

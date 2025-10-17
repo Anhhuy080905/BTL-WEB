@@ -35,6 +35,9 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 // Post routes (Discussion channel)
 app.use("/api/posts", require("./routes/postRoutes"));
 
+// User routes (Admin only)
+app.use("/api/users", require("./routes/userRoutes"));
+
 // Error handler middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

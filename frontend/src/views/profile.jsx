@@ -5,6 +5,7 @@ import Navigation from "../components/navigation.jsx";
 import Footer from "../components/footer.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
+import { adminService } from "../services/adminService";
 import "./profile.css";
 
 const Profile = () => {
@@ -107,9 +108,19 @@ const Profile = () => {
           0
         );
 
+        // Lấy số lượng users từ API
+        let totalUsers = 0;
+        try {
+          const statsResponse = await adminService.getUserStats();
+          totalUsers = statsResponse.data.totalUsers || 0;
+        } catch (error) {
+          console.error("Error fetching user stats:", error);
+          totalUsers = 0;
+        }
+
         setStats({
           totalEvents: allEvents.length,
-          totalUsers: 1250, // Giả định - nên lấy từ API
+          totalUsers: totalUsers,
           totalRegistrations: totalRegistrations,
         });
       }
@@ -188,7 +199,7 @@ const Profile = () => {
     const roleMap = {
       volunteer: "Tình nguyện viên",
       event_manager: "Quản lý sự kiện",
-      admin: "Admin",
+      admin: "Quản trị viên",
     };
     return roleMap[role] || role;
   };
@@ -309,7 +320,7 @@ const Profile = () => {
                     </div>
                     <div className="info-item">
                       <label>Vai trò</label>
-                      <p>{user.nationality}</p>
+                      <p>{getRoleName(user.role)}</p>
                     </div>
                   </div>
                 </div>

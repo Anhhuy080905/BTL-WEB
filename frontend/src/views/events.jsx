@@ -268,29 +268,6 @@ const Events = () => {
             ) : (
               filteredEvents.map((event) => (
                 <div key={event._id || event.id} className="event-card">
-                  <div className="event-image">
-                    <img src={event.image} alt={event.title} />
-                    <span
-                      className={`event-status-badge ${
-                        getStatusBadge(
-                          event.status,
-                          event.registered,
-                          event.maxParticipants
-                        ).class
-                      }`}
-                    >
-                      {
-                        getStatusBadge(
-                          event.status,
-                          event.registered,
-                          event.maxParticipants
-                        ).text
-                      }
-                    </span>
-                    <span className="event-category-badge">
-                      {getCategoryName(event.category)}
-                    </span>
-                  </div>
                   <div className="event-details">
                     <div className="event-header">
                       <h3 className="event-title">{event.title}</h3>
@@ -551,10 +528,6 @@ const Events = () => {
             </div>
 
             <div className="modal-body">
-              <div className="detail-image">
-                <img src={selectedEvent.image} alt={selectedEvent.title} />
-              </div>
-
               <div className="detail-section">
                 <h3>Thông tin chung</h3>
                 <div className="detail-info-grid">

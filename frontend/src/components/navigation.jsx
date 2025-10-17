@@ -293,6 +293,33 @@ const Navigation = (props) => {
                 <span>Kênh Trao Đổi</span>
               </div>
             </Link>
+            {userRole === "admin" && (
+              <Link to="/admin-dashboard">
+                <div className="navigation-link">
+                  <span className="navigation-link-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <g
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m-9-9h6m6 0h6M4.2 4.2l4.2 4.2m5.2 5.2l4.2 4.2M19.8 4.2l-4.2 4.2m-5.2 5.2l-4.2 4.2"></path>
+                      </g>
+                    </svg>
+                  </span>
+                  <span>Quản Trị</span>
+                </div>
+              </Link>
+            )}
           </div>
           <div className="navigation-actions">
             {isLoggedIn ? (

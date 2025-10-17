@@ -17,6 +17,7 @@ const {
   undoCheckIn,
   markAsCompleted,
   undoCompleted,
+  exportEvents,
 } = require("../controllers/eventController");
 const { protect, authorize, optionalProtect } = require("../middleware/auth");
 
@@ -26,6 +27,9 @@ router.get("/", optionalProtect, getAllEvents);
 // Protected routes - cần đăng nhập
 // Routes cho tất cả user đã đăng nhập
 router.get("/my/registered", protect, getMyRegisteredEvents);
+
+// Export route (Admin only) - must be before other routes
+router.get("/export", protect, authorize("admin"), exportEvents);
 
 // Routes chỉ cho event_manager và admin
 router.post("/", protect, authorize("event_manager", "admin"), createEvent);

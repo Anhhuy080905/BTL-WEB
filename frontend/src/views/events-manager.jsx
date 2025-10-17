@@ -233,26 +233,6 @@ const EventsManager = () => {
             <div className="events-grid">
               {filteredEvents.map((event) => (
                 <div key={event._id || event.id} className="event-card-manager">
-                  <div className="event-image-wrapper">
-                    <img
-                      src={
-                        event.image ||
-                        "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400"
-                      }
-                      alt={event.title}
-                      className="event-image"
-                    />
-                    <div className="event-overlay">
-                      <span
-                        className={`event-status ${
-                          getStatusBadge(event.status).class
-                        }`}
-                      >
-                        {getStatusBadge(event.status).text}
-                      </span>
-                    </div>
-                  </div>
-
                   <div className="event-content">
                     <div className="event-category">
                       {getCategoryLabel(event.category)}
@@ -357,15 +337,6 @@ const EventsManager = () => {
             </div>
 
             <div className="modal-body">
-              <img
-                src={
-                  selectedEvent.image ||
-                  "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800"
-                }
-                alt={selectedEvent.title}
-                className="event-detail-image"
-              />
-
               <div className="event-info-grid">
                 <div className="info-item">
                   <strong>Trạng thái:</strong>

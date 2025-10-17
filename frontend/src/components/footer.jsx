@@ -1,8 +1,8 @@
-import React from 'react'
+import React from "react";
 
-import Script from 'dangerous-html/react'
+import Script from "dangerous-html/react";
 
-import './footer.css'
+import "./footer.css";
 
 const Footer = (props) => {
   return (
@@ -141,12 +141,12 @@ const Footer = (props) => {
                 <h2 className="footer-brand-name">VolunteerHub</h2>
               </div>
               <p className="footer-mission-text">
-                {' '}
+                {" "}
                 Kết nối cộng đồng, lan tỏa yêu thương. Nền tảng hỗ trợ tổ chức
                 và quản lý các hoạt động tình nguyện toàn diện.
                 <span
                   dangerouslySetInnerHTML={{
-                    __html: ' ',
+                    __html: " ",
                   }}
                 />
               </p>
@@ -274,11 +274,11 @@ const Footer = (props) => {
                     <a href="#volunteer">
                       <div className="footer-nav-link">
                         <span>
-                          {' '}
+                          {" "}
                           Trở thành tình nguyện viên
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: ' ',
+                              __html: " ",
                             }}
                           />
                         </span>
@@ -310,11 +310,11 @@ const Footer = (props) => {
                     <a href="#tree-planting">
                       <div className="footer-nav-link">
                         <span>
-                          {' '}
+                          {" "}
                           Trồng cây xanh
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: ' ',
+                              __html: " ",
                             }}
                           />
                         </span>
@@ -339,11 +339,11 @@ const Footer = (props) => {
                     <a href="#education">
                       <div className="footer-nav-link">
                         <span>
-                          {' '}
+                          {" "}
                           Bình dân học vụ số
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: ' ',
+                              __html: " ",
                             }}
                           />
                         </span>
@@ -354,11 +354,11 @@ const Footer = (props) => {
                     <a href="#community">
                       <div className="footer-nav-link">
                         <span>
-                          {' '}
+                          {" "}
                           Xây dựng cộng đồng
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: ' ',
+                              __html: " ",
                             }}
                           />
                         </span>
@@ -400,14 +400,14 @@ const Footer = (props) => {
                   </div>
                   <div className="footer-contact-content">
                     <span className="footer-contact-label">Email</span>
-                    <a href="mailto:info@volunteerhub.vn?subject=">
+                    <a href="mailto:anhhuy050908@gmail.com?subject=">
                       <div className="footer-contact-link">
                         <span>
-                          {' '}
-                          info@volunteerhub.vn
+                          {" "}
+                          anhhuy050908@gmail.com
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: ' ',
+                              __html: " ",
                             }}
                           />
                         </span>
@@ -435,14 +435,14 @@ const Footer = (props) => {
                   </div>
                   <div className="footer-contact-content">
                     <span className="footer-contact-label">Hotline</span>
-                    <a href="tel:+84123456789">
+                    <a href="tel:0123456789">
                       <div className="footer-contact-link">
                         <span>
-                          {' '}
-                          +84 123 456 789
+                          {" "}
+                          0123 456 789
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: ' ',
+                              __html: " ",
                             }}
                           />
                         </span>
@@ -471,11 +471,11 @@ const Footer = (props) => {
                   <div className="footer-contact-content">
                     <span className="footer-contact-label">Địa chỉ</span>
                     <p className="footer-contact-text">
-                      {' '}
-                      123 Đường Tình Nguyện, Quận 1, TP. Hồ Chí Minh, Việt Nam
+                      {" "}
+                      144 Xuân Thủy, Cầu Giấy, Hà Nội, Việt Nam
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: ' ',
+                          __html: " ",
                         }}
                       />
                     </p>
@@ -487,11 +487,11 @@ const Footer = (props) => {
                   htmlFor="footer-newsletter-input"
                   className="footer-newsletter-label"
                 >
-                  {' '}
+                  {" "}
                   Đăng ký nhận tin
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: ' ',
+                      __html: " ",
                     }}
                   />
                 </label>
@@ -531,11 +531,11 @@ const Footer = (props) => {
           <div className="footer-bottom">
             <div className="footer-bottom-content">
               <p className="footer-copyright">
-                {' '}
+                {" "}
                 © 2025 VolunteerHub. Mọi quyền được bảo lưu.
                 <span
                   dangerouslySetInnerHTML={{
-                    __html: ' ',
+                    __html: " ",
                   }}
                 />
               </p>
@@ -588,7 +588,7 @@ const Footer = (props) => {
         </div>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

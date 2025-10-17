@@ -215,16 +215,6 @@ const MyEvents = () => {
             ) : (
               currentEvents.map((event) => (
                 <div key={event.id} className="event-card">
-                  <div className="event-image">
-                    <img src={event.image} alt={event.title} />
-                    <span
-                      className={`event-status-badge ${
-                        getStatusBadge(event.status).class
-                      }`}
-                    >
-                      {getStatusBadge(event.status).text}
-                    </span>
-                  </div>
                   <div className="event-details">
                     <div className="event-header">
                       <h3 className="event-title">{event.title}</h3>

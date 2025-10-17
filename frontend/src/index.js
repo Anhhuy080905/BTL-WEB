@@ -20,6 +20,7 @@ import EventsManager from "./views/events-manager.jsx";
 import Notifications from "./views/notifications.jsx";
 import DiscussionChannel from "./views/discussion-channel.jsx";
 import DiscussionListFB from "./views/discussion-list-fb.jsx";
+import AdminDashboard from "./views/admin-dashboard.jsx";
 import NotFound from "./views/not-found.jsx";
 
 const App = () => {
@@ -35,6 +36,7 @@ const App = () => {
         <Route component={Profile} exact path="/profile" />
         <Route component={MyEvents} exact path="/my-events" />
         <Route component={EventManagement} exact path="/event-management" />
+        <Route component={AdminDashboard} exact path="/admin-dashboard" />
         <Route component={DiscussionListFB} exact path="/discussion-list" />
         <Route
           component={DiscussionChannel}

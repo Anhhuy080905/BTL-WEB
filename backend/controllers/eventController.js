@@ -969,3 +969,106 @@ exports.undoCompleted = async (req, res) => {
     });
   }
 };
+
+// @desc    Export events data (Admin only)
+// @route   GET /api/events/export
+// @access  Private/Admin
+exports.exportEvents = async (req, res) => {
+  try {
+    const { format = "json" } = req.query;
+
+    const events = await Event.find()
+      .populate("createdBy", "username fullName email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const eventsData = events.map((event) => ({
+      id: event._id || "",
+      title: event.title || "",
+      description: event.description || "",
+      location: event.location || "",
+      date: event.date ? new Date(event.date).toISOString().split("T")[0] : "",
+      endDate: event.endDate
+        ? new Date(event.endDate).toISOString().split("T")[0]
+        : "",
+      time: event.time || "",
+      category: event.category || "",
+      status: event.status || "",
+      organization: event.organization || "",
+      hours: event.hours || 0,
+      maxParticipants: event.maxParticipants || 0,
+      registered: event.participants?.length || 0,
+      creator:
+        event.createdBy?.fullName || event.createdBy?.username || "Unknown",
+      creatorEmail: event.createdBy?.email || "N/A",
+      createdAt: event.createdAt ? new Date(event.createdAt).toISOString() : "",
+    }));
+
+    if (format === "csv") {
+      // Generate CSV
+      const csv = [
+        [
+          "ID",
+          "Title",
+          "Description",
+          "Location",
+          "Date",
+          "End Date",
+          "Time",
+          "Category",
+          "Status",
+          "Organization",
+          "Hours",
+          "Max Participants",
+          "Registered",
+          "Creator",
+          "Creator Email",
+          "Created At",
+        ].join(","),
+        ...eventsData.map((event) =>
+          [
+            event.id,
+            `"${(event.title || "").replace(/"/g, '""')}"`,
+            `"${(event.description || "").replace(/"/g, '""')}"`,
+            `"${(event.location || "").replace(/"/g, '""')}"`,
+            event.date,
+            event.endDate || "",
+            event.time || "",
+            event.category,
+            event.status,
+            `"${(event.organization || "").replace(/"/g, '""')}"`,
+            event.hours,
+            event.maxParticipants,
+            event.registered,
+            `"${(event.creator || "").replace(/"/g, '""')}"`,
+            event.creatorEmail,
+            event.createdAt,
+          ].join(",")
+        ),
+      ].join("\n");
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=events_${Date.now()}.csv`
+      );
+      res.send(csv);
+    } else {
+      // Return JSON
+      res.json({
+        success: true,
+        count: eventsData.length,
+        data: eventsData,
+        exportedAt: new Date().toISOString(),
+      });
+    }
+  } catch (error) {
+    console.error("Error exporting events:", error);
+    console.error("Error stack:", error.stack);
+    res.status(500).json({
+      success: false,
+      message: "Không thể xuất dữ liệu sự kiện",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
