@@ -31,6 +31,9 @@ router.get("/my/registered", protect, getMyRegisteredEvents);
 // Export route (Admin only) - must be before other routes
 router.get("/export", protect, authorize("admin"), exportEvents);
 
+// Admin route to get ALL events (including other users' events)
+router.get("/admin/all", protect, authorize("admin"), getAllEvents);
+
 // Routes chỉ cho event_manager và admin
 router.post("/", protect, authorize("event_manager", "admin"), createEvent);
 router.get(

@@ -13,6 +13,7 @@ const DiscussionChannel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
@@ -139,6 +140,15 @@ const DiscussionChannel = () => {
     return date.toLocaleDateString("vi-VN");
   };
 
+  const getUserName = (user) => {
+    return user?.username || user?.fullName || user?.name || "Unknown";
+  };
+
+  const getUserInitial = (user) => {
+    const name = getUserName(user);
+    return name.charAt(0).toUpperCase();
+  };
+
   if (loading) {
     return (
       <div className="discussion-loading">
@@ -179,14 +189,14 @@ const DiscussionChannel = () => {
       <div className="discussion-container">
         {/* Create Post Form */}
         <div className="create-post-card">
-          <div className="user-avatar">
-            {currentUser?.name?.charAt(0).toUpperCase()}
-          </div>
+          <div className="user-avatar">{getUserInitial(currentUser)}</div>
           <form onSubmit={handleCreatePost} className="create-post-form">
             <textarea
               value={newPostContent}
               onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder={`${currentUser?.name}, bạn nghĩ gì về sự kiện này?`}
+              placeholder={`${getUserName(
+                currentUser
+              )}, bạn nghĩ gì về sự kiện này?`}
               rows="3"
             />
             <button
@@ -212,10 +222,10 @@ const DiscussionChannel = () => {
                 <div className="post-header">
                   <div className="post-author">
                     <div className="user-avatar">
-                      {post.user.name.charAt(0).toUpperCase()}
+                      {getUserInitial(post.user)}
                     </div>
                     <div className="author-info">
-                      <h4>{post.user.name}</h4>
+                      <h4>{getUserName(post.user)}</h4>
                       <span className="post-time">
                         {formatDate(post.createdAt)}
                       </span>
@@ -234,6 +244,23 @@ const DiscussionChannel = () => {
                 {/* Post Content */}
                 <div className="post-content">
                   <p>{post.content}</p>
+
+                  {/* Post Images */}
+                  {post.images && post.images.length > 0 && (
+                    <div
+                      className={`post-images post-images-${post.images.length}`}
+                    >
+                      {post.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`Post image ${index + 1}`}
+                          className="post-image"
+                          onClick={() => setSelectedImage(image)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Post Actions */}
@@ -254,11 +281,11 @@ const DiscussionChannel = () => {
                   {post.comments.map((comment) => (
                     <div key={comment._id} className="comment">
                       <div className="comment-avatar">
-                        {comment.user.name.charAt(0).toUpperCase()}
+                        {getUserInitial(comment.user)}
                       </div>
                       <div className="comment-content">
                         <div className="comment-header">
-                          <strong>{comment.user.name}</strong>
+                          <strong>{getUserName(comment.user)}</strong>
                           <span className="comment-time">
                             {formatDate(comment.createdAt)}
                           </span>
@@ -281,7 +308,7 @@ const DiscussionChannel = () => {
                   {/* Add Comment Input */}
                   <div className="add-comment">
                     <div className="user-avatar small">
-                      {currentUser?.name?.charAt(0).toUpperCase()}
+                      {getUserInitial(currentUser)}
                     </div>
                     <input
                       type="text"
@@ -314,6 +341,15 @@ const DiscussionChannel = () => {
           )}
         </div>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="image-modal" onClick={() => setSelectedImage(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <img src={selectedImage} alt="Full size" className="modal-image" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

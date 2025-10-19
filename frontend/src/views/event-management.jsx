@@ -880,28 +880,6 @@ const EventManagement = () => {
                 </small>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="image" className="form-label">
-                  Ảnh sự kiện
-                </label>
-                <input
-                  type="url"
-                  id="image"
-                  name="image"
-                  className={`form-input ${errors.image ? "error" : ""}`}
-                  value={formData.image}
-                  onChange={handleInputChange}
-                  placeholder="VD: https://example.com/image.jpg"
-                />
-                {errors.image && (
-                  <span className="error-text">{errors.image}</span>
-                )}
-                <small className="form-hint">
-                  Link ảnh minh họa cho sự kiện (có thể để trống, sẽ dùng ảnh
-                  mặc định)
-                </small>
-              </div>
-
               {errors.general && (
                 <div className="alert alert-error">{errors.general}</div>
               )}

@@ -145,6 +145,7 @@
 
 .event-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   padding-top: 16px;
   margin-top: auto;
@@ -374,6 +375,11 @@
   overflow-x: hidden;
 }
 
+/* Modal Form */
+.modal-form {
+  padding: 24px;
+}
+
 /* Form Styles */
 .form-group {
   margin-bottom: 20px;
@@ -460,7 +466,7 @@
   padding: 3px 8px;
   border-radius: 0;
   text-align: left;
-  border: none;
+  border: 2px solid transparent;
   border-bottom: 1px solid #f0f0f0;
   transition: none;
   white-space: nowrap;
@@ -468,10 +474,11 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .stat-card:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .stat-card:hover {

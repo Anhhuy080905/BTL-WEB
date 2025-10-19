@@ -1567,7 +1567,7 @@ transform: translateY(0);}}
           </footer>
         </div>
       </section>
-      <section
+      {/* <section
         id="volunteering-programs-section"
         className="volunteering-programs"
       >
@@ -2015,7 +2015,7 @@ transform: translateY(0);}}
             </p>
           </footer>
         </div>
-      </section>
+      </section> */}
       <section
         id="how-it-works-section"
         role="region"

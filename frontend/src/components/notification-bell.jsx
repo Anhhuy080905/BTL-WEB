@@ -73,6 +73,8 @@ const NotificationBell = () => {
       registration_rejected: "❌",
       checked_in: "✓",
       completed: "🎉",
+      post_like: "❤️",
+      post_comment: "💬",
     };
     return icons[type] || "📢";
   };

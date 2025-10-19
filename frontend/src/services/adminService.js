@@ -147,6 +147,34 @@ export const adminService = {
 
   // ========== EVENT MANAGEMENT ==========
 
+  // Get all events (admin only)
+  getAllEvents: async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/events/admin/all`,
+        getAuthHeader()
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      throw error;
+    }
+  },
+
+  // Delete event (admin only)
+  deleteEvent: async (eventId) => {
+    try {
+      const response = await axios.delete(
+        `${API_URL}/events/${eventId}`,
+        getAuthHeader()
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      throw error;
+    }
+  },
+
   // Export events
   exportEvents: async (format = "json") => {
     try {

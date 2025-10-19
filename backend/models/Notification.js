@@ -16,6 +16,8 @@ const notificationSchema = new mongoose.Schema(
         "registration_rejected", // Đăng ký bị từ chối
         "checked_in", // Đã check-in
         "completed", // Đã hoàn thành
+        "post_like", // Ai đó đã thích bài viết
+        "post_comment", // Ai đó đã bình luận bài viết
       ],
       required: true,
     },
@@ -31,6 +33,11 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Event",
       required: true,
+    },
+    post: {
+      // Bài viết liên quan (cho like, comment)
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
     },
     relatedUser: {
       // User liên quan (ví dụ: tình nguyện viên đăng ký)

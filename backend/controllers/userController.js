@@ -11,7 +11,7 @@ exports.getAllUsers = async (req, res) => {
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
         const eventsCreated = await Event.countDocuments({
-          creator: user._id,
+          createdBy: user._id,
         });
         const eventsJoined = await Event.countDocuments({
           "participants.user": user._id,
@@ -56,7 +56,7 @@ exports.getUserById = async (req, res) => {
     }
 
     // Get user statistics
-    const eventsCreated = await Event.find({ creator: user._id })
+    const eventsCreated = await Event.find({ createdBy: user._id })
       .select("title date status")
       .sort({ date: -1 });
 

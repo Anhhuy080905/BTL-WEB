@@ -96,7 +96,6 @@ exports.optionalProtect = async (req, res, next) => {
         }
       } catch (error) {
         // Token không hợp lệ, bỏ qua và tiếp tục
-        console.log("Invalid token in optionalProtect:", error.message);
       }
     }
 

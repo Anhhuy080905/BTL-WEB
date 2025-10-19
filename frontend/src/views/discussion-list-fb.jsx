@@ -18,19 +18,22 @@ const DiscussionListFB = () => {
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
   const [updateTrigger, setUpdateTrigger] = useState(0); // Force re-render trigger
 
+  // New states for post creation features
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedFeeling, setSelectedFeeling] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [showFeelingPicker, setShowFeelingPicker] = useState(false);
+  const [showLocationInput, setShowLocationInput] = useState(false);
+  const [selectedImageForModal, setSelectedImageForModal] = useState(null);
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    console.log("=== LOADING USER ===");
-    console.log("User from localStorage:", user);
-    console.log("User._id:", user?._id);
-    console.log("User.id:", user?.id);
 
     if (!user) {
       history.push("/login");
       return;
     }
     setCurrentUser(user);
-    console.log("Current user set in state");
     fetchAllPosts();
   }, [history]);
 
@@ -82,12 +85,47 @@ const DiscussionListFB = () => {
     if (!newPostContent.trim() || !selectedEventForPost) return;
 
     try {
-      const newPost = await postsService.createPost(selectedEventForPost, {
-        content: newPostContent,
+      // Convert images to base64
+      const imagePromises = selectedImages.map((img) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(img.file);
+        });
       });
+
+      const base64Images = await Promise.all(imagePromises);
+
+      const postData = {
+        content: newPostContent,
+        images: base64Images,
+      };
+
+      // Add feeling and location to content if selected
+      let fullContent = newPostContent;
+      if (selectedFeeling) {
+        fullContent += `\n${selectedFeeling}`;
+      }
+      if (selectedLocation) {
+        fullContent += `\n📍 ${selectedLocation}`;
+      }
+      postData.content = fullContent;
+
+      const newPost = await postsService.createPost(
+        selectedEventForPost,
+        postData
+      );
       newPost.eventId = selectedEventForPost;
       setPosts([newPost, ...posts]);
+
+      // Reset all states
       setNewPostContent("");
+      setSelectedImages([]);
+      setSelectedFeeling("");
+      setSelectedLocation("");
+      setShowFeelingPicker(false);
+      setShowLocationInput(false);
       setShowCreatePostModal(false);
     } catch (err) {
       console.error("Error creating post:", err);
@@ -95,31 +133,58 @@ const DiscussionListFB = () => {
     }
   };
 
+  // Handler for image selection
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + selectedImages.length > 10) {
+      alert("Chỉ có thể chọn tối đa 10 ảnh");
+      return;
+    }
+
+    const newImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setSelectedImages([...selectedImages, ...newImages]);
+  };
+
+  // Handler for removing image
+  const handleRemoveImage = (index) => {
+    const newImages = [...selectedImages];
+    URL.revokeObjectURL(newImages[index].preview);
+    newImages.splice(index, 1);
+    setSelectedImages(newImages);
+  };
+
+  // Feelings list
+  const feelings = [
+    "😊 đang cảm thấy vui vẻ",
+    "😍 đang cảm thấy yêu thương",
+    "😢 đang cảm thấy buồn",
+    "😡 đang cảm thấy tức giận",
+    "😴 đang cảm thấy buồn ngủ",
+    "🤗 đang cảm thấy biết ơn",
+    "🎉 đang cảm thấy phấn khích",
+    "💪 đang cảm thấy mạnh mẽ",
+    "🙏 đang cảm thấy may mắn",
+    "❤️ đang yêu điều này",
+  ];
+
   const handleToggleLike = async (postId) => {
     try {
-      console.log("=== TOGGLING LIKE ===");
-      console.log("Post ID:", postId);
-      console.log("Current user:", currentUser);
-      console.log("Current user ID:", currentUser?._id || currentUser?.id);
-
       const updatedPost = await postsService.toggleLike(postId);
-      console.log("Backend response - Updated post:", updatedPost);
-      console.log("Updated post likes array:", updatedPost.likes);
 
       // Use callback to ensure we have latest state
       setPosts((prevPosts) => {
         const eventId = prevPosts.find((p) => p._id === postId)?.eventId;
         const newPost = { ...updatedPost, eventId };
-        console.log("New post to set in state:", newPost);
 
         const newPosts = prevPosts.map((p) => (p._id === postId ? newPost : p));
-        console.log("All posts after update:", newPosts);
         return newPosts;
       });
 
       // Force re-render
       setUpdateTrigger((prev) => prev + 1);
-      console.log("=== LIKE TOGGLE COMPLETE ===");
     } catch (err) {
       console.error("Error toggling like:", err);
       alert("Không thể thích bài viết: " + err.message);
@@ -131,9 +196,7 @@ const DiscussionListFB = () => {
     if (!content?.trim()) return;
 
     try {
-      console.log("Adding comment to post:", postId, "content:", content);
       const updatedPost = await postsService.addComment(postId, { content });
-      console.log("Updated post after comment:", updatedPost);
 
       // Use callback to ensure we have latest state
       setPosts((prevPosts) => {
@@ -187,14 +250,12 @@ const DiscussionListFB = () => {
 
   const isLiked = (post) => {
     if (!currentUser) {
-      console.log("isLiked: currentUser not loaded yet");
       return false;
     }
 
     // Get user ID - support both _id and id fields
     const userId = currentUser._id || currentUser.id;
     if (!userId) {
-      console.log("isLiked: no user ID found in currentUser", currentUser);
       return false;
     }
 
@@ -205,13 +266,6 @@ const DiscussionListFB = () => {
       return like._id === userId || like.id === userId;
     });
 
-    console.log("isLiked check:", {
-      postId: post._id,
-      currentUserId: userId,
-      currentUser: currentUser,
-      likes: post.likes,
-      result: liked,
-    });
     return liked;
   };
 
@@ -435,24 +489,156 @@ const DiscussionListFB = () => {
                     autoFocus
                   />
 
+                  {/* Image Preview */}
+                  {selectedImages.length > 0 && (
+                    <div className="image-preview-container">
+                      {selectedImages.map((img, index) => (
+                        <div key={index} className="image-preview-item">
+                          <img src={img.preview} alt={`Preview ${index + 1}`} />
+                          <button
+                            type="button"
+                            className="remove-image-btn"
+                            onClick={() => handleRemoveImage(index)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Feeling Display */}
+                  {selectedFeeling && (
+                    <div className="selected-feeling">
+                      {selectedFeeling}
+                      <button
+                        type="button"
+                        className="remove-btn"
+                        onClick={() => setSelectedFeeling("")}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Location Display */}
+                  {selectedLocation && (
+                    <div className="selected-location">
+                      📍 {selectedLocation}
+                      <button
+                        type="button"
+                        className="remove-btn"
+                        onClick={() => setSelectedLocation("")}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Feeling Picker */}
+                  {showFeelingPicker && (
+                    <div className="feeling-picker">
+                      <div className="feeling-picker-header">
+                        <h4>Bạn đang cảm thấy thế nào?</h4>
+                        <button
+                          type="button"
+                          onClick={() => setShowFeelingPicker(false)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="feeling-options">
+                        {feelings.map((feeling, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className="feeling-option"
+                            onClick={() => {
+                              setSelectedFeeling(feeling);
+                              setShowFeelingPicker(false);
+                            }}
+                          >
+                            {feeling}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Location Input */}
+                  {showLocationInput && (
+                    <div className="location-input-container">
+                      <input
+                        type="text"
+                        className="location-input"
+                        placeholder="Bạn đang ở đâu?"
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className="location-done-btn"
+                        onClick={() => setShowLocationInput(false)}
+                      >
+                        Xong
+                      </button>
+                    </div>
+                  )}
+
                   <div className="modal-addons">
                     <div className="addons-label">
                       Thêm vào bài viết của bạn
                     </div>
                     <div className="addons-buttons">
-                      <button className="addon-btn" title="Ảnh/Video">
+                      <input
+                        type="file"
+                        id="image-upload"
+                        accept="image/*,video/*"
+                        multiple
+                        style={{ display: "none" }}
+                        onChange={handleImageSelect}
+                      />
+                      <button
+                        type="button"
+                        className="addon-btn"
+                        title="Ảnh/Video"
+                        onClick={() =>
+                          document.getElementById("image-upload").click()
+                        }
+                      >
                         📷
                       </button>
-                      <button className="addon-btn" title="Gắn thẻ">
-                        �
+                      <button
+                        type="button"
+                        className="addon-btn"
+                        title="Gắn thẻ"
+                        onClick={() => alert("Chức năng đang được phát triển")}
+                      >
+                        👤
                       </button>
-                      <button className="addon-btn" title="Cảm xúc">
+                      <button
+                        type="button"
+                        className="addon-btn"
+                        title="Cảm xúc"
+                        onClick={() => setShowFeelingPicker(!showFeelingPicker)}
+                      >
                         😊
                       </button>
-                      <button className="addon-btn" title="Vị trí">
-                        📍
+                      <button
+                        type="button"
+                        className="addon-btn"
+                        title="Vị trí"
+                        onClick={() => setShowLocationInput(!showLocationInput)}
+                      >
+                        �️
                       </button>
-                      <button className="addon-btn" title="GIF">
+                      <button
+                        type="button"
+                        className="addon-btn"
+                        title="GIF"
+                        onClick={() => alert("Chức năng đang được phát triển")}
+                      >
                         GIF
                       </button>
                     </div>
@@ -532,6 +718,23 @@ const DiscussionListFB = () => {
                   {/* Post Content */}
                   <div className="post-content">
                     <p className="post-text">{post.content}</p>
+
+                    {/* Post Images */}
+                    {post.images && post.images.length > 0 && (
+                      <div
+                        className={`post-images post-images-${post.images.length}`}
+                      >
+                        {post.images.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Post image ${index + 1}`}
+                            className="post-image"
+                            onClick={() => setSelectedImageForModal(image)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Post Stats */}
@@ -699,6 +902,22 @@ const DiscussionListFB = () => {
           </div>
         </aside>
       </div>
+
+      {/* Image Modal */}
+      {selectedImageForModal && (
+        <div
+          className="image-modal"
+          onClick={() => setSelectedImageForModal(null)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={selectedImageForModal}
+              alt="Full size"
+              className="modal-image"
+            />
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -1,11 +1,17 @@
 const Post = require("../models/Post");
 const Event = require("../models/Event");
+const Notification = require("../models/Notification");
 
 // Kiểm tra quyền truy cập kênh trao đổi
-const checkDiscussionAccess = async (userId, eventId) => {
+const checkDiscussionAccess = async (userId, eventId, userRole) => {
   const event = await Event.findById(eventId);
   if (!event) {
     throw new Error("Không tìm thấy sự kiện");
+  }
+
+  // Admin và event_manager có thể xem tất cả kênh trao đổi
+  if (userRole === "admin" || userRole === "event_manager") {
+    return true;
   }
 
   // Kiểm tra xem user có phải là người tạo event hoặc đã được approve
@@ -17,6 +23,13 @@ const checkDiscussionAccess = async (userId, eventId) => {
   );
 
   if (!isCreator && !participant) {
+    console.error("Access denied:", {
+      userId: userId.toString(),
+      userRole,
+      eventId: eventId.toString(),
+      isCreator,
+      hasApprovedParticipant: !!participant,
+    });
     throw new Error(
       "Bạn cần được phê duyệt tham gia sự kiện để truy cập kênh trao đổi"
     );
@@ -31,7 +44,7 @@ exports.getEventPosts = async (req, res) => {
     const { eventId } = req.params;
 
     // Kiểm tra quyền truy cập
-    await checkDiscussionAccess(req.user._id, eventId);
+    await checkDiscussionAccess(req.user._id, eventId, req.user.role);
 
     const posts = await Post.find({ event: eventId })
       .populate({
@@ -49,11 +62,6 @@ exports.getEventPosts = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean()
       .exec();
-
-    console.log("Posts found:", posts.length);
-    if (posts.length > 0) {
-      console.log("Sample post:", JSON.stringify(posts[0], null, 2));
-    }
 
     res.json({
       success: true,
@@ -82,7 +90,7 @@ exports.createPost = async (req, res) => {
     }
 
     // Kiểm tra quyền truy cập
-    await checkDiscussionAccess(req.user._id, eventId);
+    await checkDiscussionAccess(req.user._id, eventId, req.user.role);
 
     const post = await Post.create({
       event: eventId,
@@ -95,8 +103,6 @@ exports.createPost = async (req, res) => {
       path: "user",
       select: "fullName username email",
     });
-
-    console.log("Created post with user:", post.user);
 
     res.status(201).json({
       success: true,
@@ -173,6 +179,22 @@ exports.toggleLike = async (req, res) => {
     } else {
       // Like
       post.likes.push(req.user._id);
+
+      // Tạo thông báo cho chủ bài viết (nếu không phải tự like)
+      if (post.user.toString() !== req.user._id.toString()) {
+        await Notification.create({
+          user: post.user,
+          type: "post_like",
+          title: "Bài viết mới được thích",
+          message: `${
+            req.user.username || req.user.fullName
+          } đã thích bài viết của bạn`,
+          event: post.event,
+          post: post._id,
+          relatedUser: req.user._id,
+          link: `/discussion/${post.event}`,
+        });
+      }
     }
 
     await post.save();
@@ -223,6 +245,25 @@ exports.addComment = async (req, res) => {
     });
 
     await post.save();
+
+    // Tạo thông báo cho chủ bài viết (nếu không phải tự comment)
+    if (post.user.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        user: post.user,
+        type: "post_comment",
+        title: "Bài viết mới có bình luận",
+        message: `${
+          req.user.username || req.user.fullName
+        } đã bình luận: "${content.substring(0, 50)}${
+          content.length > 50 ? "..." : ""
+        }"`,
+        event: post.event,
+        post: post._id,
+        relatedUser: req.user._id,
+        link: `/discussion/${post.event}`,
+      });
+    }
+
     await post.populate([
       { path: "user", select: "fullName username email" },
       { path: "likes", select: "fullName username" },
