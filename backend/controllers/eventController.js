@@ -285,6 +285,25 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
+    // Check xem user có đủ thông tin không
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Vui lòng đăng nhập để đăng ký sự kiện",
+      });
+    }
+
+    // Check xem user có phải là creator không
+    if (
+      event.createdBy &&
+      event.createdBy.toString() === req.user._id.toString()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Bạn không thể đăng ký sự kiện do mình tạo ra",
+      });
+    }
+
     // Check xem đã đăng ký chưa
     const alreadyRegistered = event.participants.some(
       (p) => p.user.toString() === req.user._id.toString()
@@ -305,11 +324,21 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
-    // Check status
+    // Check status - chỉ cho phép đăng ký sự kiện sắp diễn ra
     if (event.status !== "upcoming") {
       return res.status(400).json({
         success: false,
-        message: "Không thể đăng ký sự kiện này",
+        message: "Sự kiện đã kết thúc hoặc đang diễn ra, không thể đăng ký",
+      });
+    }
+
+    // Check ngày sự kiện - không cho đăng ký nếu đã qua
+    const eventDate = new Date(event.date);
+    const now = new Date();
+    if (eventDate < now) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể đăng ký",
       });
     }
 
@@ -320,28 +349,41 @@ exports.registerForEvent = async (req, res) => {
     });
     event.registered += 1;
 
-    await event.save();
+    // Save với validateBeforeSave: false để bỏ qua validation date
+    await event.save({ validateBeforeSave: false });
 
-    // Tạo thông báo cho tình nguyện viên
-    await createNotification({
-      userId: req.user._id,
-      type: "registration_pending",
-      title: "Đăng ký sự kiện thành công",
-      message: `Bạn đã đăng ký sự kiện "${event.title}". Vui lòng chờ quản lý phê duyệt.`,
-      eventId: event._id,
-      link: `/my-events`,
-    });
+    // Tạo thông báo cho tình nguyện viên (không block nếu lỗi)
+    try {
+      await createNotification({
+        userId: req.user._id,
+        type: "registration_pending",
+        title: "Đăng ký sự kiện thành công",
+        message: `Bạn đã đăng ký sự kiện "${event.title}". Vui lòng chờ quản lý phê duyệt.`,
+        eventId: event._id,
+        link: `/my-events`,
+      });
+    } catch (notifError) {
+      // Bỏ qua lỗi notification
+    }
 
-    // Tạo thông báo cho quản lý sự kiện
-    await createNotification({
-      userId: event.createdBy,
-      type: "registration_received",
-      title: "Có người đăng ký sự kiện",
-      message: `${req.user.username} đã đăng ký tham gia sự kiện "${event.title}"`,
-      eventId: event._id,
-      relatedUserId: req.user._id,
-      link: `/event-management`,
-    });
+    // Tạo thông báo cho quản lý sự kiện (không block nếu lỗi)
+    try {
+      if (event.createdBy) {
+        await createNotification({
+          userId: event.createdBy,
+          type: "registration_received",
+          title: "Có người đăng ký sự kiện",
+          message: `${
+            req.user.username || req.user.fullName || "Một người dùng"
+          } đã đăng ký tham gia sự kiện "${event.title}"`,
+          eventId: event._id,
+          relatedUserId: req.user._id,
+          link: `/event-management`,
+        });
+      }
+    } catch (notifError) {
+      // Bỏ qua lỗi notification
+    }
 
     res.json({
       success: true,
@@ -349,7 +391,6 @@ exports.registerForEvent = async (req, res) => {
       data: event,
     });
   } catch (error) {
-    console.error("Error in registerForEvent:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi khi đăng ký sự kiện",

@@ -21,7 +21,6 @@ export const adminService = {
       const response = await axios.get(`${API_URL}/users`, getAuthHeader());
       return response.data;
     } catch (error) {
-      console.error("Error fetching users:", error);
       throw error;
     }
   },
@@ -35,7 +34,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching user:", error);
       throw error;
     }
   },
@@ -50,7 +48,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error locking user:", error);
       throw error;
     }
   },
@@ -65,7 +62,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error unlocking user:", error);
       throw error;
     }
   },
@@ -80,7 +76,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error updating user role:", error);
       throw error;
     }
   },
@@ -94,7 +89,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error deleting user:", error);
       throw error;
     }
   },
@@ -108,7 +102,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching user stats:", error);
       throw error;
     }
   },
@@ -140,7 +133,6 @@ export const adminService = {
         return response.data;
       }
     } catch (error) {
-      console.error("Error exporting users:", error);
       throw error;
     }
   },
@@ -156,7 +148,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching events:", error);
       throw error;
     }
   },
@@ -170,7 +161,6 @@ export const adminService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error deleting event:", error);
       throw error;
     }
   },
@@ -202,7 +192,6 @@ export const adminService = {
         return response.data;
       }
     } catch (error) {
-      console.error("Error exporting events:", error);
       throw error;
     }
   },

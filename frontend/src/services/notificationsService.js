@@ -16,7 +16,6 @@ export const getNotifications = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching notifications:", error);
     throw error;
   }
 };
@@ -33,7 +32,6 @@ export const markAsRead = async (notificationId) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error marking notification as read:", error);
     throw error;
   }
 };
@@ -50,7 +48,6 @@ export const markAllAsRead = async () => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error marking all as read:", error);
     throw error;
   }
 };
@@ -66,7 +63,6 @@ export const deleteNotification = async (notificationId) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error deleting notification:", error);
     throw error;
   }
 };

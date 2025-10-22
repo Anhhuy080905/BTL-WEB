@@ -31,6 +31,8 @@ const Register = (props) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [showInfoNotification, setShowInfoNotification] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -138,8 +140,13 @@ const Register = (props) => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
-        alert("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
-        history.push("/login");
+        // Hiển thị notification success
+        setShowSuccessNotification(true);
+
+        // Chuyển trang sau 2 giây
+        setTimeout(() => {
+          history.push("/login");
+        }, 2000);
       }
     } catch (error) {
       console.error("Register error:", error);
@@ -157,7 +164,12 @@ const Register = (props) => {
   };
 
   const handleGoogleRegister = () => {
-    alert("Tính năng đăng ký với Google sẽ được cập nhật sớm!");
+    setShowInfoNotification(true);
+
+    // Tự động đóng sau 2 giây
+    setTimeout(() => {
+      setShowInfoNotification(false);
+    }, 2000);
   };
 
   return (
@@ -166,6 +178,59 @@ const Register = (props) => {
         <title>Đăng Ký Tài Khoản - VolunteerHub</title>
         <meta property="og:title" content="Đăng Ký Tài Khoản - VolunteerHub" />
       </Helmet>
+
+      {/* Success Notification */}
+      {showSuccessNotification && (
+        <div className="register-success-notification">
+          <div className="register-success-notification-content">
+            <div className="register-success-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <h3>Đăng ký thành công!</h3>
+            <p>Đang chuyển hướng đến trang đăng nhập...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Info Notification for Google Register */}
+      {showInfoNotification && (
+        <div className="register-info-notification">
+          <div className="register-info-notification-content">
+            <div className="register-info-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </div>
+            <h3>Thông báo</h3>
+            <p>Tính năng đăng ký với Google sẽ được cập nhật sớm!</p>
+          </div>
+        </div>
+      )}
 
       <div className="register-wrapper">
         {/* Left Side - Form */}

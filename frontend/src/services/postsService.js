@@ -20,10 +20,8 @@ export const postsService = {
         `${API_URL}/event/${eventId}`,
         getAuthHeader()
       );
-      console.log("Raw API response for event", eventId, ":", response.data);
       return response.data.data;
     } catch (error) {
-      console.error("Error getting posts:", error);
       throw error;
     }
   },
@@ -38,7 +36,6 @@ export const postsService = {
       );
       return response.data.data;
     } catch (error) {
-      console.error("Error creating post:", error);
       throw error;
     }
   },
@@ -52,7 +49,6 @@ export const postsService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error deleting post:", error);
       throw error;
     }
   },
@@ -67,7 +63,6 @@ export const postsService = {
       );
       return response.data.data;
     } catch (error) {
-      console.error("Error toggling like:", error);
       throw error;
     }
   },
@@ -82,7 +77,6 @@ export const postsService = {
       );
       return response.data.data;
     } catch (error) {
-      console.error("Error adding comment:", error);
       throw error;
     }
   },
@@ -96,7 +90,6 @@ export const postsService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error deleting comment:", error);
       throw error;
     }
   },

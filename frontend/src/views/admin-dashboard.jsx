@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
 import Navigation from "../components/navigation";
 import Footer from "../components/footer";
+import Notification from "../components/Notification";
 import { adminService } from "../services/adminService";
 import { eventsService } from "../services/eventsService";
 import { authAPI } from "../services/api";
@@ -18,6 +19,27 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    message: "",
+    onConfirm: null,
+  });
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmDialog({ show: true, message, onConfirm });
+  };
+
+  const handleConfirm = () => {
+    if (confirmDialog.onConfirm) {
+      confirmDialog.onConfirm();
+    }
+    setConfirmDialog({ show: false, message: "", onConfirm: null });
+  };
+
+  const handleCancel = () => {
+    setConfirmDialog({ show: false, message: "", onConfirm: null });
+  };
 
   useEffect(() => {
     checkAdminAccess();
@@ -27,8 +49,12 @@ const AdminDashboard = () => {
   const checkAdminAccess = () => {
     const user = authAPI.getUserData();
     if (user?.role !== "admin") {
-      alert("Bạn không có quyền truy cập trang này!");
-      history.push("/");
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: "Bạn không có quyền truy cập trang này!",
+      });
+      setTimeout(() => history.push("/"), 2000);
     }
   };
 
@@ -50,8 +76,12 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       if (error.response?.status === 401 || error.response?.status === 403) {
-        alert("Phiên đăng nhập hết hạn hoặc không có quyền truy cập!");
-        history.push("/login");
+        setNotification({
+          type: "error",
+          title: "Lỗi!",
+          message: "Phiên đăng nhập hết hạn hoặc không có quyền truy cập!",
+        });
+        setTimeout(() => history.push("/login"), 2000);
       }
     } finally {
       setLoading(false);
@@ -59,52 +89,117 @@ const AdminDashboard = () => {
   };
 
   const handleLockUser = async (userId) => {
-    if (!window.confirm("Bạn có chắc muốn khóa tài khoản này?")) return;
+    showConfirm("Bạn có chắc muốn khóa tài khoản này?", async () => {
+      try {
+        await adminService.lockUser(userId);
 
-    try {
-      await adminService.lockUser(userId);
-      alert("Đã khóa tài khoản thành công!");
-      fetchData();
-    } catch (error) {
-      alert(error.response?.data?.message || "Không thể khóa tài khoản");
-    }
+        // Cập nhật state users thay vì reload - sử dụng isActive
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === userId ? { ...user, isActive: false } : user
+          )
+        );
+
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã khóa tài khoản thành công!",
+        });
+      } catch (error) {
+        setNotification({
+          type: "error",
+          title: "Lỗi!",
+          message: error.response?.data?.message || "Không thể khóa tài khoản",
+        });
+      }
+    });
   };
 
   const handleUnlockUser = async (userId) => {
-    try {
-      await adminService.unlockUser(userId);
-      alert("Đã mở khóa tài khoản thành công!");
-      fetchData();
-    } catch (error) {
-      alert(error.response?.data?.message || "Không thể mở khóa tài khoản");
-    }
+    showConfirm("Bạn có chắc muốn mở khóa tài khoản này?", async () => {
+      try {
+        await adminService.unlockUser(userId);
+
+        // Cập nhật state users thay vì reload - sử dụng isActive
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === userId ? { ...user, isActive: true } : user
+          )
+        );
+
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã mở khóa tài khoản thành công!",
+        });
+      } catch (error) {
+        setNotification({
+          type: "error",
+          title: "Lỗi!",
+          message:
+            error.response?.data?.message || "Không thể mở khóa tài khoản",
+        });
+      }
+    });
   };
 
   const handleDeleteUser = async (userId) => {
-    if (
-      !window.confirm(
-        "Bạn có chắc muốn XÓA tài khoản này? Hành động này không thể hoàn tác!"
-      )
-    )
-      return;
+    showConfirm(
+      "Bạn có chắc muốn XÓA tài khoản này? Hành động này không thể hoàn tác!",
+      async () => {
+        try {
+          await adminService.deleteUser(userId);
 
-    try {
-      await adminService.deleteUser(userId);
-      alert("Đã xóa tài khoản thành công!");
-      fetchData();
-    } catch (error) {
-      alert(error.response?.data?.message || "Không thể xóa tài khoản");
-    }
+          // Xóa user khỏi state thay vì reload
+          setUsers((prevUsers) =>
+            prevUsers.filter((user) => user._id !== userId)
+          );
+
+          // Cập nhật stats
+          setStats((prevStats) => ({
+            ...prevStats,
+            totalUsers: (prevStats.totalUsers || 0) - 1,
+          }));
+
+          setNotification({
+            type: "success",
+            title: "Thành công!",
+            message: "Đã xóa tài khoản thành công!",
+          });
+        } catch (error) {
+          setNotification({
+            type: "error",
+            title: "Lỗi!",
+            message: error.response?.data?.message || "Không thể xóa tài khoản",
+          });
+        }
+      }
+    );
   };
 
   const handleUpdateRole = async (userId, newRole) => {
     try {
       await adminService.updateUserRole(userId, newRole);
-      alert("Đã cập nhật vai trò thành công!");
-      fetchData();
+
+      // Cập nhật role trong state thay vì reload
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === userId ? { ...user, role: newRole } : user
+        )
+      );
+
+      setNotification({
+        type: "success",
+        title: "Thành công!",
+        message: "Đã cập nhật vai trò thành công!",
+      });
       setShowUserModal(false);
     } catch (error) {
-      alert(error.response?.data?.message || "Không thể cập nhật vai trò");
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: error.response?.data?.message || "Không thể cập nhật vai trò",
+      });
     }
   };
 
@@ -112,7 +207,11 @@ const AdminDashboard = () => {
     try {
       const result = await adminService.exportUsers(format);
       if (format === "csv") {
-        alert("Đã tải xuống file CSV!");
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã tải xuống file CSV!",
+        });
       } else if (format === "json") {
         // Download JSON file
         const blob = new Blob([JSON.stringify(result, null, 2)], {
@@ -126,10 +225,18 @@ const AdminDashboard = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        alert("Đã tải xuống file JSON!");
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã tải xuống file JSON!",
+        });
       }
     } catch (error) {
-      alert("Không thể xuất dữ liệu: " + error.message);
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: "Không thể xuất dữ liệu: " + error.message,
+      });
     }
   };
 
@@ -137,7 +244,11 @@ const AdminDashboard = () => {
     try {
       const result = await adminService.exportEvents(format);
       if (format === "csv") {
-        alert("Đã tải xuống file CSV!");
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã tải xuống file CSV!",
+        });
       } else if (format === "json") {
         // Download JSON file
         const blob = new Blob([JSON.stringify(result, null, 2)], {
@@ -151,23 +262,46 @@ const AdminDashboard = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        alert("Đã tải xuống file JSON!");
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã tải xuống file JSON!",
+        });
       }
     } catch (error) {
-      alert("Không thể xuất dữ liệu: " + error.message);
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: "Không thể xuất dữ liệu: " + error.message,
+      });
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa sự kiện này?")) return;
+    showConfirm("Bạn có chắc muốn xóa sự kiện này?", async () => {
+      try {
+        await eventsService.deleteEvent(eventId);
 
-    try {
-      await eventsService.deleteEvent(eventId);
-      alert("Đã xóa sự kiện thành công!");
-      fetchData();
-    } catch (error) {
-      alert(error.response?.data?.message || "Không thể xóa sự kiện");
-    }
+        // Xóa event khỏi state thay vì reload
+        setEvents((prevEvents) =>
+          prevEvents.filter(
+            (event) => event._id !== eventId && event.id !== eventId
+          )
+        );
+
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã xóa sự kiện thành công!",
+        });
+      } catch (error) {
+        setNotification({
+          type: "error",
+          title: "Lỗi!",
+          message: error.response?.data?.message || "Không thể xóa sự kiện",
+        });
+      }
+    });
   };
 
   const filteredUsers = users.filter(
@@ -220,6 +354,27 @@ const AdminDashboard = () => {
       </Helmet>
 
       <Navigation />
+
+      {/* Confirm Dialog */}
+      {confirmDialog.show && (
+        <div className="modal-overlay" onClick={handleCancel}>
+          <div
+            className="modal-content confirm-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="confirm-title">Xác nhận</h3>
+            <p className="confirm-message">{confirmDialog.message}</p>
+            <div className="confirm-actions">
+              <button className="btn btn-secondary" onClick={handleCancel}>
+                Hủy
+              </button>
+              <button className="btn btn-primary" onClick={handleConfirm}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="admin-dashboard-wrapper">
         {/* Header */}
@@ -541,6 +696,16 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
       )}
 
       <Footer />

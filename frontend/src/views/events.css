@@ -368,6 +368,13 @@
   cursor: not-allowed;
 }
 
+.btn-completed {
+  background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;

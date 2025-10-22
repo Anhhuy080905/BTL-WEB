@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
+import Notification from "../components/Notification";
 import { postsService } from "../services/postsService";
 import { eventsService } from "../services/eventsService";
 import "./discussion-channel.css";
@@ -14,6 +15,8 @@ const DiscussionChannel = () => {
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [showAccessDenied, setShowAccessDenied] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
@@ -31,7 +34,6 @@ const DiscussionChannel = () => {
       setPosts(postsData);
       setError(null);
     } catch (err) {
-      console.error("Error fetching data:", err);
       setError(
         err.response?.data?.message ||
           "Bạn không có quyền truy cập kênh trao đổi này"
@@ -52,8 +54,23 @@ const DiscussionChannel = () => {
       setPosts([newPost, ...posts]);
       setNewPostContent("");
     } catch (err) {
-      console.error("Error creating post:", err);
-      alert(err.response?.data?.message || "Không thể tạo bài viết");
+      // Kiểm tra nếu lỗi là do chưa được phê duyệt
+      console.log("Error status:", err.response?.status);
+      console.log("Error message:", err.response?.data?.message);
+
+      if (
+        err.response?.status === 403 &&
+        err.response?.data?.message?.includes("phê duyệt")
+      ) {
+        console.log("Showing access denied modal");
+        setShowAccessDenied(true);
+      } else {
+        setNotification({
+          type: "error",
+          title: "Lỗi!",
+          message: err.response?.data?.message || "Không thể tạo bài viết",
+        });
+      }
     }
   };
 
@@ -64,7 +81,6 @@ const DiscussionChannel = () => {
       await postsService.deletePost(postId);
       setPosts(posts.filter((post) => post._id !== postId));
     } catch (err) {
-      console.error("Error deleting post:", err);
       alert(err.response?.data?.message || "Không thể xóa bài viết");
     }
   };
@@ -74,7 +90,7 @@ const DiscussionChannel = () => {
       const updatedPost = await postsService.toggleLike(postId);
       setPosts(posts.map((post) => (post._id === postId ? updatedPost : post)));
     } catch (err) {
-      console.error("Error toggling like:", err);
+      // Silently fail for like operations
     }
   };
 
@@ -87,7 +103,6 @@ const DiscussionChannel = () => {
       setPosts(posts.map((post) => (post._id === postId ? updatedPost : post)));
       setCommentInputs({ ...commentInputs, [postId]: "" });
     } catch (err) {
-      console.error("Error adding comment:", err);
       alert(err.response?.data?.message || "Không thể thêm bình luận");
     }
   };
@@ -100,7 +115,6 @@ const DiscussionChannel = () => {
       const updatedPosts = await postsService.getEventPosts(eventId);
       setPosts(updatedPosts);
     } catch (err) {
-      console.error("Error deleting comment:", err);
       alert(err.response?.data?.message || "Không thể xóa bình luận");
     }
   };
@@ -347,6 +361,50 @@ const DiscussionChannel = () => {
         <div className="image-modal" onClick={() => setSelectedImage(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <img src={selectedImage} alt="Full size" className="modal-image" />
+          </div>
+        </div>
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
+      {/* Access Denied Modal */}
+      {showAccessDenied && (
+        <div
+          className="access-denied-modal"
+          onClick={() => setShowAccessDenied(false)}
+        >
+          <div
+            className="access-denied-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="access-denied-icon">🔒</div>
+            <h2>Bạn cần tham gia sự kiện này để đăng bài</h2>
+            <p>
+              Vui lòng đăng ký tham gia sự kiện và chờ được phê duyệt để có thể
+              tham gia thảo luận.
+            </p>
+            <div className="access-denied-buttons">
+              <button
+                className="btn-view-event"
+                onClick={() => history.push("/events")}
+              >
+                Tìm sự kiện
+              </button>
+              <button
+                className="btn-close"
+                onClick={() => setShowAccessDenied(false)}
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

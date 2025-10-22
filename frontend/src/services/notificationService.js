@@ -16,7 +16,6 @@ const notificationService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Error fetching notifications:", error);
       throw error;
     }
   },
@@ -29,7 +28,6 @@ const notificationService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Error fetching unread count:", error);
       throw error;
     }
   },
@@ -46,7 +44,6 @@ const notificationService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error marking as read:", error);
       throw error;
     }
   },
@@ -63,7 +60,6 @@ const notificationService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error marking all as read:", error);
       throw error;
     }
   },
@@ -76,7 +72,6 @@ const notificationService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Error deleting notification:", error);
       throw error;
     }
   },

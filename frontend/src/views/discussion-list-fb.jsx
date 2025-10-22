@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import Navigation from "../components/navigation";
 import Footer from "../components/footer";
+import Notification from "../components/Notification";
 import { postsService } from "../services/postsService";
 import { eventsService } from "../services/eventsService";
 import "./discussion-list-fb.css";
@@ -16,7 +17,6 @@ const DiscussionListFB = () => {
   const [selectedEventForPost, setSelectedEventForPost] = useState("");
   const [newCommentContent, setNewCommentContent] = useState({});
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
-  const [updateTrigger, setUpdateTrigger] = useState(0); // Force re-render trigger
 
   // New states for post creation features
   const [selectedImages, setSelectedImages] = useState([]);
@@ -25,6 +25,7 @@ const DiscussionListFB = () => {
   const [showFeelingPicker, setShowFeelingPicker] = useState(false);
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [selectedImageForModal, setSelectedImageForModal] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -41,40 +42,51 @@ const DiscussionListFB = () => {
     try {
       setLoading(true);
       const allEvents = await eventsService.getAllEvents();
-      const accessibleEvents = allEvents.filter(
-        (event) =>
-          event.creator?._id ===
-            JSON.parse(localStorage.getItem("user"))?._id ||
-          event.registrationStatus === "approved"
-      );
+      const currentUserId = JSON.parse(localStorage.getItem("user"))?._id;
 
       const eventsMap = {};
-      accessibleEvents.forEach((event) => {
-        eventsMap[event._id] = event;
-      });
-      setEvents(eventsMap);
-
-      if (accessibleEvents.length > 0) {
-        setSelectedEventForPost(accessibleEvents[0]._id);
-      }
-
       const allPosts = [];
-      for (const event of accessibleEvents) {
+
+      // Chỉ fetch posts từ events mà user có khả năng cao có quyền truy cập
+      for (const event of allEvents) {
+        // Pre-filter: Chỉ thử fetch nếu:
+        // 1. User là creator, hoặc
+        // 2. Event có registrationStatus = 'approved' (backend trả về)
+        const isCreator =
+          event.creator?._id === currentUserId ||
+          event.createdBy === currentUserId;
+        const hasApprovedStatus = event.registrationStatus === "approved";
+
+        if (!isCreator && !hasApprovedStatus) {
+          // Bỏ qua các events mà user rõ ràng không có quyền
+          continue;
+        }
+
         try {
           const eventPosts = await postsService.getEventPosts(event._id);
+          // Nếu fetch thành công, nghĩa là user có quyền truy cập
+          eventsMap[event._id] = event;
           eventPosts.forEach((post) => {
             post.eventId = event._id;
           });
           allPosts.push(...eventPosts);
         } catch (err) {
-          console.error(`Error fetching posts for event ${event._id}:`, err);
+          // Nếu lỗi 403, nghĩa là không có quyền -> bỏ qua event này
+          // Silently skip
         }
+      }
+
+      setEvents(eventsMap);
+
+      const accessibleEventIds = Object.keys(eventsMap);
+      if (accessibleEventIds.length > 0) {
+        setSelectedEventForPost(accessibleEventIds[0]);
       }
 
       allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setPosts(allPosts);
     } catch (err) {
-      console.error("Error fetching posts:", err);
+      // Silently handle
     } finally {
       setLoading(false);
     }
@@ -128,8 +140,11 @@ const DiscussionListFB = () => {
       setShowLocationInput(false);
       setShowCreatePostModal(false);
     } catch (err) {
-      console.error("Error creating post:", err);
-      alert("Không thể tạo bài viết");
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: err.response?.data?.message || "Không thể tạo bài viết",
+      });
     }
   };
 
@@ -137,7 +152,11 @@ const DiscussionListFB = () => {
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
     if (files.length + selectedImages.length > 10) {
-      alert("Chỉ có thể chọn tối đa 10 ảnh");
+      setNotification({
+        type: "warning",
+        title: "Cảnh báo!",
+        message: "Chỉ có thể chọn tối đa 10 ảnh",
+      });
       return;
     }
 
@@ -182,12 +201,13 @@ const DiscussionListFB = () => {
         const newPosts = prevPosts.map((p) => (p._id === postId ? newPost : p));
         return newPosts;
       });
-
-      // Force re-render
-      setUpdateTrigger((prev) => prev + 1);
     } catch (err) {
       console.error("Error toggling like:", err);
-      alert("Không thể thích bài viết: " + err.message);
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: "Không thể thích bài viết: " + err.message,
+      });
     }
   };
 
@@ -208,7 +228,11 @@ const DiscussionListFB = () => {
       setNewCommentContent({ ...newCommentContent, [postId]: "" });
     } catch (err) {
       console.error("Error adding comment:", err);
-      alert("Không thể gửi bình luận: " + err.message);
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: "Không thể gửi bình luận: " + err.message,
+      });
     }
   };
 
@@ -613,7 +637,13 @@ const DiscussionListFB = () => {
                         type="button"
                         className="addon-btn"
                         title="Gắn thẻ"
-                        onClick={() => alert("Chức năng đang được phát triển")}
+                        onClick={() =>
+                          setNotification({
+                            type: "info",
+                            title: "Thông báo",
+                            message: "Chức năng đang được phát triển",
+                          })
+                        }
                       >
                         👤
                       </button>
@@ -637,7 +667,13 @@ const DiscussionListFB = () => {
                         type="button"
                         className="addon-btn"
                         title="GIF"
-                        onClick={() => alert("Chức năng đang được phát triển")}
+                        onClick={() =>
+                          setNotification({
+                            type: "info",
+                            title: "Thông báo",
+                            message: "Chức năng đang được phát triển",
+                          })
+                        }
                       >
                         GIF
                       </button>
@@ -917,6 +953,16 @@ const DiscussionListFB = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
       )}
 
       <Footer />

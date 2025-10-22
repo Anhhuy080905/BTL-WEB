@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link, useHistory } from "react-router-dom";
+import Notification from "../components/Notification";
 import { authAPI } from "../services/api";
 import "./login.css";
 
@@ -12,6 +13,10 @@ const Login = (props) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [notification, setNotification] = useState(null);
 
   const validateForm = () => {
     const newErrors = {};
@@ -35,32 +40,52 @@ const Login = (props) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
+    // Luôn ngăn chặn hành vi mặc định của form
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
 
-    setLoading(true);
-    setErrors({});
-
     try {
+      console.log("=== LOGIN SUBMIT ===");
+
+      if (!validateForm()) {
+        console.log("=== VALIDATION FAILED ===");
+        return;
+      }
+
+      setLoading(true);
+      setErrors({});
+
       const response = await authAPI.login({ email, password });
 
       if (response.success) {
-        // Show success message
-        alert("Đăng nhập thành công!");
-        // Reload page to trigger navigation update
-        window.location.href = "/";
+        // Show success notification
+        setShowSuccessNotification(true);
+
+        // Redirect after 1.5 seconds
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
       }
     } catch (error) {
       console.error("Login error:", error);
 
+      let message = "Đăng nhập thất bại. Vui lòng thử lại!";
       if (error.response?.data?.message) {
-        setErrors({ general: error.response.data.message });
-      } else {
-        setErrors({ general: "Đăng nhập thất bại. Vui lòng thử lại!" });
+        message = error.response.data.message;
       }
+
+      console.log("=== SHOWING ERROR NOTIFICATION ===", message);
+
+      // Hiển thị error notification
+      setErrorMessage(message);
+      setShowErrorNotification(true);
+
+      // Tự động đóng sau 3 giây
+      setTimeout(() => {
+        setShowErrorNotification(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -68,7 +93,11 @@ const Login = (props) => {
 
   const handleGoogleLogin = () => {
     // TODO: Implement Google OAuth login
-    alert("Tính năng đăng nhập với Google sẽ được cập nhật sớm!");
+    setNotification({
+      type: "info",
+      title: "Thông báo",
+      message: "Tính năng đăng nhập với Google sẽ được cập nhật sớm!",
+    });
   };
 
   return (
@@ -77,6 +106,59 @@ const Login = (props) => {
         <title>Đăng Nhập - VolunteerHub</title>
         <meta property="og:title" content="Đăng Nhập - VolunteerHub" />
       </Helmet>
+
+      {/* Success Notification */}
+      {showSuccessNotification && (
+        <div className="success-notification">
+          <div className="success-notification-content">
+            <div className="success-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <h3>Đăng nhập thành công!</h3>
+            <p>Đang chuyển hướng đến trang chủ...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Notification */}
+      {showErrorNotification && (
+        <div className="error-notification">
+          <div className="error-notification-content">
+            <div className="error-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <h3>Đăng nhập thất bại!</h3>
+            <p>{errorMessage}</p>
+          </div>
+        </div>
+      )}
 
       <div className="login-wrapper">
         {/* Left Side - Form */}
@@ -104,11 +186,14 @@ const Login = (props) => {
               Chào mừng bạn trở lại với VolunteerHub
             </p>
 
-            {errors.general && (
-              <div className="alert alert-error">{errors.general}</div>
-            )}
-
-            <form onSubmit={handleSubmit} className="login-form">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSubmit(e);
+              }}
+              className="login-form"
+            >
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   Email hoặc Tên đăng nhập
@@ -286,6 +371,16 @@ const Login = (props) => {
           </div>
         </div>
       </div>
+
+      {/* Notification */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };

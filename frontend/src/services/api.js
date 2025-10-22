@@ -29,10 +29,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired hoặc không hợp lệ
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      // Chỉ redirect nếu KHÔNG PHẢI đang ở trang login hoặc register
+      const currentPath = window.location.pathname;
+      const isAuthPage =
+        currentPath === "/login" || currentPath === "/register";
+
+      if (!isAuthPage) {
+        // Token expired hoặc không hợp lệ - chỉ redirect khi user đã login trước đó
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
@@ -64,7 +71,7 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/";
+    // Không tự động redirect - để component tự quản lý
   },
 
   // Lấy thông tin user hiện tại

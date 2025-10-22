@@ -32,13 +32,11 @@ export const eventsService = {
         params.append("search", filters.search);
       }
 
-      // Gửi token nếu có để lấy thông tin trạng thái đăng ký
       const response = await axios.get(`${API_URL}?${params.toString()}`, {
         headers: getAuthHeader(),
       });
       return response.data.data || [];
     } catch (error) {
-      console.error("Error fetching events:", error);
       throw error;
     }
   },
@@ -46,18 +44,16 @@ export const eventsService = {
   // Lấy sự kiện theo ID
   getEventById: async (id) => {
     try {
-      // Gửi token nếu có để lấy thông tin trạng thái đăng ký
       const response = await axios.get(`${API_URL}/${id}`, {
         headers: getAuthHeader(),
       });
       return response.data.data;
     } catch (error) {
-      console.error("Error fetching event:", error);
       throw error;
     }
   },
 
-  // Tạo sự kiện mới (cần đăng nhập + role event_manager/admin)
+  // Tạo sự kiện mới
   createEvent: async (eventData) => {
     try {
       const response = await axios.post(`${API_URL}`, eventData, {
@@ -66,7 +62,6 @@ export const eventsService = {
       notifyListeners();
       return response.data.data;
     } catch (error) {
-      console.error("Error creating event:", error);
       throw error;
     }
   },
@@ -80,7 +75,6 @@ export const eventsService = {
       notifyListeners();
       return response.data.data;
     } catch (error) {
-      console.error("Error updating event:", error);
       throw error;
     }
   },
@@ -94,7 +88,6 @@ export const eventsService = {
       notifyListeners();
       return true;
     } catch (error) {
-      console.error("Error deleting event:", error);
       throw error;
     }
   },
@@ -112,7 +105,6 @@ export const eventsService = {
       notifyListeners();
       return response.data.data;
     } catch (error) {
-      console.error("Error registering for event:", error);
       throw error;
     }
   },
@@ -126,7 +118,6 @@ export const eventsService = {
       notifyListeners();
       return response.data.data;
     } catch (error) {
-      console.error("Error unregistering from event:", error);
       throw error;
     }
   },
@@ -139,12 +130,11 @@ export const eventsService = {
       });
       return response.data.data || [];
     } catch (error) {
-      console.error("Error fetching registered events:", error);
       throw error;
     }
   },
 
-  // Lấy các sự kiện do mình tạo (cho event_manager)
+  // Lấy các sự kiện do mình tạo
   getMyCreatedEvents: async () => {
     try {
       const response = await axios.get(`${API_URL}/my/created`, {
@@ -152,7 +142,6 @@ export const eventsService = {
       });
       return response.data.data || [];
     } catch (error) {
-      console.error("Error fetching created events:", error);
       throw error;
     }
   },
@@ -168,7 +157,6 @@ export const eventsService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching pending registrations:", error);
       throw error;
     }
   },
@@ -181,7 +169,6 @@ export const eventsService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Error fetching event registrations:", error);
       throw error;
     }
   },
@@ -199,7 +186,6 @@ export const eventsService = {
       notifyListeners();
       return response.data;
     } catch (error) {
-      console.error("Error approving registration:", error);
       throw error;
     }
   },
@@ -217,7 +203,6 @@ export const eventsService = {
       notifyListeners();
       return response.data;
     } catch (error) {
-      console.error("Error rejecting registration:", error);
       throw error;
     }
   },
@@ -235,7 +220,6 @@ export const eventsService = {
       notifyListeners();
       return response.data;
     } catch (error) {
-      console.error("Error checking in participant:", error);
       throw error;
     }
   },
@@ -252,7 +236,6 @@ export const eventsService = {
       notifyListeners();
       return response.data;
     } catch (error) {
-      console.error("Error undoing check-in:", error);
       throw error;
     }
   },
@@ -270,7 +253,6 @@ export const eventsService = {
       notifyListeners();
       return response.data;
     } catch (error) {
-      console.error("Error marking as completed:", error);
       throw error;
     }
   },
@@ -287,7 +269,6 @@ export const eventsService = {
       notifyListeners();
       return response.data;
     } catch (error) {
-      console.error("Error undoing completion:", error);
       throw error;
     }
   },

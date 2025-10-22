@@ -23,13 +23,6 @@ const checkDiscussionAccess = async (userId, eventId, userRole) => {
   );
 
   if (!isCreator && !participant) {
-    console.error("Access denied:", {
-      userId: userId.toString(),
-      userRole,
-      eventId: eventId.toString(),
-      isCreator,
-      hasApprovedParticipant: !!participant,
-    });
     throw new Error(
       "Bạn cần được phê duyệt tham gia sự kiện để truy cập kênh trao đổi"
     );
@@ -68,11 +61,16 @@ exports.getEventPosts = async (req, res) => {
       data: posts,
     });
   } catch (error) {
-    console.error("Error getting event posts:", error);
-    res.status(error.message.includes("quyền") ? 403 : 500).json({
-      success: false,
-      message: error.message || "Không thể tải bài viết",
-    });
+    res
+      .status(
+        error.message.includes("quyền") || error.message.includes("phê duyệt")
+          ? 403
+          : 500
+      )
+      .json({
+        success: false,
+        message: error.message || "Không thể tải bài viết",
+      });
   }
 };
 
@@ -110,11 +108,16 @@ exports.createPost = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.error("Error creating post:", error);
-    res.status(error.message.includes("quyền") ? 403 : 500).json({
-      success: false,
-      message: error.message || "Không thể tạo bài viết",
-    });
+    res
+      .status(
+        error.message.includes("quyền") || error.message.includes("phê duyệt")
+          ? 403
+          : 500
+      )
+      .json({
+        success: false,
+        message: error.message || "Không thể tạo bài viết",
+      });
   }
 };
 
@@ -150,7 +153,6 @@ exports.deletePost = async (req, res) => {
       message: "Đã xóa bài viết",
     });
   } catch (error) {
-    console.error("Error deleting post:", error);
     res.status(500).json({
       success: false,
       message: "Không thể xóa bài viết",
@@ -210,7 +212,6 @@ exports.toggleLike = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.error("Error toggling like:", error);
     res.status(500).json({
       success: false,
       message: "Không thể thực hiện",
@@ -276,7 +277,6 @@ exports.addComment = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.error("Error adding comment:", error);
     res.status(500).json({
       success: false,
       message: "Không thể thêm bình luận",
@@ -325,7 +325,6 @@ exports.deleteComment = async (req, res) => {
       message: "Đã xóa bình luận",
     });
   } catch (error) {
-    console.error("Error deleting comment:", error);
     res.status(500).json({
       success: false,
       message: "Không thể xóa bình luận",

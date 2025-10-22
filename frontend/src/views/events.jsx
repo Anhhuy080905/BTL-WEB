@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
 import Navigation from "../components/navigation.jsx";
 import Footer from "../components/footer.jsx";
+import Notification from "../components/Notification.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import "./events.css";
@@ -15,6 +16,7 @@ const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [notification, setNotification] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [events, setEvents] = useState([]);
 
@@ -99,7 +101,11 @@ const Events = () => {
     }
 
     if (event.registered >= event.maxParticipants) {
-      alert("Sự kiện đã đủ số lượng người tham gia!");
+      setNotification({
+        type: "error",
+        title: "Không thể đăng ký",
+        message: "Sự kiện đã đủ số lượng người tham gia!",
+      });
       return;
     }
 
@@ -111,16 +117,21 @@ const Events = () => {
     ) {
       try {
         await eventsService.registerForEvent(event._id || event.id);
-        setSuccessMessage(
-          "Đăng ký thành công! Đăng ký của bạn đang chờ quản lý phê duyệt."
-        );
+        setNotification({
+          type: "success",
+          title: "Đăng ký thành công!",
+          message: "Đăng ký của bạn đang chờ quản lý phê duyệt.",
+        });
         setShowDetailModal(false);
         await loadEvents(); // Reload để cập nhật số lượng đã đăng ký
-        setTimeout(() => setSuccessMessage(""), 5000);
       } catch (error) {
         const errorMessage =
           error.response?.data?.message || "Có lỗi xảy ra khi đăng ký";
-        alert(errorMessage);
+        setNotification({
+          type: "error",
+          title: "Đăng ký thất bại",
+          message: errorMessage,
+        });
       }
     }
   };
@@ -158,6 +169,15 @@ const Events = () => {
           content="Sự Kiện Tình Nguyện - VolunteerHub"
         />
       </Helmet>
+
+      {notification && (
+        <Notification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
 
       <Navigation />
 
@@ -458,32 +478,56 @@ const Events = () => {
                           Đã từ chối
                         </button>
                       ) : (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => handleRegister(event._id || event.id)}
-                          disabled={
-                            event.status === "completed" ||
-                            event.registered >= event.maxParticipants
-                          }
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <line x1="19" y1="8" x2="19" y2="14" />
-                            <line x1="22" y1="11" x2="16" y2="11" />
-                          </svg>
-                          Đăng ký
-                        </button>
+                        <>
+                          {event.status === "completed" ||
+                          new Date(event.date) < new Date() ? (
+                            <button className="btn btn-completed" disabled>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                              </svg>
+                              Đã hoàn thành
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-primary"
+                              onClick={() =>
+                                handleRegister(event._id || event.id)
+                              }
+                              disabled={
+                                event.registered >= event.maxParticipants
+                              }
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <line x1="19" y1="8" x2="19" y2="14" />
+                                <line x1="22" y1="11" x2="16" y2="11" />
+                              </svg>
+                              Đăng ký
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

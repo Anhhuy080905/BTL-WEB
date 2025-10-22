@@ -624,3 +624,137 @@
     max-height: 85vh;
   }
 }
+
+/* Access Denied Modal */
+.access-denied-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+}
+
+.access-denied-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.access-denied-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease;
+}
+
+.access-denied-content h2 {
+  color: #1e293b;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+}
+
+.access-denied-content p {
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 30px 0;
+}
+
+.access-denied-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.access-denied-buttons button {
+  padding: 12px 30px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-view-event {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-view-event:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-close {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.btn-close:hover {
+  background: #cbd5e1;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .access-denied-content {
+    padding: 30px 20px;
+  }
+
+  .access-denied-content h2 {
+    font-size: 20px;
+  }
+
+  .access-denied-content p {
+    font-size: 14px;
+  }
+
+  .access-denied-buttons {
+    flex-direction: column;
+  }
+
+  .access-denied-buttons button {
+    width: 100%;
+  }
+}

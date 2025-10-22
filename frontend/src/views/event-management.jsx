@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
 import Navigation from "../components/navigation.jsx";
 import Footer from "../components/footer.jsx";
+import Notification from "../components/Notification.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import * as Yup from "yup";
@@ -53,7 +54,6 @@ const EventManagement = () => {
     image: "",
   });
   const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState("");
   const [events, setEvents] = useState([]);
   const [showRegistrationsModal, setShowRegistrationsModal] = useState(false);
   const [selectedEventForReview, setSelectedEventForReview] = useState(null);
@@ -70,6 +70,27 @@ const EventManagement = () => {
     checkedIn: 0,
     completed: 0,
   });
+  const [notification, setNotification] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    message: "",
+    onConfirm: null,
+  });
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmDialog({ show: true, message, onConfirm });
+  };
+
+  const handleConfirm = () => {
+    if (confirmDialog.onConfirm) {
+      confirmDialog.onConfirm();
+      // Don't close here, let the callback handle it
+    }
+  };
+
+  const handleCancel = () => {
+    setConfirmDialog({ show: false, message: "", onConfirm: null });
+  };
 
   useEffect(() => {
     checkUserRole();
@@ -172,7 +193,6 @@ const EventManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
-    setSuccessMessage("");
 
     try {
       // Validate với Yup
@@ -186,7 +206,11 @@ const EventManagement = () => {
           maxParticipants: parseInt(formData.maxParticipants),
           hours: parseInt(formData.hours),
         });
-        setSuccessMessage("Cập nhật sự kiện thành công!");
+        setNotification({
+          type: "success",
+          title: "Thành công",
+          message: "Cập nhật sự kiện thành công!",
+        });
       } else {
         // Create new event
         await eventsService.createEvent({
@@ -204,13 +228,16 @@ const EventManagement = () => {
             "Kinh nghiệm thực tế",
           ],
         });
-        setSuccessMessage("Tạo sự kiện mới thành công!");
+        setNotification({
+          type: "success",
+          title: "Thành công",
+          message: "Tạo sự kiện mới thành công!",
+        });
       }
 
       // Reload events sau khi tạo/sửa
       await loadEvents();
       setShowModal(false);
-      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (validationError) {
       if (validationError.inner) {
         // Yup validation errors
@@ -230,22 +257,38 @@ const EventManagement = () => {
   };
 
   const handleDelete = async (eventId) => {
-    if (
-      window.confirm(
-        "Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác!"
-      )
-    ) {
-      try {
-        await eventsService.deleteEvent(eventId);
-        setSuccessMessage("Đã xóa sự kiện thành công!");
-        await loadEvents();
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch (error) {
-        const errorMessage =
-          error.response?.data?.message || "Có lỗi khi xóa sự kiện";
-        setErrors({ general: errorMessage });
+    showConfirm(
+      "Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác!",
+      async () => {
+        try {
+          await eventsService.deleteEvent(eventId);
+          await loadEvents();
+
+          // Show notification IMMEDIATELY
+          setNotification({
+            type: "success",
+            title: "Thành công",
+            message: "Đã xóa sự kiện thành công!",
+          });
+
+          // Close confirm dialog after showing notification
+          setConfirmDialog({ show: false, message: "", onConfirm: null });
+        } catch (error) {
+          const errorMessage =
+            error.response?.data?.message || "Có lỗi khi xóa sự kiện";
+
+          // Show error notification IMMEDIATELY
+          setNotification({
+            type: "error",
+            title: "Lỗi",
+            message: errorMessage,
+          });
+
+          // Close confirm dialog
+          setConfirmDialog({ show: false, message: "", onConfirm: null });
+        }
       }
-    }
+    );
   };
 
   const handleViewRegistrations = async (event) => {
@@ -258,10 +301,13 @@ const EventManagement = () => {
       setRegistrationsStats(response.statistics);
       setShowRegistrationsModal(true);
     } catch (error) {
-      alert(
-        "Có lỗi khi tải danh sách đăng ký: " +
-          (error.response?.data?.message || error.message)
-      );
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
+          "Có lỗi khi tải danh sách đăng ký: " +
+          (error.response?.data?.message || error.message),
+      });
     }
   };
 
@@ -271,38 +317,69 @@ const EventManagement = () => {
         selectedEventForReview._id || selectedEventForReview.id,
         userId
       );
-      setSuccessMessage("Đã phê duyệt đăng ký thành công!");
-      // Reload registrations
-      await handleViewRegistrations(selectedEventForReview);
-      await loadEvents();
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      alert(
-        "Có lỗi khi phê duyệt: " +
-          (error.response?.data?.message || error.message)
+
+      // Reload registration data to update the modal
+      const response = await eventsService.getEventRegistrations(
+        selectedEventForReview._id || selectedEventForReview.id
       );
+      setRegistrations(response.data);
+      setRegistrationsStats(response.statistics);
+
+      // Show notification immediately (modal stays open, no confirm dialog)
+      setNotification({
+        type: "success",
+        title: "Thành công",
+        message: "Đã phê duyệt đăng ký thành công!",
+      });
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
+          "Có lỗi khi phê duyệt: " +
+          (error.response?.data?.message || error.message),
+      });
     }
   };
 
   const handleRejectRegistration = async (userId) => {
-    if (window.confirm("Bạn có chắc chắn muốn từ chối đăng ký này?")) {
+    showConfirm("Bạn có chắc chắn muốn từ chối đăng ký này?", async () => {
       try {
         await eventsService.rejectRegistration(
           selectedEventForReview._id || selectedEventForReview.id,
           userId
         );
-        setSuccessMessage("Đã từ chối đăng ký!");
-        // Reload registrations
-        await handleViewRegistrations(selectedEventForReview);
-        await loadEvents();
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch (error) {
-        alert(
-          "Có lỗi khi từ chối: " +
-            (error.response?.data?.message || error.message)
+
+        // Reload registration data to update the modal
+        const response = await eventsService.getEventRegistrations(
+          selectedEventForReview._id || selectedEventForReview.id
         );
+        setRegistrations(response.data);
+        setRegistrationsStats(response.statistics);
+
+        // Show notification IMMEDIATELY (same as handleApproveRegistration)
+        setNotification({
+          type: "success",
+          title: "Thành công",
+          message: "Đã từ chối đăng ký!",
+        });
+
+        // Close confirm dialog after showing notification
+        setConfirmDialog({ show: false, message: "", onConfirm: null });
+      } catch (error) {
+        // Show error notification IMMEDIATELY
+        setNotification({
+          type: "error",
+          title: "Lỗi",
+          message:
+            "Có lỗi khi từ chối: " +
+            (error.response?.data?.message || error.message),
+        });
+
+        // Close confirm dialog
+        setConfirmDialog({ show: false, message: "", onConfirm: null });
       }
-    }
+    });
   };
 
   const handleCheckIn = async (userId) => {
@@ -311,35 +388,60 @@ const EventManagement = () => {
         selectedEventForReview._id || selectedEventForReview.id,
         userId
       );
-      setSuccessMessage("Đã check-in thành công!");
-      await handleViewRegistrations(selectedEventForReview);
-      await loadEvents();
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      alert(
-        "Có lỗi khi check-in: " +
-          (error.response?.data?.message || error.message)
+
+      // Reload registration data to update the modal
+      const response = await eventsService.getEventRegistrations(
+        selectedEventForReview._id || selectedEventForReview.id
       );
+      setRegistrations(response.data);
+      setRegistrationsStats(response.statistics);
+
+      // Show notification immediately (modal stays open)
+      setNotification({
+        type: "success",
+        title: "Thành công",
+        message: "Đã check-in thành công!",
+      });
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
+          "Có lỗi khi check-in: " +
+          (error.response?.data?.message || error.message),
+      });
     }
   };
 
   const handleUndoCheckIn = async (userId) => {
-    if (window.confirm("Bạn có chắc chắn muốn hủy check-in?")) {
-      try {
-        await eventsService.undoCheckIn(
-          selectedEventForReview._id || selectedEventForReview.id,
-          userId
-        );
-        setSuccessMessage("Đã hủy check-in!");
-        await handleViewRegistrations(selectedEventForReview);
-        await loadEvents();
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch (error) {
-        alert(
+    try {
+      await eventsService.undoCheckIn(
+        selectedEventForReview._id || selectedEventForReview.id,
+        userId
+      );
+
+      // Reload registration data to update the modal
+      const response = await eventsService.getEventRegistrations(
+        selectedEventForReview._id || selectedEventForReview.id
+      );
+      setRegistrations(response.data);
+      setRegistrationsStats(response.statistics);
+
+      // Show notification immediately
+      setNotification({
+        type: "success",
+        title: "Thành công",
+        message: "Đã hủy check-in!",
+      });
+    } catch (error) {
+      // Show error notification immediately
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
           "Có lỗi khi hủy check-in: " +
-            (error.response?.data?.message || error.message)
-        );
-      }
+          (error.response?.data?.message || error.message),
+      });
     }
   };
 
@@ -349,76 +451,125 @@ const EventManagement = () => {
         selectedEventForReview._id || selectedEventForReview.id,
         userId
       );
-      setSuccessMessage("Đã đánh dấu hoàn thành!");
-      await handleViewRegistrations(selectedEventForReview);
-      await loadEvents();
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      alert(
-        "Có lỗi khi đánh dấu hoàn thành: " +
-          (error.response?.data?.message || error.message)
+
+      // Reload registration data to update the modal
+      const response = await eventsService.getEventRegistrations(
+        selectedEventForReview._id || selectedEventForReview.id
       );
+      setRegistrations(response.data);
+      setRegistrationsStats(response.statistics);
+
+      // Show notification immediately (modal stays open)
+      setNotification({
+        type: "success",
+        title: "Thành công",
+        message: "Đã đánh dấu hoàn thành!",
+      });
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
+          "Có lỗi khi đánh dấu hoàn thành: " +
+          (error.response?.data?.message || error.message),
+      });
     }
   };
 
   const handleUndoCompleted = async (userId) => {
-    if (window.confirm("Bạn có chắc chắn muốn hủy trạng thái hoàn thành?")) {
-      try {
-        await eventsService.undoCompleted(
-          selectedEventForReview._id || selectedEventForReview.id,
-          userId
-        );
-        setSuccessMessage("Đã hủy hoàn thành!");
-        await handleViewRegistrations(selectedEventForReview);
-        await loadEvents();
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch (error) {
-        alert(
+    try {
+      await eventsService.undoCompleted(
+        selectedEventForReview._id || selectedEventForReview.id,
+        userId
+      );
+
+      // Reload registration data to update the modal
+      const response = await eventsService.getEventRegistrations(
+        selectedEventForReview._id || selectedEventForReview.id
+      );
+      setRegistrations(response.data);
+      setRegistrationsStats(response.statistics);
+
+      // Show notification immediately
+      setNotification({
+        type: "success",
+        title: "Thành công",
+        message: "Đã hủy hoàn thành!",
+      });
+    } catch (error) {
+      // Show error notification immediately
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
           "Có lỗi khi hủy hoàn thành: " +
-            (error.response?.data?.message || error.message)
-        );
-      }
+          (error.response?.data?.message || error.message),
+      });
     }
   };
 
   const handleCompleteEvent = async (eventId) => {
-    if (
-      window.confirm(
-        "Bạn có chắc muốn đánh dấu hoàn thành cho TẤT CẢ người đã check-in của sự kiện này?"
-      )
-    ) {
-      try {
-        const event = events.find((e) => e._id === eventId || e.id === eventId);
-
-        // Lọc những người đã check-in nhưng chưa completed
-        const checkedInParticipants =
-          event.participants?.filter((p) => p.checkedIn && !p.completed) || [];
-
-        if (checkedInParticipants.length === 0) {
-          alert("Không có người tham gia đã check-in để đánh dấu hoàn thành!");
-          return;
-        }
-
-        // Đánh dấu hoàn thành cho từng người
-        for (const participant of checkedInParticipants) {
-          await eventsService.markAsCompleted(
-            eventId,
-            participant.user?._id || participant.user
+    showConfirm(
+      "Bạn có chắc muốn đánh dấu hoàn thành cho TẤT CẢ người đã check-in của sự kiện này?",
+      async () => {
+        try {
+          const event = events.find(
+            (e) => e._id === eventId || e.id === eventId
           );
-        }
 
-        setSuccessMessage(
-          `Đã đánh dấu hoàn thành cho ${checkedInParticipants.length} người tham gia!`
-        );
-        await loadEvents();
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch (error) {
-        alert(
-          "Có lỗi khi hoàn thành sự kiện: " +
-            (error.response?.data?.message || error.message)
-        );
+          // Lọc những người đã check-in nhưng chưa completed
+          const checkedInParticipants =
+            event.participants?.filter((p) => p.checkedIn && !p.completed) ||
+            [];
+
+          if (checkedInParticipants.length === 0) {
+            // Show notification IMMEDIATELY
+            setNotification({
+              type: "error",
+              title: "Lỗi",
+              message:
+                "Không có người tham gia đã check-in để đánh dấu hoàn thành!",
+            });
+
+            // Close confirm dialog after showing notification
+            setConfirmDialog({ show: false, message: "", onConfirm: null });
+            return;
+          }
+
+          // Đánh dấu hoàn thành cho từng người
+          for (const participant of checkedInParticipants) {
+            await eventsService.markAsCompleted(
+              eventId,
+              participant.user?._id || participant.user
+            );
+          }
+
+          await loadEvents();
+
+          // Show notification IMMEDIATELY
+          setNotification({
+            type: "success",
+            title: "Thành công",
+            message: `Đã đánh dấu hoàn thành cho ${checkedInParticipants.length} người tham gia!`,
+          });
+
+          // Close confirm dialog after showing notification
+          setConfirmDialog({ show: false, message: "", onConfirm: null });
+        } catch (error) {
+          // Show error notification IMMEDIATELY
+          setNotification({
+            type: "error",
+            title: "Lỗi",
+            message:
+              "Có lỗi khi hoàn thành sự kiện: " +
+              (error.response?.data?.message || error.message),
+          });
+
+          // Close confirm dialog
+          setConfirmDialog({ show: false, message: "", onConfirm: null });
+        }
       }
-    }
+    );
   };
 
   const handlePrintParticipants = () => {
@@ -451,6 +602,26 @@ const EventManagement = () => {
 
       <Navigation />
 
+      {confirmDialog.show && (
+        <div className="modal-overlay" onClick={handleCancel}>
+          <div
+            className="modal-content confirm-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="confirm-title">Xác nhận</h3>
+            <p className="confirm-message">{confirmDialog.message}</p>
+            <div className="confirm-actions">
+              <button className="btn btn-secondary" onClick={handleCancel}>
+                Hủy
+              </button>
+              <button className="btn btn-primary" onClick={handleConfirm}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="event-management-wrapper">
         {/* Header */}
         <div className="event-management-header">
@@ -478,11 +649,6 @@ const EventManagement = () => {
             Tạo sự kiện mới
           </button>
         </div>
-
-        {/* Success Message */}
-        {successMessage && (
-          <div className="alert alert-success">{successMessage}</div>
-        )}
 
         {/* Events List */}
         <div className="events-grid">
@@ -1173,6 +1339,16 @@ const EventManagement = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Notification - Render cuối cùng để hiển thị trên cùng */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
       )}
 
       <Footer />
