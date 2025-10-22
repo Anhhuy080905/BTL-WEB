@@ -446,11 +446,27 @@ const DiscussionListFB = () => {
 
             <div className="create-post-actions">
               <div className="post-action-buttons">
-                <button className="action-btn">
+                <button
+                  className="action-btn"
+                  onClick={() => {
+                    setShowCreatePostModal(true);
+                    setTimeout(() => {
+                      document.getElementById("modal-image-upload")?.click();
+                    }, 100);
+                  }}
+                >
                   <span>📷</span>
                   <span>Ảnh/Video</span>
                 </button>
-                <button className="action-btn">
+                <button
+                  className="action-btn"
+                  onClick={() => {
+                    setShowCreatePostModal(true);
+                    setTimeout(() => {
+                      setShowFeelingPicker(true);
+                    }, 100);
+                  }}
+                >
                   <span>😊</span>
                   <span>Cảm xúc</span>
                 </button>
@@ -618,6 +634,14 @@ const DiscussionListFB = () => {
                       <input
                         type="file"
                         id="image-upload"
+                        accept="image/*,video/*"
+                        multiple
+                        style={{ display: "none" }}
+                        onChange={handleImageSelect}
+                      />
+                      <input
+                        type="file"
+                        id="modal-image-upload"
                         accept="image/*,video/*"
                         multiple
                         style={{ display: "none" }}

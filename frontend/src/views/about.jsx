@@ -147,25 +147,27 @@ const About = (props) => {
       <section className="about-team">
         <div className="about-team-container">
           <h2 className="team-section-title">Đội Ngũ Lãnh Đạo</h2>
-          <div className="team-grid">
+          <div className="team-grid" style={{ justifyContent: "center" }}>
             <div className="team-member">
               <div className="member-avatar">
                 <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop"
-                  alt="Nguyễn Văn An"
+                  src="https://avatars.githubusercontent.com/anhhuy080905?s=200"
+                  alt="Nguyễn Anh Huy"
                 />
               </div>
-              <h3 className="member-name">Nguyễn Văn An</h3>
-              <p className="member-role">Founder & CEO</p>
+              <h3 className="member-name">Nguyễn Anh Huy</h3>
+              <p className="member-role">Founder & Lead Developer</p>
               <p className="member-bio">
-                Với hơn 8 năm kinh nghiệm trong lĩnh vực công nghệ và tư duy đổi
-                mới, Văn An đang xây dựng VolunteerHub.
+                Huy là người sáng lập và phát triển chính của VolunteerHub, với
+                đam mê xây dựng các giải pháp công nghệ cho cộng đồng.
               </p>
               <div className="member-links">
-                <a href="#" className="member-link">
-                  LinkedIn
-                </a>
-                <a href="#" className="member-link">
+                <a
+                  href="https://github.com/anhhuy080905"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="member-link"
+                >
                   GitHub
                 </a>
               </div>
@@ -174,68 +176,49 @@ const About = (props) => {
             <div className="team-member">
               <div className="member-avatar">
                 <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop"
-                  alt="Trần Thị Minh"
+                  src="https://avatars.githubusercontent.com/cinnamoll?s=200"
+                  alt="Đặng Anh Quế"
                 />
               </div>
-              <h3 className="member-name">Trần Thị Minh</h3>
-              <p className="member-role">Head of Community</p>
+              <h3 className="member-name">Đặng Anh Quế</h3>
+              <p className="member-role">Co-Founder & Developer</p>
               <p className="member-bio">
-                Minh sáng kích nhiệm vụ điều hành cộng đồng với tầm nhìn tạo ra
-                một nơi mọi người có thể học hỏi và phát triển cùng nhau.
+                Quế đóng góp vào phát triển backend và thiết kế hệ thống, đảm
+                bảo nền tảng hoạt động hiệu quả và ổn định.
               </p>
               <div className="member-links">
-                <a href="#" className="member-link">
-                  LinkedIn
-                </a>
-                <a href="#" className="member-link">
-                  Twitter
-                </a>
-              </div>
-            </div>
-
-            <div className="team-member">
-              <div className="member-avatar">
-                <img
-                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop"
-                  alt="Lê Hoàng Đức"
-                />
-              </div>
-              <h3 className="member-name">Lê Hoàng Đức</h3>
-              <p className="member-role">Lead Developer</p>
-              <p className="member-bio">
-                Đức là chuyên gia về kỹ thuật JavaScript và Web. Anh ấy phụ
-                trách phát triển và xây dựng các sản phẩm công nghệ.
-              </p>
-              <div className="member-links">
-                <a href="#" className="member-link">
+                <a
+                  href="https://github.com/cinnamoll"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="member-link"
+                >
                   GitHub
                 </a>
-                <a href="#" className="member-link">
-                  Portfolio
-                </a>
               </div>
             </div>
 
             <div className="team-member">
               <div className="member-avatar">
                 <img
-                  src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop"
-                  alt="Phạm Thị Lan"
+                  src="https://avatars.githubusercontent.com/Hardiant2802?s=200"
+                  alt="Nguyễn Mạnh Hà"
                 />
               </div>
-              <h3 className="member-name">Phạm Thị Lan</h3>
-              <p className="member-role">Head of Design</p>
+              <h3 className="member-name">Nguyễn Mạnh Hà</h3>
+              <p className="member-role">Co-Founder & Full-Stack Developer</p>
               <p className="member-bio">
-                Lan là chuyên gia UX/UI Design với đam mê xây dựng trải nghiệm
-                tốt. Cô ấy dẫn đầu team design và xây dựng các sản phẩm.
+                Hà tham gia phát triển cả frontend và backend, đảm bảo trải
+                nghiệm người dùng mượt mà và chức năng hoạt động tốt.
               </p>
               <div className="member-links">
-                <a href="#" className="member-link">
-                  Behance
-                </a>
-                <a href="#" className="member-link">
-                  Dribbble
+                <a
+                  href="https://github.com/Hardiant2802"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="member-link"
+                >
+                  GitHub
                 </a>
               </div>
             </div>

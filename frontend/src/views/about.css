@@ -150,8 +150,10 @@
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .team-member {
@@ -388,5 +390,133 @@
 
   .cta-btn {
     width: 100%;
+  }
+}
+
+/* Events Section */
+.about-events {
+  padding: 80px 20px;
+  background: white;
+}
+
+.about-events-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.events-section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 60px;
+  color: #1a1a1a;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.event-card-about {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-card-about:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.event-image-about {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.event-image-about img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.event-card-about:hover .event-image-about img {
+  transform: scale(1.1);
+}
+
+.event-content-about {
+  padding: 24px;
+}
+
+.event-title-about {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.event-date-about,
+.event-location-about {
+  font-size: 0.95rem;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+.event-description-about {
+  font-size: 0.95rem;
+  color: #718096;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.no-events-message {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #718096;
+  grid-column: 1 / -1;
+  padding: 40px 0;
+}
+
+.view-all-events {
+  text-align: center;
+}
+
+.view-all-btn {
+  background: linear-gradient(135deg, #4169e1 0%, #5a7def 100%);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.view-all-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(65, 105, 225, 0.3);
+}
+
+/* Responsive for Events */
+@media (max-width: 1024px) {
+  .events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .events-section-title {
+    font-size: 2rem;
+  }
+
+  .events-grid {
+    grid-template-columns: 1fr;
   }
 }

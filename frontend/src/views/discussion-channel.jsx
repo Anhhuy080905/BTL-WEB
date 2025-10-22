@@ -10,7 +10,6 @@ const DiscussionChannel = () => {
   const history = useHistory();
   const [event, setEvent] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [newPostContent, setNewPostContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
@@ -40,37 +39,6 @@ const DiscussionChannel = () => {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    if (!newPostContent.trim()) return;
-
-    try {
-      const newPost = await postsService.createPost(eventId, {
-        content: newPostContent,
-      });
-      setPosts([newPost, ...posts]);
-      setNewPostContent("");
-    } catch (err) {
-      // Kiểm tra nếu lỗi là do chưa được phê duyệt
-      console.log("Error status:", err.response?.status);
-      console.log("Error message:", err.response?.data?.message);
-
-      if (
-        err.response?.status === 403 &&
-        err.response?.data?.message?.includes("phê duyệt")
-      ) {
-        console.log("Showing access denied modal");
-        setShowAccessDenied(true);
-      } else {
-        setNotification({
-          type: "error",
-          title: "Lỗi!",
-          message: err.response?.data?.message || "Không thể tạo bài viết",
-        });
-      }
     }
   };
 
@@ -120,6 +88,7 @@ const DiscussionChannel = () => {
   };
 
   const canDeletePost = (post) => {
+    if (!post || !post.user) return false;
     return (
       post.user._id === currentUser?._id ||
       currentUser?.role === "admin" ||
@@ -128,6 +97,7 @@ const DiscussionChannel = () => {
   };
 
   const canDeleteComment = (comment) => {
+    if (!comment || !comment.user) return false;
     return (
       comment.user._id === currentUser?._id ||
       currentUser?.role === "admin" ||
@@ -136,6 +106,7 @@ const DiscussionChannel = () => {
   };
 
   const isLiked = (post) => {
+    if (!post || !post.likes) return false;
     return post.likes.some((like) => like._id === currentUser?._id);
   };
 
@@ -201,33 +172,11 @@ const DiscussionChannel = () => {
       </div>
 
       <div className="discussion-container">
-        {/* Create Post Form */}
-        <div className="create-post-card">
-          <div className="user-avatar">{getUserInitial(currentUser)}</div>
-          <form onSubmit={handleCreatePost} className="create-post-form">
-            <textarea
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder={`${getUserName(
-                currentUser
-              )}, bạn nghĩ gì về sự kiện này?`}
-              rows="3"
-            />
-            <button
-              type="submit"
-              disabled={!newPostContent.trim()}
-              className="submit-post-btn"
-            >
-              Đăng bài
-            </button>
-          </form>
-        </div>
-
         {/* Posts List */}
         <div className="posts-list">
           {posts.length === 0 ? (
             <div className="no-posts">
-              <p>Chưa có bài viết nào. Hãy là người đầu tiên chia sẻ!</p>
+              <p>Chưa có bài viết nào trong sự kiện này.</p>
             </div>
           ) : (
             posts.map((post) => (
@@ -283,41 +232,42 @@ const DiscussionChannel = () => {
                     onClick={() => handleToggleLike(post._id)}
                     className={`like-btn ${isLiked(post) ? "liked" : ""}`}
                   >
-                    {isLiked(post) ? "❤️" : "🤍"} {post.likes.length}
+                    {isLiked(post) ? "❤️" : "🤍"} {post.likes?.length || 0}
                   </button>
                   <span className="comment-count">
-                    💬 {post.comments.length} bình luận
+                    💬 {post.comments?.length || 0} bình luận
                   </span>
                 </div>
 
                 {/* Comments Section */}
                 <div className="comments-section">
-                  {post.comments.map((comment) => (
-                    <div key={comment._id} className="comment">
-                      <div className="comment-avatar">
-                        {getUserInitial(comment.user)}
-                      </div>
-                      <div className="comment-content">
-                        <div className="comment-header">
-                          <strong>{getUserName(comment.user)}</strong>
-                          <span className="comment-time">
-                            {formatDate(comment.createdAt)}
-                          </span>
+                  {post.comments &&
+                    post.comments.map((comment) => (
+                      <div key={comment._id} className="comment">
+                        <div className="comment-avatar">
+                          {getUserInitial(comment.user)}
                         </div>
-                        <p>{comment.content}</p>
+                        <div className="comment-content">
+                          <div className="comment-header">
+                            <strong>{getUserName(comment.user)}</strong>
+                            <span className="comment-time">
+                              {formatDate(comment.createdAt)}
+                            </span>
+                          </div>
+                          <p>{comment.content}</p>
+                        </div>
+                        {canDeleteComment(comment) && (
+                          <button
+                            onClick={() =>
+                              handleDeleteComment(post._id, comment._id)
+                            }
+                            className="delete-comment-btn"
+                          >
+                            ×
+                          </button>
+                        )}
                       </div>
-                      {canDeleteComment(comment) && (
-                        <button
-                          onClick={() =>
-                            handleDeleteComment(post._id, comment._id)
-                          }
-                          className="delete-comment-btn"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    ))}
 
                   {/* Add Comment Input */}
                   <div className="add-comment">

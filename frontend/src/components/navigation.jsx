@@ -161,7 +161,7 @@ const Navigation = (props) => {
       </div>
       <nav id="navigation-main" className="navigation-wrapper">
         <div className="navigation-container">
-          <a href="#">
+          <Link to="/">
             <div
               aria-label="VolunteerHub - Trang chủ"
               className="navigation-logo"
@@ -186,7 +186,7 @@ const Navigation = (props) => {
               </div>
               <span className="navigation-logo-text">VolunteerHub</span>
             </div>
-          </a>
+          </Link>
           <div className="navigation-links">
             <a href="/">
               <div className="navigation-link">
