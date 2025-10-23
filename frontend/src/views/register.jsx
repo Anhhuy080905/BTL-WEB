@@ -30,9 +30,87 @@ const Register = (props) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showInfoNotification, setShowInfoNotification] = useState(false);
+
+  // Real-time validation khi user blur khỏi field
+  const validateField = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "fullName":
+        if (!value.trim()) {
+          error = "Vui lòng nhập tên đăng nhập";
+        } else if (value.length < 3) {
+          error = "Tên đăng nhập phải có ít nhất 3 ký tự";
+        } else if (value.length > 30) {
+          error = "Tên đăng nhập không được vượt quá 30 ký tự";
+        }
+        break;
+
+      case "username":
+        if (!value.trim()) {
+          error = "Vui lòng nhập họ và tên";
+        }
+        break;
+
+      case "email":
+        if (!value) {
+          error = "Vui lòng nhập email";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = "Email không hợp lệ";
+        }
+        break;
+
+      case "phone":
+        if (!value) {
+          error = "Vui lòng nhập số điện thoại";
+        } else if (!/^[0-9]{10,11}$/.test(value)) {
+          error = "Số điện thoại không hợp lệ (10-11 số)";
+        }
+        break;
+
+      case "password":
+        if (!value) {
+          error = "Vui lòng nhập mật khẩu";
+        } else if (value.length < 6) {
+          error = "Mật khẩu phải có ít nhất 6 ký tự";
+        } else if (!/(?=.*[a-z])/.test(value)) {
+          error = "Mật khẩu phải có ít nhất 1 chữ thường";
+        } else if (!/(?=.*[A-Z])/.test(value)) {
+          error = "Mật khẩu phải có ít nhất 1 chữ hoa";
+        } else if (!/(?=.*[0-9])/.test(value)) {
+          error = "Mật khẩu phải có ít nhất 1 số";
+        }
+        break;
+
+      case "confirmPassword":
+        if (!value) {
+          error = "Vui lòng xác nhận mật khẩu";
+        } else if (value !== formData.password) {
+          error = "Mật khẩu xác nhận không khớp";
+        }
+        break;
+
+      case "birthDate":
+        if (!value) {
+          error = "Vui lòng chọn ngày sinh";
+        } else {
+          const age = new Date().getFullYear() - new Date(value).getFullYear();
+          if (age < 13) {
+            error = "Bạn phải từ 13 tuổi trở lên";
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -100,6 +178,29 @@ const Register = (props) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+
+    // Real-time validation khi đã touched
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: error,
+      }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }));
+
+    const error = validateField(name, value);
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
     }));
   };
 

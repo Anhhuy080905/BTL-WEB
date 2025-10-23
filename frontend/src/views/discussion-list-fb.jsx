@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import Navigation from "../components/navigation";
 import Footer from "../components/footer";
 import Notification from "../components/Notification";
@@ -9,6 +9,7 @@ import "./discussion-list-fb.css";
 
 const DiscussionListFB = () => {
   const history = useHistory();
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(null);
   const [events, setEvents] = useState({});
   const [posts, setPosts] = useState([]);
@@ -16,7 +17,13 @@ const DiscussionListFB = () => {
   const [newPostContent, setNewPostContent] = useState("");
   const [selectedEventForPost, setSelectedEventForPost] = useState("");
   const [newCommentContent, setNewCommentContent] = useState({});
+  const [commentImages, setCommentImages] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null); // { postId, commentId }
+  const [replyContent, setReplyContent] = useState("");
+  const [replyImages, setReplyImages] = useState([]);
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showPostDetailModal, setShowPostDetailModal] = useState(false);
+  const [selectedPostForComment, setSelectedPostForComment] = useState(null);
 
   // New states for post creation features
   const [selectedImages, setSelectedImages] = useState([]);
@@ -37,6 +44,21 @@ const DiscussionListFB = () => {
     setCurrentUser(user);
     fetchAllPosts();
   }, [history]);
+
+  // Check URL params for postId and open modal
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const postId = params.get("postId");
+
+    if (postId && posts.length > 0) {
+      const post = posts.find((p) => p._id === postId);
+      if (post) {
+        handleOpenPostDetail(post);
+        // Clear the postId from URL
+        history.replace("/discussion-list");
+      }
+    }
+  }, [location.search, posts]);
 
   const fetchAllPosts = async () => {
     try {
@@ -216,7 +238,20 @@ const DiscussionListFB = () => {
     if (!content?.trim()) return;
 
     try {
-      const updatedPost = await postsService.addComment(postId, { content });
+      const images = commentImages[postId] || [];
+      console.log("Sending comment with images:", images.length);
+
+      const updatedPost = await postsService.addComment(
+        postId,
+        content,
+        images
+      );
+
+      console.log("Updated post received:", updatedPost);
+      console.log(
+        "Latest comment:",
+        updatedPost.comments[updatedPost.comments.length - 1]
+      );
 
       // Use callback to ensure we have latest state
       setPosts((prevPosts) => {
@@ -225,15 +260,77 @@ const DiscussionListFB = () => {
         return prevPosts.map((p) => (p._id === postId ? updatedPost : p));
       });
 
+      // Update selected post in modal if it's open - IMPORTANT: do this with the updated post
+      if (selectedPostForComment?._id === postId) {
+        updatedPost.eventId = selectedPostForComment.eventId;
+        setSelectedPostForComment(updatedPost);
+      }
+
       setNewCommentContent({ ...newCommentContent, [postId]: "" });
+      setCommentImages({ ...commentImages, [postId]: [] });
     } catch (err) {
       console.error("Error adding comment:", err);
+      console.error("Error details:", err.response?.data);
       setNotification({
         type: "error",
         title: "Lỗi!",
         message: "Không thể gửi bình luận: " + err.message,
       });
     }
+  };
+
+  const handleCommentImageUpload = (postId, e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const imageUrls = [];
+    let loadedCount = 0;
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        imageUrls.push(reader.result);
+        loadedCount++;
+        if (loadedCount === files.length) {
+          const currentImages = commentImages[postId] || [];
+          setCommentImages({
+            ...commentImages,
+            [postId]: [...currentImages, ...imageUrls],
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeCommentImage = (postId, index) => {
+    const currentImages = commentImages[postId] || [];
+    const newImages = currentImages.filter((_, i) => i !== index);
+    setCommentImages({ ...commentImages, [postId]: newImages });
+  };
+
+  const handleReplyImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const imageUrls = [];
+    let loadedCount = 0;
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        imageUrls.push(reader.result);
+        loadedCount++;
+        if (loadedCount === files.length) {
+          setReplyImages([...replyImages, ...imageUrls]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeReplyImage = (index) => {
+    setReplyImages(replyImages.filter((_, i) => i !== index));
   };
 
   const handleDeletePost = async (postId) => {
@@ -254,8 +351,77 @@ const DiscussionListFB = () => {
       const updatedPost = await postsService.deleteComment(postId, commentId);
       updatedPost.eventId = posts.find((p) => p._id === postId)?.eventId;
       setPosts(posts.map((p) => (p._id === postId ? updatedPost : p)));
+
+      // Update selected post if it's open in modal
+      if (selectedPostForComment?._id === postId) {
+        setSelectedPostForComment(updatedPost);
+      }
     } catch (err) {
       console.error("Error deleting comment:", err);
+    }
+  };
+
+  const handleLikeComment = async (postId, commentId) => {
+    try {
+      const updatedPost = await postsService.toggleCommentLike(
+        postId,
+        commentId
+      );
+
+      updatedPost.eventId = posts.find((p) => p._id === postId)?.eventId;
+      setPosts(posts.map((p) => (p._id === postId ? updatedPost : p)));
+
+      // Update selected post if it's open in modal
+      if (selectedPostForComment?._id === postId) {
+        setSelectedPostForComment(updatedPost);
+      }
+    } catch (err) {
+      console.error("Error liking comment:", err);
+    }
+  };
+
+  const handleAddReply = async (postId, commentId) => {
+    if (!replyContent.trim()) return;
+
+    try {
+      const updatedPost = await postsService.addReply(
+        postId,
+        commentId,
+        replyContent,
+        replyImages
+      );
+      updatedPost.eventId = posts.find((p) => p._id === postId)?.eventId;
+      setPosts(posts.map((p) => (p._id === postId ? updatedPost : p)));
+
+      // Update selected post if it's open in modal
+      if (selectedPostForComment?._id === postId) {
+        setSelectedPostForComment(updatedPost);
+      }
+
+      // Clear reply input
+      setReplyContent("");
+      setReplyImages([]);
+      setReplyingTo(null);
+    } catch (err) {
+      console.error("Error adding reply:", err);
+    }
+  };
+
+  const handleOpenPostDetail = (post) => {
+    setSelectedPostForComment(post);
+    setShowPostDetailModal(true);
+  };
+
+  const handleClosePostDetail = () => {
+    setShowPostDetailModal(false);
+    setSelectedPostForComment(null);
+    // Clear comment input for this post
+    if (selectedPostForComment) {
+      setNewCommentContent({
+        ...newCommentContent,
+        [selectedPostForComment._id]: "",
+      });
+      setCommentImages({ ...commentImages, [selectedPostForComment._id]: [] });
     }
   };
 
@@ -834,12 +1000,7 @@ const DiscussionListFB = () => {
                     </button>
                     <button
                       className="post-action"
-                      onClick={() => {
-                        const input = document.getElementById(
-                          `comment-input-${post._id}`
-                        );
-                        if (input) input.focus();
-                      }}
+                      onClick={() => handleOpenPostDetail(post)}
                     >
                       <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
@@ -852,78 +1013,6 @@ const DiscussionListFB = () => {
                       </svg>
                       <span>Chia sẻ</span>
                     </button>
-                  </div>
-
-                  {/* Comments */}
-                  <div className="comments-wrapper">
-                    {post.comments?.map((comment) => (
-                      <div key={comment._id} className="comment">
-                        <div className="comment-avatar">
-                          {getInitials(getUserName(comment.user))}
-                        </div>
-                        <div className="comment-body">
-                          <div className="comment-bubble">
-                            <div className="comment-author">
-                              {getUserName(comment.user)}
-                            </div>
-                            <div className="comment-text">
-                              {comment.content}
-                            </div>
-                          </div>
-                          <div className="comment-actions">
-                            <span className="comment-action">Thích</span>
-                            <span className="comment-action">Trả lời</span>
-                            {canDeleteComment(comment) && (
-                              <span
-                                className="comment-action"
-                                onClick={() =>
-                                  handleDeleteComment(post._id, comment._id)
-                                }
-                              >
-                                Xóa
-                              </span>
-                            )}
-                            <span className="comment-time">
-                              {formatDate(comment.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Add Comment */}
-                    <div className="add-comment">
-                      <div className="comment-avatar">
-                        {getInitials(getUserName(currentUser))}
-                      </div>
-                      <div className="add-comment-input-wrapper">
-                        <input
-                          id={`comment-input-${post._id}`}
-                          type="text"
-                          placeholder="Viết bình luận..."
-                          value={newCommentContent[post._id] || ""}
-                          onChange={(e) =>
-                            setNewCommentContent({
-                              ...newCommentContent,
-                              [post._id]: e.target.value,
-                            })
-                          }
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              handleAddComment(post._id);
-                            }
-                          }}
-                        />
-                        {newCommentContent[post._id]?.trim() && (
-                          <button
-                            className="comment-send-btn"
-                            onClick={() => handleAddComment(post._id)}
-                          >
-                            ➤
-                          </button>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </article>
               ))}
@@ -962,6 +1051,424 @@ const DiscussionListFB = () => {
           </div>
         </aside>
       </div>
+
+      {/* Post Detail Modal */}
+      {showPostDetailModal && selectedPostForComment && (
+        <div className="post-detail-modal" onClick={handleClosePostDetail}>
+          <div
+            className="post-detail-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Bài viết của {getUserName(selectedPostForComment.user)}</h2>
+              <button
+                className="close-modal-btn"
+                onClick={handleClosePostDetail}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {/* Post Content */}
+              <div className="modal-post">
+                <div className="post-author-info">
+                  <div className="post-avatar-large">
+                    {getInitials(getUserName(selectedPostForComment.user))}
+                  </div>
+                  <div>
+                    <h3>{getUserName(selectedPostForComment.user)}</h3>
+                    <span className="post-date">
+                      {formatDate(selectedPostForComment.createdAt)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="post-text">
+                  {selectedPostForComment.content}
+                </div>
+
+                {/* Post Images */}
+                {selectedPostForComment.images &&
+                  selectedPostForComment.images.length > 0 && (
+                    <div className="modal-post-images">
+                      {selectedPostForComment.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`Post ${index + 1}`}
+                          onClick={() => setSelectedImageForModal(image)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                {/* Post Stats */}
+                <div className="modal-post-stats">
+                  <span>
+                    {selectedPostForComment.likes?.length || 0} lượt thích
+                  </span>
+                  <span>
+                    {selectedPostForComment.comments?.length || 0} bình luận
+                  </span>
+                </div>
+              </div>
+
+              {/* Comments List */}
+              <div className="modal-comments">
+                <h3>Bình luận</h3>
+                {selectedPostForComment.comments?.map((comment) => (
+                  <div key={comment._id} className="modal-comment">
+                    <div className="comment-avatar">
+                      {getInitials(getUserName(comment.user))}
+                    </div>
+                    <div className="comment-body">
+                      <div className="comment-bubble">
+                        <div className="comment-author">
+                          {getUserName(comment.user)}
+                        </div>
+                        <div className="comment-text">{comment.content}</div>
+                        {/* Comment Images */}
+                        {comment.images && comment.images.length > 0 && (
+                          <div className="comment-images">
+                            {comment.images.map((image, index) => (
+                              <img
+                                key={index}
+                                src={image}
+                                alt={`Comment ${index + 1}`}
+                                className="comment-image"
+                                onClick={() => setSelectedImageForModal(image)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="comment-actions">
+                        <span
+                          className={`comment-action ${
+                            comment.likes?.some((like) => {
+                              const likeId =
+                                typeof like === "string" ? like : like._id;
+                              const userId =
+                                currentUser?._id || currentUser?.id;
+                              return likeId === userId;
+                            })
+                              ? "liked"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            handleLikeComment(
+                              selectedPostForComment._id,
+                              comment._id
+                            )
+                          }
+                        >
+                          Thích
+                        </span>
+                        <span className="comment-action-dot">·</span>
+                        <span
+                          className="comment-action"
+                          onClick={() =>
+                            setReplyingTo({
+                              postId: selectedPostForComment._id,
+                              commentId: comment._id,
+                            })
+                          }
+                        >
+                          Trả lời
+                        </span>
+                        {canDeleteComment(comment) && (
+                          <>
+                            <span className="comment-action-dot">·</span>
+                            <span
+                              className="comment-action"
+                              onClick={() =>
+                                handleDeleteComment(
+                                  selectedPostForComment._id,
+                                  comment._id
+                                )
+                              }
+                            >
+                              Xóa
+                            </span>
+                          </>
+                        )}
+                        <span className="comment-action-dot">·</span>
+                        <span className="comment-time">
+                          {formatDate(comment.createdAt)}
+                        </span>
+                        {comment.likes?.length > 0 && (
+                          <>
+                            <span className="comment-action-dot">·</span>
+                            <span className="comment-likes-icon">
+                              {comment.likes.length} 👍
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Replies */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <div className="comment-replies">
+                          {comment.replies.map((reply) => (
+                            <div key={reply._id} className="comment-reply">
+                              <div className="reply-avatar">
+                                {getInitials(getUserName(reply.user))}
+                              </div>
+                              <div className="reply-body">
+                                <div className="reply-bubble">
+                                  <div className="reply-author">
+                                    {getUserName(reply.user)}
+                                  </div>
+                                  <div className="reply-text">
+                                    {reply.content}
+                                  </div>
+                                  {/* Reply Images */}
+                                  {reply.images && reply.images.length > 0 && (
+                                    <div className="reply-images">
+                                      {reply.images.map((image, index) => (
+                                        <img
+                                          key={index}
+                                          src={image}
+                                          alt={`Reply ${index + 1}`}
+                                          className="reply-image"
+                                          onClick={() =>
+                                            setSelectedImageForModal(image)
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="comment-actions">
+                                  <span className="comment-action">Thích</span>
+                                  <span className="comment-action-dot">·</span>
+                                  <span className="comment-action">
+                                    Trả lời
+                                  </span>
+                                  <span className="comment-action-dot">·</span>
+                                  <span className="comment-time">
+                                    {formatDate(reply.createdAt)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply Input */}
+                      {replyingTo?.commentId === comment._id && (
+                        <div className="reply-input-container">
+                          <div className="reply-avatar">
+                            {getInitials(getUserName(currentUser))}
+                          </div>
+                          <div className="reply-input-box">
+                            {/* Image Preview */}
+                            {replyImages.length > 0 && (
+                              <div className="reply-image-preview">
+                                {replyImages.map((image, index) => (
+                                  <div
+                                    key={index}
+                                    className="preview-image-container"
+                                  >
+                                    <img
+                                      src={image}
+                                      alt={`Preview ${index + 1}`}
+                                      className="preview-image"
+                                    />
+                                    <button
+                                      onClick={() => removeReplyImage(index)}
+                                      className="remove-preview-btn"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="reply-input-wrapper">
+                              <input
+                                type="text"
+                                placeholder="Viết câu trả lời..."
+                                value={replyContent}
+                                onChange={(e) =>
+                                  setReplyContent(e.target.value)
+                                }
+                                onKeyPress={(e) => {
+                                  if (
+                                    e.key === "Enter" &&
+                                    replyContent.trim()
+                                  ) {
+                                    handleAddReply(
+                                      selectedPostForComment._id,
+                                      comment._id
+                                    );
+                                  }
+                                }}
+                                className="reply-input"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="reply-actions-icons">
+                              <button className="reply-icon-btn" title="Emoji">
+                                😊
+                              </button>
+                              <label className="reply-icon-btn" title="Ảnh">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  onChange={handleReplyImageUpload}
+                                  style={{ display: "none" }}
+                                />
+                                📷
+                              </label>
+                              <button className="reply-icon-btn" title="GIF">
+                                GIF
+                              </button>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() =>
+                              handleAddReply(
+                                selectedPostForComment._id,
+                                comment._id
+                              )
+                            }
+                            className="reply-send-btn"
+                            title="Gửi"
+                          >
+                            ➤
+                          </button>
+                          <button
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyContent("");
+                              setReplyImages([]);
+                            }}
+                            className="reply-close-btn"
+                            title="Đóng"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Comment */}
+              <div className="modal-add-comment">
+                <div className="comment-avatar">
+                  {getInitials(getUserName(currentUser))}
+                </div>
+                <div className="add-comment-input-wrapper">
+                  {/* Preview uploaded images */}
+                  {commentImages[selectedPostForComment._id] &&
+                    commentImages[selectedPostForComment._id].length > 0 && (
+                      <div className="comment-image-preview">
+                        {commentImages[selectedPostForComment._id].map(
+                          (image, index) => (
+                            <div
+                              key={index}
+                              className="preview-image-container"
+                            >
+                              <img
+                                src={image}
+                                alt={`Preview ${index + 1}`}
+                                className="preview-image"
+                              />
+                              <button
+                                onClick={() =>
+                                  removeCommentImage(
+                                    selectedPostForComment._id,
+                                    index
+                                  )
+                                }
+                                className="remove-preview-btn"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                  <div className="comment-input-group">
+                    <input
+                      type="text"
+                      placeholder="Viết bình luận..."
+                      value={
+                        newCommentContent[selectedPostForComment._id] || ""
+                      }
+                      onChange={(e) =>
+                        setNewCommentContent({
+                          ...newCommentContent,
+                          [selectedPostForComment._id]: e.target.value,
+                        })
+                      }
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddComment(selectedPostForComment._id);
+                        }
+                      }}
+                      autoFocus
+                    />
+                    {newCommentContent[selectedPostForComment._id]?.trim() && (
+                      <button
+                        className="comment-send-btn"
+                        onClick={() =>
+                          handleAddComment(selectedPostForComment._id)
+                        }
+                      >
+                        ➤
+                      </button>
+                    )}
+                  </div>
+                  {/* Comment Actions Row */}
+                  <div className="comment-actions-row">
+                    <div className="comment-action-icons">
+                      <button className="comment-icon-btn" title="Emoji">
+                        😊
+                      </button>
+                      <button className="comment-icon-btn" title="Sticker">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
+                        </svg>
+                      </button>
+                      <label
+                        htmlFor="modal-comment-image-upload"
+                        className="comment-icon-btn"
+                        title="Thêm ảnh"
+                      >
+                        📷
+                      </label>
+                      <input
+                        type="file"
+                        id="modal-comment-image-upload"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) =>
+                          handleCommentImageUpload(
+                            selectedPostForComment._id,
+                            e
+                          )
+                        }
+                        style={{ display: "none" }}
+                      />
+                      <button className="comment-icon-btn" title="GIF">
+                        GIF
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image Modal */}
       {selectedImageForModal && (

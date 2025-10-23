@@ -159,7 +159,12 @@ const Notifications = () => {
                     if (!notification.read) {
                       handleMarkAsRead(notification._id);
                     }
-                    if (notification.link) {
+                    // If notification has postId, navigate to discussion-list with modal
+                    if (notification.post) {
+                      history.push(
+                        `/discussion-list?postId=${notification.post}`
+                      );
+                    } else if (notification.link) {
                       history.push(notification.link);
                     }
                   }}

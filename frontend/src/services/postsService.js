@@ -68,11 +68,11 @@ export const postsService = {
   },
 
   // Thêm comment
-  addComment: async (postId, commentData) => {
+  addComment: async (postId, content, images = []) => {
     try {
       const response = await axios.post(
         `${API_URL}/${postId}/comments`,
-        commentData,
+        { content, images },
         getAuthHeader()
       );
       return response.data.data;
@@ -89,6 +89,34 @@ export const postsService = {
         getAuthHeader()
       );
       return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Like/Unlike comment
+  toggleCommentLike: async (postId, commentId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/${postId}/comments/${commentId}/like`,
+        {},
+        getAuthHeader()
+      );
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Thêm reply vào comment
+  addReply: async (postId, commentId, content, images = []) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/${postId}/comments/${commentId}/replies`,
+        { content, images },
+        getAuthHeader()
+      );
+      return response.data.data;
     } catch (error) {
       throw error;
     }

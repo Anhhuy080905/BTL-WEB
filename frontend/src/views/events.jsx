@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
 import Navigation from "../components/navigation.jsx";
 import Footer from "../components/footer.jsx";
 import Notification from "../components/Notification.jsx";
+import Toast from "../components/Toast.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import "./events.css";
@@ -12,25 +13,59 @@ const Events = () => {
   const history = useHistory();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [notification, setNotification] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [events, setEvents] = useState([]);
+  const [toasts, setToasts] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
+
+  // Toast helper functions
+  const showToast = (message, type = "info", duration = 3000) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // Đợi 500ms sau khi user ngừng gõ
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     checkAuth();
     loadEvents();
   }, []);
 
+  // Load events khi search query hoặc category thay đổi
+  useEffect(() => {
+    if (debouncedSearchQuery !== "" || selectedCategory !== "all") {
+      loadEvents();
+    }
+  }, [debouncedSearchQuery, selectedCategory]);
+
   const loadEvents = async () => {
     try {
+      setSearchLoading(true);
       const eventsData = await eventsService.getAllEvents();
       setEvents(eventsData);
     } catch (error) {
       console.error("Error loading events:", error);
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -87,8 +122,10 @@ const Events = () => {
 
   const handleRegister = async (eventId) => {
     if (!user) {
-      alert("Vui lòng đăng nhập để đăng ký sự kiện!");
-      history.push("/login");
+      showToast("Vui lòng đăng nhập để đăng ký sự kiện!", "warning");
+      setTimeout(() => {
+        history.push("/login");
+      }, 1500);
       return;
     }
 
@@ -96,44 +133,44 @@ const Events = () => {
     if (!event) return;
 
     if (event.status === "completed") {
-      alert("Sự kiện đã kết thúc!");
+      showToast("Sự kiện đã kết thúc!", "error");
       return;
     }
 
     if (event.registered >= event.maxParticipants) {
-      setNotification({
-        type: "error",
-        title: "Không thể đăng ký",
-        message: "Sự kiện đã đủ số lượng người tham gia!",
-      });
+      showToast("Sự kiện đã đủ số lượng người tham gia!", "error");
       return;
     }
 
-    // Gọi API để đăng ký
-    if (
-      window.confirm(
-        `Bạn có chắc muốn đăng ký tham gia sự kiện "${event.title}"?\n\nĐăng ký của bạn sẽ được chuyển đến quản lý sự kiện để phê duyệt.`
-      )
-    ) {
-      try {
-        await eventsService.registerForEvent(event._id || event.id);
-        setNotification({
-          type: "success",
-          title: "Đăng ký thành công!",
-          message: "Đăng ký của bạn đang chờ quản lý phê duyệt.",
-        });
-        setShowDetailModal(false);
-        await loadEvents(); // Reload để cập nhật số lượng đã đăng ký
-      } catch (error) {
-        const errorMessage =
-          error.response?.data?.message || "Có lỗi xảy ra khi đăng ký";
-        setNotification({
-          type: "error",
-          title: "Đăng ký thất bại",
-          message: errorMessage,
-        });
-      }
+    // Hiện modal xác nhận thay vì window.confirm
+    setPendingRegistration(event);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmRegistration = async () => {
+    if (!pendingRegistration) return;
+
+    setShowConfirmModal(false);
+
+    try {
+      await eventsService.registerForEvent(
+        pendingRegistration._id || pendingRegistration.id
+      );
+      showToast("Đăng ký thành công! Đang chờ quản lý phê duyệt.", "success");
+      setShowDetailModal(false);
+      await loadEvents(); // Reload để cập nhật số lượng đã đăng ký
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Có lỗi xảy ra khi đăng ký";
+      showToast(errorMessage, "error");
+    } finally {
+      setPendingRegistration(null);
     }
+  };
+
+  const handleCancelRegistration = () => {
+    setShowConfirmModal(false);
+    setPendingRegistration(null);
   };
 
   // Filter events
@@ -550,25 +587,6 @@ const Events = () => {
           >
             <div className="modal-header">
               <h2>{selectedEvent.title}</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowDetailModal(false)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
             </div>
 
             <div className="modal-body">
@@ -666,6 +684,53 @@ const Events = () => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && pendingRegistration && (
+        <div className="modal-overlay" onClick={handleCancelRegistration}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Xác nhận đăng ký</h3>
+            </div>
+            <div className="modal-body">
+              <p>
+                Bạn có chắc muốn đăng ký tham gia sự kiện{" "}
+                <strong>"{pendingRegistration.title}"</strong>?
+              </p>
+              <p className="modal-body-subtitle">
+                Đăng ký của bạn sẽ được chuyển đến quản lý sự kiện để phê duyệt.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={handleCancelRegistration}
+              >
+                Hủy
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleConfirmRegistration}
+              >
+                Xác nhận đăng ký
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
 
       <Footer />
     </div>

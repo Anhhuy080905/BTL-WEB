@@ -12,6 +12,40 @@ const commentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    images: [
+      {
+        type: String, // URL của ảnh
+      },
+    ],
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    replies: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        content: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        images: [
+          {
+            type: String,
+          },
+        ],
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     createdAt: {
       type: Date,
       default: Date.now,

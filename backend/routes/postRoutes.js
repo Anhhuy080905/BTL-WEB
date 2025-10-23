@@ -8,6 +8,8 @@ const {
   toggleLike,
   addComment,
   deleteComment,
+  toggleCommentLike,
+  addReply,
 } = require("../controllers/postController");
 
 // Tất cả routes đều cần authentication
@@ -24,5 +26,7 @@ router.post("/:postId/like", toggleLike);
 // Comments
 router.post("/:postId/comments", addComment);
 router.delete("/:postId/comments/:commentId", deleteComment);
+router.post("/:postId/comments/:commentId/like", toggleCommentLike);
+router.post("/:postId/comments/:commentId/replies", addReply);
 
 module.exports = router;

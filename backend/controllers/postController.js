@@ -194,7 +194,7 @@ exports.toggleLike = async (req, res) => {
           event: post.event,
           post: post._id,
           relatedUser: req.user._id,
-          link: `/discussion/${post.event}`,
+          link: `/discussion-list?postId=${post._id}`,
         });
       }
     }
@@ -223,7 +223,7 @@ exports.toggleLike = async (req, res) => {
 exports.addComment = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { content } = req.body;
+    const { content, images } = req.body;
 
     if (!content || content.trim().length === 0) {
       return res.status(400).json({
@@ -243,9 +243,15 @@ exports.addComment = async (req, res) => {
     post.comments.push({
       user: req.user._id,
       content,
+      images: images || [],
     });
 
     await post.save();
+
+    console.log(
+      "Comment saved with images:",
+      post.comments[post.comments.length - 1].images
+    );
 
     // Tạo thông báo cho chủ bài viết (nếu không phải tự comment)
     if (post.user.toString() !== req.user._id.toString()) {
@@ -261,7 +267,7 @@ exports.addComment = async (req, res) => {
         event: post.event,
         post: post._id,
         relatedUser: req.user._id,
-        link: `/discussion/${post.event}`,
+        link: `/discussion-list?postId=${post._id}`,
       });
     }
 
@@ -271,10 +277,18 @@ exports.addComment = async (req, res) => {
       { path: "comments.user", select: "fullName username email" },
     ]);
 
+    console.log(
+      "Post before sending:",
+      JSON.stringify(post.comments[post.comments.length - 1], null, 2)
+    );
+
+    // Convert to plain object to ensure all fields are serialized
+    const postObject = post.toObject();
+
     res.json({
       success: true,
       message: "Đã thêm bình luận",
-      data: post,
+      data: postObject,
     });
   } catch (error) {
     res.status(500).json({
@@ -328,6 +342,123 @@ exports.deleteComment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Không thể xóa bình luận",
+    });
+  }
+};
+
+// Like/Unlike comment
+exports.toggleCommentLike = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bài viết",
+      });
+    }
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bình luận",
+      });
+    }
+
+    const userId = req.user._id.toString();
+    const likeIndex = comment.likes.findIndex(
+      (like) => like.toString() === userId
+    );
+
+    if (likeIndex > -1) {
+      // Unlike
+      comment.likes.splice(likeIndex, 1);
+    } else {
+      // Like
+      comment.likes.push(req.user._id);
+    }
+
+    await post.save();
+    await post.populate([
+      { path: "user", select: "fullName username email" },
+      { path: "likes", select: "fullName username" },
+      { path: "comments.user", select: "fullName username email" },
+      { path: "comments.likes", select: "fullName username" },
+      { path: "comments.replies.user", select: "fullName username email" },
+    ]);
+
+    const postObject = post.toObject();
+
+    res.json({
+      success: true,
+      message: likeIndex > -1 ? "Đã bỏ thích" : "Đã thích",
+      data: postObject,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Không thể thực hiện",
+    });
+  }
+};
+
+// Add reply to comment
+exports.addReply = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { content, images = [] } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Nội dung trả lời không được để trống",
+      });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bài viết",
+      });
+    }
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bình luận",
+      });
+    }
+
+    comment.replies.push({
+      user: req.user._id,
+      content,
+      images,
+    });
+
+    await post.save();
+    await post.populate([
+      { path: "user", select: "fullName username email" },
+      { path: "likes", select: "fullName username" },
+      { path: "comments.user", select: "fullName username email" },
+      { path: "comments.likes", select: "fullName username" },
+      { path: "comments.replies.user", select: "fullName username email" },
+    ]);
+
+    const postObject = post.toObject();
+
+    res.json({
+      success: true,
+      message: "Đã thêm trả lời",
+      data: postObject,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Không thể thêm trả lời",
     });
   }
 };

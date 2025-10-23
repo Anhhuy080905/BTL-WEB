@@ -90,6 +90,15 @@ const NotificationBell = () => {
     return `${Math.floor(diff / 86400)} ngày`;
   };
 
+  const getNotificationLink = (notification) => {
+    // If notification has postId, use new modal format
+    if (notification.post) {
+      return `/discussion-list?postId=${notification.post}`;
+    }
+    // Otherwise use the default link
+    return notification.link || "/notifications";
+  };
+
   return (
     <div className="notification-bell-container" ref={dropdownRef}>
       <button className="notification-bell-button" onClick={toggleDropdown}>
@@ -131,7 +140,7 @@ const NotificationBell = () => {
               notifications.map((notification) => (
                 <Link
                   key={notification._id}
-                  to={notification.link || "/notifications"}
+                  to={getNotificationLink(notification)}
                   className={`notification-bell-item ${
                     !notification.read ? "unread" : ""
                   }`}

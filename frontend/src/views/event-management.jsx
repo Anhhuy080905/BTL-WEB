@@ -343,43 +343,35 @@ const EventManagement = () => {
   };
 
   const handleRejectRegistration = async (userId) => {
-    showConfirm("Bạn có chắc chắn muốn từ chối đăng ký này?", async () => {
-      try {
-        await eventsService.rejectRegistration(
-          selectedEventForReview._id || selectedEventForReview.id,
-          userId
-        );
+    try {
+      await eventsService.rejectRegistration(
+        selectedEventForReview._id || selectedEventForReview.id,
+        userId
+      );
 
-        // Reload registration data to update the modal
-        const response = await eventsService.getEventRegistrations(
-          selectedEventForReview._id || selectedEventForReview.id
-        );
-        setRegistrations(response.data);
-        setRegistrationsStats(response.statistics);
+      // Reload registration data to update the modal
+      const response = await eventsService.getEventRegistrations(
+        selectedEventForReview._id || selectedEventForReview.id
+      );
+      setRegistrations(response.data);
+      setRegistrationsStats(response.statistics);
 
-        // Show notification IMMEDIATELY (same as handleApproveRegistration)
-        setNotification({
-          type: "success",
-          title: "Thành công",
-          message: "Đã từ chối đăng ký!",
-        });
-
-        // Close confirm dialog after showing notification
-        setConfirmDialog({ show: false, message: "", onConfirm: null });
-      } catch (error) {
-        // Show error notification IMMEDIATELY
-        setNotification({
-          type: "error",
-          title: "Lỗi",
-          message:
-            "Có lỗi khi từ chối: " +
-            (error.response?.data?.message || error.message),
-        });
-
-        // Close confirm dialog
-        setConfirmDialog({ show: false, message: "", onConfirm: null });
-      }
-    });
+      // Show notification
+      setNotification({
+        type: "success",
+        title: "Thành công",
+        message: "Đã từ chối đăng ký!",
+      });
+    } catch (error) {
+      // Show error notification
+      setNotification({
+        type: "error",
+        title: "Lỗi",
+        message:
+          "Có lỗi khi từ chối: " +
+          (error.response?.data?.message || error.message),
+      });
+    }
   };
 
   const handleCheckIn = async (userId) => {
@@ -878,25 +870,6 @@ const EventManagement = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingEvent ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowModal(false)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="modal-form">
@@ -1079,12 +1052,6 @@ const EventManagement = () => {
           >
             <div className="modal-header">
               <h2>Quản lý đăng ký - {selectedEventForReview.title}</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowRegistrationsModal(false)}
-              >
-                ×
-              </button>
             </div>
 
             <div className="registrations-stats">

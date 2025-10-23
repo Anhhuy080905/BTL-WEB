@@ -13,6 +13,7 @@ const DiscussionChannel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
+  const [commentImages, setCommentImages] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [notification, setNotification] = useState(null);
   const [showAccessDenied, setShowAccessDenied] = useState(false);
@@ -67,12 +68,48 @@ const DiscussionChannel = () => {
     if (!content?.trim()) return;
 
     try {
-      const updatedPost = await postsService.addComment(postId, content);
+      const images = commentImages[postId] || [];
+      const updatedPost = await postsService.addComment(
+        postId,
+        content,
+        images
+      );
       setPosts(posts.map((post) => (post._id === postId ? updatedPost : post)));
       setCommentInputs({ ...commentInputs, [postId]: "" });
+      setCommentImages({ ...commentImages, [postId]: [] });
     } catch (err) {
       alert(err.response?.data?.message || "Không thể thêm bình luận");
     }
+  };
+
+  const handleCommentImageUpload = (postId, e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const imageUrls = [];
+    let loadedCount = 0;
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        imageUrls.push(reader.result);
+        loadedCount++;
+        if (loadedCount === files.length) {
+          const currentImages = commentImages[postId] || [];
+          setCommentImages({
+            ...commentImages,
+            [postId]: [...currentImages, ...imageUrls],
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeCommentImage = (postId, index) => {
+    const currentImages = commentImages[postId] || [];
+    const newImages = currentImages.filter((_, i) => i !== index);
+    setCommentImages({ ...commentImages, [postId]: newImages });
   };
 
   const handleDeleteComment = async (postId, commentId) => {
@@ -255,6 +292,20 @@ const DiscussionChannel = () => {
                             </span>
                           </div>
                           <p>{comment.content}</p>
+                          {/* Comment Images */}
+                          {comment.images && comment.images.length > 0 && (
+                            <div className="comment-images">
+                              {comment.images.map((image, index) => (
+                                <img
+                                  key={index}
+                                  src={image}
+                                  alt={`Comment image ${index + 1}`}
+                                  className="comment-image"
+                                  onClick={() => setSelectedImage(image)}
+                                />
+                              ))}
+                            </div>
+                          )}
                         </div>
                         {canDeleteComment(comment) && (
                           <button
@@ -274,30 +325,77 @@ const DiscussionChannel = () => {
                     <div className="user-avatar small">
                       {getUserInitial(currentUser)}
                     </div>
-                    <input
-                      type="text"
-                      value={commentInputs[post._id] || ""}
-                      onChange={(e) =>
-                        setCommentInputs({
-                          ...commentInputs,
-                          [post._id]: e.target.value,
-                        })
-                      }
-                      placeholder="Viết bình luận..."
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleAddComment(post._id);
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => handleAddComment(post._id)}
-                      className="send-comment-btn"
-                      disabled={!commentInputs[post._id]?.trim()}
-                    >
-                      ➤
-                    </button>
+                    <div className="comment-input-wrapper">
+                      {/* Preview uploaded images */}
+                      {commentImages[post._id] &&
+                        commentImages[post._id].length > 0 && (
+                          <div className="comment-image-preview">
+                            {commentImages[post._id].map((image, index) => (
+                              <div
+                                key={index}
+                                className="preview-image-container"
+                              >
+                                <img
+                                  src={image}
+                                  alt={`Preview ${index + 1}`}
+                                  className="preview-image"
+                                />
+                                <button
+                                  onClick={() =>
+                                    removeCommentImage(post._id, index)
+                                  }
+                                  className="remove-preview-btn"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      <div className="comment-input-group">
+                        <input
+                          type="text"
+                          value={commentInputs[post._id] || ""}
+                          onChange={(e) =>
+                            setCommentInputs({
+                              ...commentInputs,
+                              [post._id]: e.target.value,
+                            })
+                          }
+                          placeholder="Viết bình luận..."
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAddComment(post._id);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`comment-image-${post._id}`}
+                          className="image-upload-btn"
+                          title="Thêm ảnh"
+                        >
+                          📷
+                        </label>
+                        <input
+                          type="file"
+                          id={`comment-image-${post._id}`}
+                          accept="image/*"
+                          multiple
+                          onChange={(e) =>
+                            handleCommentImageUpload(post._id, e)
+                          }
+                          style={{ display: "none" }}
+                        />
+                        <button
+                          onClick={() => handleAddComment(post._id)}
+                          className="send-comment-btn"
+                          disabled={!commentInputs[post._id]?.trim()}
+                        >
+                          ➤
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
