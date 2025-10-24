@@ -1,44 +1,27 @@
 .footer-container1 {
   display: contents;
 }
-
+ 
 .footer-container2 {
   display: none;
 }
-
+ 
 .footer-container3 {
   display: contents;
 }
-
+ 
 .footer-container4 {
   display: none;
 }
-
+ 
 .footer-container5 {
   display: contents;
 }
-
+ 
 .footer-container6 {
   display: none;
 }
-
+ 
 .footer-container7 {
   display: contents;
-}
-
-/* Custom styles for centered 3-column layout */
-.footer-content-wrapper {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 60px 20px;
-}
-
-@media (max-width: 992px) {
-  .footer-content-wrapper {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
 }

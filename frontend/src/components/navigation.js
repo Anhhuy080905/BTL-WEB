@@ -1,54 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import Script from "dangerous-html/react";
-import UserDropdown from "./user-dropdown";
-import NotificationBell from "./notification-bell";
-import { authAPI } from "../services/api";
+import React from 'react'
 
-import "./navigation.css";
+import Script from 'dangerous-html/react'
+
+import './navigation.css'
 
 const Navigation = (props) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null);
-
-  useEffect(() => {
-    // Check if user is logged in and get role
-    setIsLoggedIn(authAPI.isAuthenticated());
-
-    if (authAPI.isAuthenticated()) {
-      const userData = authAPI.getUserData();
-      setUserRole(userData?.role);
-    } else {
-      setUserRole(null);
-    }
-
-    // Listen for storage changes (when user logs in/out in another tab)
-    const handleStorageChange = () => {
-      setIsLoggedIn(authAPI.isAuthenticated());
-
-      if (authAPI.isAuthenticated()) {
-        const userData = authAPI.getUserData();
-        setUserRole(userData?.role);
-      } else {
-        setUserRole(null);
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  // Get the events page URL based on user role
-  const getEventsUrl = () => {
-    if (userRole === "event_manager" || userRole === "admin") {
-      return "/events-manager";
-    }
-    return "/events";
-  };
-
   return (
     <div className="navigation-container1">
       <div className="navigation-container2">
@@ -161,7 +117,7 @@ const Navigation = (props) => {
       </div>
       <nav id="navigation-main" className="navigation-wrapper">
         <div className="navigation-container">
-          <Link to="/">
+          <a href="#">
             <div
               aria-label="VolunteerHub - Trang chủ"
               className="navigation-logo"
@@ -177,74 +133,18 @@ const Navigation = (props) => {
                   <path
                     fill="none"
                     stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
                     d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676a.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"
                   ></path>
                 </svg>
               </div>
               <span className="navigation-logo-text">VolunteerHub</span>
             </div>
-          </Link>
+          </a>
           <div className="navigation-links">
-            <a href="/">
-              <div className="navigation-link">
-                <span className="navigation-link-icon">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676a.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"
-                    ></path>
-                  </svg>
-                </span>
-                <span>Trang Chủ</span>
-              </div>
-            </a>
-            <a href="/about">
-              <div className="navigation-link">
-                <span className="navigation-link-icon">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                    ></circle>
-                    <path
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 16v-4m0-4h.01"
-                    ></path>
-                  </svg>
-                </span>
-                <span>Về Chúng Tôi</span>
-              </div>
-            </a>
-            <Link to={getEventsUrl()}>
+            <a href="#hoat-dong">
               <div className="navigation-link">
                 <span className="navigation-link-icon">
                   <svg
@@ -257,9 +157,9 @@ const Navigation = (props) => {
                     <g
                       fill="none"
                       stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
                     >
                       <path d="M8 2v4m8-4v4"></path>
                       <rect width="18" height="18" x="3" y="4" rx="2"></rect>
@@ -267,10 +167,10 @@ const Navigation = (props) => {
                     </g>
                   </svg>
                 </span>
-                <span>Sự Kiện</span>
+                <span>Hoạt Động</span>
               </div>
-            </Link>
-            <Link to="/discussion-list">
+            </a>
+            <a href="#cong-dong">
               <div className="navigation-link">
                 <span className="navigation-link-icon">
                   <svg
@@ -280,98 +180,66 @@ const Navigation = (props) => {
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    <path
+                    <g
                       fill="none"
                       stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                    ></path>
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3.128a4 4 0 0 1 0 7.744M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                    </g>
                   </svg>
                 </span>
-                <span>Kênh Trao Đổi</span>
+                <span>Cộng Đồng</span>
               </div>
-            </Link>
-            {userRole === "admin" && (
-              <Link to="/admin-dashboard">
-                <div className="navigation-link">
-                  <span className="navigation-link-icon">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
+            </a>
+            <a href="#ve-chung-toi">
+              <div className="navigation-link">
+                <span className="navigation-link-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <g
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
                     >
-                      <g
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M12 1v6m0 6v6m-9-9h6m6 0h6M4.2 4.2l4.2 4.2m5.2 5.2l4.2 4.2M19.8 4.2l-4.2 4.2m-5.2 5.2l-4.2 4.2"></path>
-                      </g>
-                    </svg>
-                  </span>
-                  <span>Quản Trị</span>
-                </div>
-              </Link>
-            )}
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M12 16v-4m0-4h.01"></path>
+                    </g>
+                  </svg>
+                </span>
+                <span>Về Chúng Tôi</span>
+              </div>
+            </a>
           </div>
           <div className="navigation-actions">
-            {isLoggedIn ? (
-              <>
-                <NotificationBell />
-                <UserDropdown />
-              </>
-            ) : (
-              <>
-                <a href="/login">
-                  <button className="navigation-btn-secondary btn btn-outline">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ marginRight: "6px" }}
-                    >
-                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-5-4l5-5-5-5m5 5H3"></path>
-                    </svg>
-                    Đăng Nhập
-                  </button>
-                </a>
-                <a href="/register">
-                  <button className="navigation-btn-primary btn btn-primary">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ marginRight: "6px" }}
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <line x1="19" y1="8" x2="19" y2="14"></line>
-                      <line x1="22" y1="11" x2="16" y2="11"></line>
-                    </svg>
-                    Đăng Ký
-                  </button>
-                </a>
-              </>
-            )}
+            <button className="navigation-btn-secondary btn btn-outline">
+              {' '}
+              Đăng Nhập
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: ' ',
+                }}
+              />
+            </button>
+            <button className="navigation-btn-primary btn btn-primary">
+              {' '}
+              Tham Gia Ngay
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: ' ',
+                }}
+              />
+            </button>
           </div>
           <button
             id="navigation-toggle"
@@ -390,9 +258,9 @@ const Navigation = (props) => {
                 <path
                   fill="none"
                   stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
                   d="M4 5h16M4 12h16M4 19h16"
                 ></path>
               </svg>
@@ -408,9 +276,9 @@ const Navigation = (props) => {
                 <path
                   fill="none"
                   stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
                   d="M18 6L6 18M6 6l12 12"
                 ></path>
               </svg>
@@ -432,9 +300,9 @@ const Navigation = (props) => {
                     <g
                       fill="none"
                       stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
                     >
                       <path d="M8 2v4m8-4v4"></path>
                       <rect width="18" height="18" x="3" y="4" rx="2"></rect>
@@ -445,7 +313,7 @@ const Navigation = (props) => {
                 <span>Hoạt Động</span>
               </div>
             </a>
-            <Link to="/discussion-list">
+            <a href="#cong-dong">
               <div className="navigation-mobile-link">
                 <span className="navigation-mobile-link-icon">
                   <svg
@@ -455,19 +323,21 @@ const Navigation = (props) => {
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    <path
+                    <g
                       fill="none"
                       stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                    ></path>
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3.128a4 4 0 0 1 0 7.744M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                    </g>
                   </svg>
                 </span>
-                <span>Kênh Trao Đổi</span>
+                <span>Cộng Đồng</span>
               </div>
-            </Link>
+            </a>
             <a href="#ve-chung-toi">
               <div className="navigation-mobile-link">
                 <span className="navigation-mobile-link-icon">
@@ -481,9 +351,9 @@ const Navigation = (props) => {
                     <g
                       fill="none"
                       stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
                     >
                       <circle cx="12" cy="12" r="10"></circle>
                       <path d="M12 16v-4m0-4h.01"></path>
@@ -494,44 +364,24 @@ const Navigation = (props) => {
               </div>
             </a>
             <div className="navigation-mobile-actions">
-              {isLoggedIn ? (
-                <div
-                  style={{
-                    padding: "16px 0",
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "12px",
+              <button className="navigation-mobile-btn btn btn-outline">
+                Đăng Nhập
+              </button>
+              <button className="navigation-mobile-btn btn btn-primary">
+                {' '}
+                Tham Gia Ngay
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: ' ',
                   }}
-                >
-                  <NotificationBell />
-                  <UserDropdown />
-                </div>
-              ) : (
-                <>
-                  <a href="/login">
-                    <button className="navigation-mobile-btn btn btn-outline">
-                      Đăng Nhập
-                    </button>
-                  </a>
-                  <a href="/register">
-                    <button className="navigation-mobile-btn btn btn-primary">
-                      {" "}
-                      Tham Gia Ngay
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: " ",
-                        }}
-                      />
-                    </button>
-                  </a>
-                </>
-              )}
+                />
+              </button>
             </div>
           </div>
         </div>
       </nav>
     </div>
-  );
-};
+  )
+}
 
-export default Navigation;
+export default Navigation
