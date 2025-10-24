@@ -309,48 +309,52 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 999998;
-  padding: 20px;
+  padding: 15px;
+  overflow-y: auto;
 }
 
 .modal-content {
   background: white;
   border-radius: 12px;
-  max-width: 90vw;
-  width: 90vw;
-  height: 90vh;
-  max-height: 90vh;
-  overflow: hidden;
+  max-width: 94vw;
+  width: 94vw;
+  max-height: 94vh;
+  height: 94vh;
+  overflow: visible;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
+  margin: 3vh auto;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 24px 32px;
+  border-bottom: 2px solid #1565c0;
   flex-shrink: 0;
   background: white;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: relative;
+  z-index: 1000;
+  min-height: 80px;
+  margin-bottom: 15px;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: #1a1a1a;
+  line-height: 1.3;
 }
 
 .modal-close {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   background: #f5f5f5;
@@ -361,18 +365,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .modal-close:hover {
   background: #e0e0e0;
   color: #1a1a1a;
+  transform: scale(1.1);
 }
 
 .modal-body {
-  padding: 0;
-  flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  flex: 1;
+  padding: 0;
 }
 
 /* Modal Form */
@@ -431,62 +436,51 @@
 }
 
 .modal-footer {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding: 14px 20px;
+  padding: 20px 32px;
+  text-align: right;
   border-top: 1px solid #e0e0e0;
-  flex-shrink: 0;
-  background: white;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
+  background: #f8f9fa;
 }
 
-/* Registration Management Modal */
 .modal-large {
-  max-width: 90vw;
-  width: 90vw;
-  height: 92vh;
-  max-height: 92vh;
+  max-width: 94vw;
+  width: 94vw;
+  height: auto;
+  min-height: 70vh;
+  max-height: 94vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  margin: 3vh auto;
 }
 
 .modal-large .modal-header {
   flex-shrink: 0;
-}
-
-.stats-section-header,
-.list-section-header {
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
-  border-bottom: 2px solid #0d47a1;
-  flex-shrink: 0;
-}
-
-.section-header-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  background: white;
+  position: relative;
+  z-index: 1000;
+  border-bottom: 2px solid #1565c0;
+  margin-bottom: 0;
+  padding: 24px 32px;
+  min-height: 80px;
 }
 
 .registrations-stats {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 12px;
+  padding: 16px;
   background: white;
   border-bottom: 1px solid #e0e0e0;
-  overflow-y: auto;
+  overflow-y: auto !important;
   overflow-x: hidden;
-  max-height: 200px;
+  height: 160px;
+  min-height: 160px;
+  max-height: 160px;
   flex-shrink: 0;
+  position: relative;
+  margin-top: 80px;
+  margin-top: 0;
 }
 
 /* Custom scrollbar cho phần thống kê */
@@ -524,8 +518,12 @@
   box-sizing: border-box;
 }
 
+.stat-card:first-child {
+  margin-top: 0;
+}
+
 .stat-card:last-child {
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .stat-card:hover {
@@ -570,22 +568,27 @@
 }
 
 .registration-actions-header {
-  padding: 10px 16px;
-  border-bottom: 2px solid #1565c0;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
-  background: #f8f9fa;
+  background: white;
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
 }
 
 .registrations-tabs {
-  padding: 16px 20px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding: 20px 24px;
+  padding-top: 10px;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   flex: 1;
-  min-height: 0;
-  max-height: calc(92vh - 350px);
+  min-height: 250px;
+  height: calc(96vh - 400px);
+  background: #f8f9fa;
 }
 
 /* Custom scrollbar cho phần danh sách */
@@ -611,6 +614,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 30px;
+  overflow-x: hidden !important;
 }
 
 .registration-section {
@@ -891,6 +896,30 @@
   background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+}
+
+/* Registrations Modal */
+.registrations-modal .modal-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.registrations-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  flex: 1;
+  padding-right: 20px; /* Add some space for the close button */
 }
 
 /* Responsive */
