@@ -1054,6 +1054,9 @@ const EventManagement = () => {
               <h2>Quản lý đăng ký - {selectedEventForReview.title}</h2>
             </div>
 
+            <div className="stats-section-header">
+              <h3 className="section-header-title">📊 Thống kê đăng ký</h3>
+            </div>
             <div className="registrations-stats">
               <div className="stat-card">
                 <div className="stat-number">{registrationsStats.total}</div>
@@ -1083,6 +1086,10 @@ const EventManagement = () => {
                 </div>
                 <div className="stat-label">Đã hoàn thành</div>
               </div>
+            </div>
+
+            <div className="list-section-header">
+              <h3 className="section-header-title">📋 Danh sách đăng ký</h3>
             </div>
 
             <div className="registration-actions-header">

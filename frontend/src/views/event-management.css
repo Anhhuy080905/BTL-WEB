@@ -449,6 +449,31 @@
   width: 90vw;
   height: 92vh;
   max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-large .modal-header {
+  flex-shrink: 0;
+}
+
+.stats-section-header,
+.list-section-header {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+  border-bottom: 2px solid #0d47a1;
+  flex-shrink: 0;
+}
+
+.section-header-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .registrations-stats {
@@ -458,48 +483,69 @@
   padding: 8px 12px;
   background: white;
   border-bottom: 1px solid #e0e0e0;
+  overflow-y: auto;
   overflow-x: hidden;
+  max-height: 200px;
+  flex-shrink: 0;
+}
+
+/* Custom scrollbar cho phần thống kê */
+.registrations-stats::-webkit-scrollbar {
+  width: 8px;
+}
+
+.registrations-stats::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.registrations-stats::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.registrations-stats::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .stat-card {
-  background: transparent;
-  padding: 3px 8px;
-  border-radius: 0;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
   text-align: left;
-  border: 2px solid transparent;
-  border-bottom: 1px solid #f0f0f0;
-  transition: none;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
   white-space: nowrap;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   box-sizing: border-box;
 }
 
 .stat-card:last-child {
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 0;
 }
 
 .stat-card:hover {
-  background: #f8f9fa;
+  background: #e9ecef;
+  transform: translateX(4px);
 }
 
 .stat-number {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 0;
-  min-width: 25px;
+  min-width: 35px;
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 13px;
   color: #666;
   font-weight: 500;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   flex: 1;
 }
 
@@ -525,16 +571,40 @@
 
 .registration-actions-header {
   padding: 10px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid #1565c0;
   display: flex;
   justify-content: flex-end;
   gap: 6px;
+  flex-shrink: 0;
+  background: #f8f9fa;
 }
 
 .registrations-tabs {
   padding: 16px 20px;
   overflow-y: auto;
-  max-height: calc(90vh - 240px);
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  max-height: calc(92vh - 350px);
+}
+
+/* Custom scrollbar cho phần danh sách */
+.registrations-tabs::-webkit-scrollbar {
+  width: 8px;
+}
+
+.registrations-tabs::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.registrations-tabs::-webkit-scrollbar-thumb {
+  background: #1565c0;
+  border-radius: 4px;
+}
+
+.registrations-tabs::-webkit-scrollbar-thumb:hover {
+  background: #0d47a1;
 }
 
 .tab-content {
