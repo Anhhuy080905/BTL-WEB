@@ -84,7 +84,6 @@
     - `GET /api/dashboard/trending-events`
     - `GET /api/dashboard/hot-events`
 
-    **Thời gian:** 14-18 giờ
 
     ---
 
@@ -123,7 +122,6 @@
     - Comment/reply mới
     - Sự kiện sắp diễn ra
 
-    **Thời gian:** 5-8 giờ
 
     ---
 
@@ -145,7 +143,6 @@
     - Frontend: Dropdown filter (Hôm nay, Tuần này, Tháng này, Quý này, Tùy chỉnh)
     - Custom date range picker
 
-    **Thời gian:** 2-3 giờ
 
     ---
 
@@ -163,7 +160,6 @@
     - Button trong event-management
     - Service method trong eventsService
 
-    **Thời gian:** 2-3 giờ
 
     ---
 
@@ -185,7 +181,6 @@
     - Gợi ý tên tổ chức
     - Auto-format số điện thoại
 
-    **Thời gian:** 5-7 giờ
 
     ---
 
@@ -210,7 +205,6 @@
     - [ ] CORS config đúng
     - [ ] HTTP Parameter Pollution
 
-    **Thời gian:** 3 giờ
 
     ---
 
@@ -229,7 +223,6 @@
     - URL: `/events/trong-cay-xanh-ha-noi-2025`
     - Route: `GET /events/slug/:slug`
 
-    **Thời gian:** 2-3 giờ
 
     ---
 
@@ -246,7 +239,6 @@
     - [ ] Rich text editor (react-quill)
     - [ ] Image upload
 
-    **Thời gian:** 3-4 giờ
 
     ---
 
@@ -259,7 +251,6 @@
     - `repositories/EventRepository.js`
     - `repositories/PostRepository.js`
 
-    **Thời gian:** 4-5 giờ
 
     ---
 
@@ -279,35 +270,6 @@
     | 🟢 **P3** | Discussion                    | 3-4h      | ~2-3%   |
     | 🟢 **P3** | Repository                    | 4-5h      | ~2-3%   |
 
-    ### Khuyến nghị thực hiện:
-
-    **Tuần 1 (CRITICAL):**
-
-    1. Dashboard (P0) - 14-18h
-    2. Web Push (P0) - 5-8h
-    3. Time Filter (P1) - 2-3h
-    4. Export Participants (P1) - 2-3h
-
-    **Tổng: 23-32 giờ**
-
-    **Tuần 2 (HIGH):** 5. Validation - 5-7h 6. Security - 3h
-
-    **Tổng: 8-10 giờ**
-
-    **Nếu còn thời gian (MEDIUM):** 7. SEO URLs - 2-3h 8. Discussion - 3-4h 9. Repository - 4-5h
-
-    ---
-
-    ## 📈 **DỰ KIẾN ĐIỂM**
-
-    | Trạng thái       | Điểm       |
-    | ---------------- | ---------- |
-    | **Hiện tại**     | ~0.65-0.70 |
-    | **Sau P0+P1**    | ~0.80-0.85 |
-    | **Sau P0+P1+P2** | ~0.88-0.92 |
-    | **Làm tất cả**   | ~0.92-0.95 |
-
-    ---
 
     ## ⚠️ **YÊU CẦU RÕ RÀNG TRONG ĐỀ BÀI**
 
