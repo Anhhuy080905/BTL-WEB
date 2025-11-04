@@ -42,17 +42,21 @@ const Register = (props) => {
     switch (name) {
       case "fullName":
         if (!value.trim()) {
-          error = "Vui lòng nhập tên đăng nhập";
+          error = "Vui lòng nhập họ và tên";
         } else if (value.length < 3) {
-          error = "Tên đăng nhập phải có ít nhất 3 ký tự";
-        } else if (value.length > 30) {
-          error = "Tên đăng nhập không được vượt quá 30 ký tự";
+          error = "Họ và tên phải có ít nhất 3 ký tự";
+        } else if (value.length > 50) {
+          error = "Họ và tên không được vượt quá 50 ký tự";
         }
         break;
 
       case "username":
         if (!value.trim()) {
-          error = "Vui lòng nhập họ và tên";
+          error = "Vui lòng nhập tên đăng nhập";
+        } else if (value.length < 3) {
+          error = "Tên đăng nhập phải có ít nhất 3 ký tự";
+        } else if (value.length > 30) {
+          error = "Tên đăng nhập không được vượt quá 30 ký tự";
         }
         break;
 
@@ -250,8 +254,6 @@ const Register = (props) => {
         }, 2000);
       }
     } catch (error) {
-      console.error("Register error:", error);
-
       if (error.response?.data?.message) {
         setErrors({ general: error.response.data.message });
       } else if (error.response?.data?.errors) {
@@ -366,39 +368,39 @@ const Register = (props) => {
             <form onSubmit={handleSubmit} className="register-form">
               {/* Tên đăng nhập */}
               <div className="form-group">
-                <label htmlFor="fullName" className="form-label">
-                  Tên đăng nhập
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  className={`form-input ${errors.fullName ? "error" : ""}`}
-                  placeholder="Nhập tên đăng nhập (3-30 ký tự)"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                />
-                {errors.fullName && (
-                  <span className="error-message">{errors.fullName}</span>
-                )}
-              </div>
-
-              {/* Họ và tên */}
-              <div className="form-group">
                 <label htmlFor="username" className="form-label">
-                  Họ và tên
+                  Tên đăng nhập
                 </label>
                 <input
                   type="text"
                   id="username"
                   name="username"
                   className={`form-input ${errors.username ? "error" : ""}`}
-                  placeholder="Nhập họ và tên đầy đủ"
+                  placeholder="Nhập tên đăng nhập (3-30 ký tự)"
                   value={formData.username}
                   onChange={handleInputChange}
                 />
                 {errors.username && (
                   <span className="error-message">{errors.username}</span>
+                )}
+              </div>
+
+              {/* Họ và tên */}
+              <div className="form-group">
+                <label htmlFor="fullName" className="form-label">
+                  Họ và tên
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  className={`form-input ${errors.fullName ? "error" : ""}`}
+                  placeholder="Nhập họ và tên đầy đủ"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                />
+                {errors.fullName && (
+                  <span className="error-message">{errors.fullName}</span>
                 )}
               </div>
 

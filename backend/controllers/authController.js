@@ -33,9 +33,9 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Kiểm tra xem fullName đã tồn tại chưa
-    const fullNameExists = await User.findOne({ fullName });
-    if (fullNameExists) {
+    // Kiểm tra xem username đã tồn tại chưa
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
       return res.status(400).json({
         success: false,
         message: "Tên đăng nhập đã được sử dụng",
@@ -65,6 +65,7 @@ exports.register = async (req, res) => {
 
     // Generate token
     const token = generateToken(user._id);
+    console.log("✅ User created successfully:", user._id);
 
     res.status(201).json({
       success: true,
@@ -82,7 +83,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Register error:", error);
+    console.error("Register error:", error.message);
 
     // Handle validation errors
     if (error.name === "ValidationError") {
@@ -91,6 +92,21 @@ exports.register = async (req, res) => {
         success: false,
         message: "Dữ liệu không hợp lệ",
         errors,
+      });
+    }
+
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        success: false,
+        message: `${
+          field === "email"
+            ? "Email"
+            : field === "username"
+            ? "Tên đăng nhập"
+            : field
+        } đã được sử dụng`,
       });
     }
 

@@ -6,16 +6,18 @@ const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: [true, "Vui lòng nhập tên đăng nhập"],
+      required: [true, "Vui lòng nhập họ và tên"],
       trim: true,
-      minlength: [3, "Tên đăng nhập phải có ít nhất 3 ký tự"],
-      maxlength: [30, "Tên đăng nhập không được vượt quá 30 ký tự"],
-      unique: true,
+      minlength: [3, "Họ và tên phải có ít nhất 3 ký tự"],
+      maxlength: [50, "Họ và tên không được vượt quá 50 ký tự"],
     },
     username: {
       type: String,
-      required: [true, "Vui lòng nhập họ và tên"],
+      required: [true, "Vui lòng nhập tên đăng nhập"],
       trim: true,
+      unique: true,
+      minlength: [3, "Tên đăng nhập phải có ít nhất 3 ký tự"],
+      maxlength: [30, "Tên đăng nhập không được vượt quá 30 ký tự"],
     },
     email: {
       type: String,
