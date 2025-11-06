@@ -21,12 +21,11 @@ const Login = (props) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Email validation
+    // Email/Username validation
     if (!email) {
-      newErrors.email = "Vui lòng nhập email";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email không hợp lệ";
+      newErrors.email = "Vui lòng nhập email hoặc tên đăng nhập";
     }
+    // Không validate format nữa vì có thể là username
 
     // Password validation
     if (!password) {
