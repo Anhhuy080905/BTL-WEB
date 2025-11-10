@@ -6,7 +6,7 @@ import Footer from "../components/footer.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import EventCard from "../components/EventCard.jsx";
-import "./volunteer-dashboard.css";
+import styles from "./volunteer-dashboard.module.css";
 
 const PANEL = {
   NEW: "new",
@@ -107,10 +107,10 @@ const VolunteerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="volunteer-dashboard-root">
+      <div className={styles["volunteer-dashboard-root"]}>
         <Navigation />
-        <main className="dashboard-loading">
-          <div className="spinner" />
+        <main className={styles["dashboard-loading"]}>
+          <div className={styles.spinner} />
           <p>Đang tải thông tin Dashboard...</p>
         </main>
         <Footer />
@@ -123,9 +123,11 @@ const VolunteerDashboard = () => {
     switch (selectedPanel) {
       case PANEL.NEW:
         return newEvents.length === 0 ? (
-          <div className="empty">Không có sự kiện mới trong tuần này.</div>
+          <div className={styles.empty}>
+            Không có sự kiện mới trong tuần này.
+          </div>
         ) : (
-          <div className="event-list">
+          <div className={styles["event-list"]}>
             {newEvents.map((e, i) => (
               <EventCard
                 key={e._id || e.id || i}
@@ -139,9 +141,9 @@ const VolunteerDashboard = () => {
 
       case PANEL.TRENDING:
         return trendingEvents.length === 0 ? (
-          <div className="empty">Không có sự kiện trending.</div>
+          <div className={styles.empty}>Không có sự kiện trending.</div>
         ) : (
-          <div className="event-list">
+          <div className={styles["event-list"]}>
             {trendingEvents.map((e, i) => (
               <EventCard
                 key={e._id || e.id || i}
@@ -155,11 +157,11 @@ const VolunteerDashboard = () => {
 
       case PANEL.SUGGESTED:
         return suggestedEvents.length === 0 ? (
-          <div className="empty">
+          <div className={styles.empty}>
             Cập nhật interests của bạn để nhận gợi ý tốt hơn.
           </div>
         ) : (
-          <div className="event-list">
+          <div className={styles["event-list"]}>
             {suggestedEvents.map((e, i) => (
               <EventCard
                 key={e._id || e.id || i}
@@ -173,35 +175,35 @@ const VolunteerDashboard = () => {
 
       case PANEL.STATS:
         return (
-          <div className="stats-panel-content">
-            <div className="stat-item">
-              <div className="label">Tổng sự kiện đã đăng ký</div>
-              <div className="value">{totalRegistered}</div>
+          <div className={styles["stats-panel-content"]}>
+            <div className={styles["stat-item"]}>
+              <div className={styles.label}>Tổng sự kiện đã đăng ký</div>
+              <div className={styles.value}>{totalRegistered}</div>
             </div>
-            <div className="stat-item">
-              <div className="label">Sự kiện đã hoàn thành</div>
-              <div className="value">{attendedCount}</div>
+            <div className={styles["stat-item"]}>
+              <div className={styles.label}>Sự kiện đã hoàn thành</div>
+              <div className={styles.value}>{attendedCount}</div>
             </div>
-            <div className="stat-item">
-              <div className="label">Tổng giờ tình nguyện</div>
-              <div className="value">{totalHours}</div>
+            <div className={styles["stat-item"]}>
+              <div className={styles.label}>Tổng giờ tình nguyện</div>
+              <div className={styles.value}>{totalHours}</div>
             </div>
-            <div className="stat-item">
-              <div className="label">Sở thích</div>
-              <div className="value">
+            <div className={styles["stat-item"]}>
+              <div className={styles.label}>Sở thích</div>
+              <div className={styles.value}>
                 {interestCategories.join(", ") || "Chưa có"}
               </div>
             </div>
 
-            <div className="personal-actions">
+            <div className={styles["personal-actions"]}>
               <button
-                className="btn btn-primary"
+                className={`${styles.btn} ${styles["btn-primary"]}`}
                 onClick={() => history.push("/my-events")}
               >
                 Quản lý sự kiện của tôi
               </button>
               <button
-                className="btn btn-outline"
+                className={`${styles.btn} ${styles["btn-outline"]}`}
                 onClick={() => history.push("/events")}
               >
                 Khám phá sự kiện
@@ -216,15 +218,17 @@ const VolunteerDashboard = () => {
   };
 
   return (
-    <div className="volunteer-dashboard-root">
+    <div className={styles["volunteer-dashboard-root"]}>
       <Helmet>
         <title>Volunteer Dashboard - VolunteerHub</title>
       </Helmet>
 
       <Navigation />
 
-      <main className="volunteer-dashboard-container with-sidebar">
-        <header className="dashboard-hero">
+      <main
+        className={`${styles["volunteer-dashboard-container"]} ${styles["with-sidebar"]}`}
+      >
+        <header className={styles["dashboard-hero"]}>
           <div>
             <h1>Trang quản lý tình nguyện viên</h1>
             <p>
@@ -233,28 +237,31 @@ const VolunteerDashboard = () => {
             </p>
           </div>
 
-          <div className="hero-stats">
-            <div className="stat">
-              <div className="num">{totalRegistered}</div>
-              <div className="label">Đã đăng ký</div>
+          <div className={styles["hero-stats"]}>
+            <div className={styles.stat}>
+              <div className={styles.num}>{totalRegistered}</div>
+              <div className={styles.label}>Đã đăng ký</div>
             </div>
-            <div className="stat">
-              <div className="num">{attendedCount}</div>
-              <div className="label">Đã tham gia</div>
+            <div className={styles.stat}>
+              <div className={styles.num}>{attendedCount}</div>
+              <div className={styles.label}>Đã tham gia</div>
             </div>
-            <div className="stat">
-              <div className="num">{totalHours}</div>
-              <div className="label">Tổng giờ</div>
+            <div className={styles.stat}>
+              <div className={styles.num}>{totalHours}</div>
+              <div className={styles.label}>Tổng giờ</div>
             </div>
           </div>
         </header>
 
-        <section className="dashboard-grid-with-sidebar">
-          <nav className="dashboard-sidebar" aria-label="Dashboard panels">
+        <section className={styles["dashboard-grid-with-sidebar"]}>
+          <nav
+            className={styles["dashboard-sidebar"]}
+            aria-label="Dashboard panels"
+          >
             <ul>
               <li>
                 <button
-                  className={selectedPanel === PANEL.NEW ? "active" : ""}
+                  className={selectedPanel === PANEL.NEW ? styles.active : ""}
                   onClick={() => setSelectedPanel(PANEL.NEW)}
                 >
                   Sự kiện mới công bố (7 ngày)
@@ -262,7 +269,9 @@ const VolunteerDashboard = () => {
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.TRENDING ? "active" : ""}
+                  className={
+                    selectedPanel === PANEL.TRENDING ? styles.active : ""
+                  }
                   onClick={() => setSelectedPanel(PANEL.TRENDING)}
                 >
                   Sự kiện trending
@@ -270,7 +279,9 @@ const VolunteerDashboard = () => {
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.SUGGESTED ? "active" : ""}
+                  className={
+                    selectedPanel === PANEL.SUGGESTED ? styles.active : ""
+                  }
                   onClick={() => setSelectedPanel(PANEL.SUGGESTED)}
                 >
                   Gợi ý theo interests
@@ -278,7 +289,7 @@ const VolunteerDashboard = () => {
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.STATS ? "active" : ""}
+                  className={selectedPanel === PANEL.STATS ? styles.active : ""}
                   onClick={() => setSelectedPanel(PANEL.STATS)}
                 >
                   Thống kê cá nhân
@@ -287,7 +298,9 @@ const VolunteerDashboard = () => {
             </ul>
           </nav>
 
-          <section className="dashboard-main-panel panel">
+          <section
+            className={`${styles["dashboard-main-panel"]} ${styles.panel}`}
+          >
             <h2>
               {selectedPanel === PANEL.NEW && "Sự kiện mới công bố (7 ngày)"}
               {selectedPanel === PANEL.TRENDING && "Sự kiện trending"}
@@ -300,7 +313,7 @@ const VolunteerDashboard = () => {
         </section>
 
         {error && (
-          <div className="dashboard-error">
+          <div className={styles["dashboard-error"]}>
             Có lỗi xảy ra: {error.message || String(error)}
           </div>
         )}

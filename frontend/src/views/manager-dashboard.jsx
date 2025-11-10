@@ -6,7 +6,7 @@ import Footer from "../components/footer.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import EventCard from "../components/EventCard.jsx";
-import "./manager-dashboard.css";
+import styles from "./manager-dashboard.module.css";
 
 const PANEL = {
   OVERVIEW: "overview",
@@ -162,10 +162,10 @@ const ManagerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="manager-dashboard-root">
+      <div className={styles.managerDashboardContainer}>
         <Navigation />
-        <main className="dashboard-loading">
-          <div className="spinner" />
+        <main className={styles.managerLoading}>
+          <div className={styles.spinner} />
           <p>Đang tải thông tin Dashboard...</p>
         </main>
         <Footer />
@@ -178,49 +178,57 @@ const ManagerDashboard = () => {
     switch (selectedPanel) {
       case PANEL.OVERVIEW:
         return (
-          <div className="overview-content">
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">📊</div>
-                <div className="stat-info">
-                  <div className="stat-value">{totalEvents}</div>
-                  <div className="stat-label">Tổng sự kiện</div>
+          <div className={styles.overviewContent}>
+            <div className={styles.statsGrid}>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>📊</div>
+                <div className={styles.statInfo}>
+                  <div className={styles.statValue}>{totalEvents}</div>
+                  <div className={styles.statLabel}>Tổng sự kiện</div>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon">📅</div>
-                <div className="stat-info">
-                  <div className="stat-value">{upcomingEvents}</div>
-                  <div className="stat-label">Sắp diễn ra</div>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>📅</div>
+                <div className={styles.statInfo}>
+                  <div className={styles.statValue}>{upcomingEvents}</div>
+                  <div className={styles.statLabel}>Sắp diễn ra</div>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon">✅</div>
-                <div className="stat-info">
-                  <div className="stat-value">{completedEvents}</div>
-                  <div className="stat-label">Đã hoàn thành</div>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>✅</div>
+                <div className={styles.statInfo}>
+                  <div className={styles.statValue}>{completedEvents}</div>
+                  <div className={styles.statLabel}>Đã hoàn thành</div>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon">👥</div>
-                <div className="stat-info">
-                  <div className="stat-value">{totalParticipants}</div>
-                  <div className="stat-label">Tổng tham gia</div>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>👥</div>
+                <div className={styles.statInfo}>
+                  <div className={styles.statValue}>{totalParticipants}</div>
+                  <div className={styles.statLabel}>Tổng tham gia</div>
                 </div>
               </div>
             </div>
 
-            <div className="event-list-section">
+            <div className={styles.eventListSection}>
               <h3>Danh sách sự kiện của bạn</h3>
               {myEvents.length === 0 ? (
-                <div className="empty">Bạn chưa tạo sự kiện nào.</div>
+                <div className={styles.empty}>Bạn chưa tạo sự kiện nào.</div>
               ) : (
-                <div className="event-list">
+                <div className={styles.eventList}>
                   {myEvents.slice(0, 6).map((e, i) => (
-                    <div key={e._id || i} className="event-item">
-                      <div className="event-item-header">
+                    <div key={e._id || i} className={styles.eventItem}>
+                      <div className={styles.eventItemHeader}>
                         <h4>{e.title}</h4>
-                        <span className={`status-badge status-${e.status}`}>
+                        <span
+                          className={`${styles.statusBadge} ${
+                            styles[
+                              "status" +
+                                e.status.charAt(0).toUpperCase() +
+                                e.status.slice(1)
+                            ]
+                          }`}
+                        >
                           {e.status === "upcoming"
                             ? "Sắp diễn ra"
                             : e.status === "completed"
@@ -230,7 +238,7 @@ const ManagerDashboard = () => {
                             : "Đã hủy"}
                         </span>
                       </div>
-                      <div className="event-item-info">
+                      <div className={styles.eventItemInfo}>
                         <span>
                           📅 {new Date(e.date).toLocaleDateString("vi-VN")}
                         </span>
@@ -244,7 +252,7 @@ const ManagerDashboard = () => {
               )}
               {myEvents.length > 6 && (
                 <button
-                  className="btn btn-outline"
+                  className={`${styles.btn} ${styles.btnOutline}`}
                   onClick={() => history.push("/event-management")}
                 >
                   Xem tất cả
@@ -256,43 +264,45 @@ const ManagerDashboard = () => {
 
       case PANEL.PENDING:
         return (
-          <div className="pending-content">
+          <div className={styles.pendingContent}>
             {allPendingRegs.length === 0 ? (
-              <div className="empty">Không có đăng ký chờ phê duyệt.</div>
+              <div className={styles.empty}>
+                Không có đăng ký chờ phê duyệt.
+              </div>
             ) : (
-              <div className="registration-list">
+              <div className={styles.registrationList}>
                 {allPendingRegs.map((reg, i) => (
-                  <div key={i} className="registration-item">
-                    <div className="reg-header">
-                      <div className="reg-user">
-                        <div className="user-avatar">
+                  <div key={i} className={styles.registrationItem}>
+                    <div className={styles.regHeader}>
+                      <div className={styles.regUser}>
+                        <div className={styles.userAvatar}>
                           {reg.user?.username?.charAt(0).toUpperCase() || "?"}
                         </div>
-                        <div className="user-info">
-                          <div className="user-name">
+                        <div className={styles.userInfo}>
+                          <div className={styles.userName}>
                             {reg.user?.username || "N/A"}
                           </div>
-                          <div className="user-email">
+                          <div className={styles.userEmail}>
                             {reg.user?.email || ""}
                           </div>
                         </div>
                       </div>
-                      <div className="reg-date">
+                      <div className={styles.regDate}>
                         {new Date(reg.registeredAt).toLocaleDateString("vi-VN")}
                       </div>
                     </div>
-                    <div className="reg-event">
+                    <div className={styles.regEvent}>
                       <strong>Sự kiện:</strong> {reg.eventTitle}
                     </div>
-                    <div className="reg-actions">
+                    <div className={styles.regActions}>
                       <button
-                        className="btn btn-success btn-sm"
+                        className={`${styles.btn} ${styles.btnSuccess} ${styles.btnSm}`}
                         onClick={() => handleApprove(reg.eventId, reg.user._id)}
                       >
                         Phê duyệt
                       </button>
                       <button
-                        className="btn btn-danger btn-sm"
+                        className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
                         onClick={() => handleReject(reg.eventId, reg.user._id)}
                       >
                         Từ chối
@@ -307,22 +317,24 @@ const ManagerDashboard = () => {
 
       case PANEL.ENGAGEMENT:
         return (
-          <div className="engagement-content">
+          <div className={styles.engagementContent}>
             {eventsWithEngagement.length === 0 ? (
-              <div className="empty">Chưa có dữ liệu engagement.</div>
+              <div className={styles.empty}>Chưa có dữ liệu engagement.</div>
             ) : (
-              <div className="engagement-list">
+              <div className={styles.engagementList}>
                 {eventsWithEngagement.map((e, i) => (
-                  <div key={e._id || i} className="engagement-item">
-                    <div className="engagement-rank">{i + 1}</div>
-                    <div className="engagement-event">
+                  <div key={e._id || i} className={styles.engagementItem}>
+                    <div className={styles.engagementRank}>{i + 1}</div>
+                    <div className={styles.engagementEvent}>
                       <h4>{e.title}</h4>
-                      <div className="engagement-stats">
+                      <div className={styles.engagementStats}>
                         <span>Đăng ký: {e.registered || 0}</span>
                         <span>Engagement: {e.engagement}</span>
                       </div>
                     </div>
-                    <div className="engagement-score">{e.engagement} điểm</div>
+                    <div className={styles.engagementScore}>
+                      {e.engagement} điểm
+                    </div>
                   </div>
                 ))}
               </div>
@@ -332,11 +344,11 @@ const ManagerDashboard = () => {
 
       case PANEL.HOT:
         return (
-          <div className="hot-content">
+          <div className={styles.hotContent}>
             {hotEvents.length === 0 ? (
-              <div className="empty">Không có sự kiện hot.</div>
+              <div className={styles.empty}>Không có sự kiện hot.</div>
             ) : (
-              <div className="event-list">
+              <div className={styles.eventList}>
                 {hotEvents.map((e, i) => (
                   <EventCard
                     key={e._id || i}
@@ -352,19 +364,24 @@ const ManagerDashboard = () => {
 
       case PANEL.ALERTS:
         return (
-          <div className="alerts-content">
-            <div className="alert-section">
+          <div className={styles.alertsContent}>
+            <div className={styles.alertSection}>
               <h3>⏰ Sự kiện sắp diễn ra (3 ngày tới)</h3>
               {upcomingSoonEvents.length === 0 ? (
-                <div className="empty">Không có sự kiện nào sắp diễn ra.</div>
+                <div className={styles.empty}>
+                  Không có sự kiện nào sắp diễn ra.
+                </div>
               ) : (
-                <div className="alert-list">
+                <div className={styles.alertList}>
                   {upcomingSoonEvents.map((e, i) => (
-                    <div key={e._id || i} className="alert-item alert-warning">
-                      <div className="alert-icon">⚠️</div>
-                      <div className="alert-info">
-                        <div className="alert-title">{e.title}</div>
-                        <div className="alert-meta">
+                    <div
+                      key={e._id || i}
+                      className={`${styles.alertItem} ${styles.alertWarning}`}
+                    >
+                      <div className={styles.alertIcon}>⚠️</div>
+                      <div className={styles.alertInfo}>
+                        <div className={styles.alertTitle}>{e.title}</div>
+                        <div className={styles.alertMeta}>
                           {new Date(e.date).toLocaleDateString("vi-VN")} -{" "}
                           {e.registered || 0}/{e.maxParticipants} người
                         </div>
@@ -375,19 +392,21 @@ const ManagerDashboard = () => {
               )}
             </div>
 
-            <div className="alert-section">
+            <div className={styles.alertSection}>
               <h3>📋 Đăng ký cần phê duyệt</h3>
               {eventsNeedApproval === 0 ? (
-                <div className="empty">Không có đăng ký nào cần phê duyệt.</div>
+                <div className={styles.empty}>
+                  Không có đăng ký nào cần phê duyệt.
+                </div>
               ) : (
-                <div className="alert-item alert-info">
-                  <div className="alert-icon">📋</div>
-                  <div className="alert-info">
-                    <div className="alert-title">
+                <div className={`${styles.alertItem} ${styles.alertInfo}`}>
+                  <div className={styles.alertIcon}>📋</div>
+                  <div className={styles.alertInfo}>
+                    <div className={styles.alertTitle}>
                       {eventsNeedApproval} đăng ký đang chờ phê duyệt
                     </div>
                     <button
-                      className="btn btn-primary btn-sm"
+                      className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
                       onClick={() => setSelectedPanel(PANEL.PENDING)}
                     >
                       Xem ngay
@@ -405,15 +424,17 @@ const ManagerDashboard = () => {
   };
 
   return (
-    <div className="manager-dashboard-root">
+    <div className={styles.managerDashboardRoot}>
       <Helmet>
         <title>Manager Dashboard - VolunteerHub</title>
       </Helmet>
 
       <Navigation />
 
-      <main className="manager-dashboard-container with-sidebar">
-        <header className="dashboard-hero">
+      <main
+        className={`${styles.managerDashboardContainer} ${styles.withSidebar}`}
+      >
+        <header className={styles.dashboardHero}>
           <div>
             <h1>Bảng điều khiển Quản lý sự kiện</h1>
             <p>
@@ -422,28 +443,33 @@ const ManagerDashboard = () => {
             </p>
           </div>
 
-          <div className="hero-stats">
-            <div className="stat">
-              <div className="num">{totalEvents}</div>
-              <div className="label">Sự kiện</div>
+          <div className={styles.heroStats}>
+            <div className={styles.stat}>
+              <div className={styles.num}>{totalEvents}</div>
+              <div className={styles.label}>Sự kiện</div>
             </div>
-            <div className="stat">
-              <div className="num">{totalParticipants}</div>
-              <div className="label">Tham gia</div>
+            <div className={styles.stat}>
+              <div className={styles.num}>{totalParticipants}</div>
+              <div className={styles.label}>Tham gia</div>
             </div>
-            <div className="stat">
-              <div className="num">{eventsNeedApproval}</div>
-              <div className="label">Chờ duyệt</div>
+            <div className={styles.stat}>
+              <div className={styles.num}>{eventsNeedApproval}</div>
+              <div className={styles.label}>Chờ duyệt</div>
             </div>
           </div>
         </header>
 
-        <section className="dashboard-grid-with-sidebar">
-          <nav className="dashboard-sidebar" aria-label="Dashboard panels">
+        <section className={styles.dashboardGridWithSidebar}>
+          <nav
+            className={styles.dashboardSidebar}
+            aria-label="Dashboard panels"
+          >
             <ul>
               <li>
                 <button
-                  className={selectedPanel === PANEL.OVERVIEW ? "active" : ""}
+                  className={
+                    selectedPanel === PANEL.OVERVIEW ? styles.active : ""
+                  }
                   onClick={() => setSelectedPanel(PANEL.OVERVIEW)}
                 >
                   Tổng quan sự kiện
@@ -451,18 +477,22 @@ const ManagerDashboard = () => {
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.PENDING ? "active" : ""}
+                  className={
+                    selectedPanel === PANEL.PENDING ? styles.active : ""
+                  }
                   onClick={() => setSelectedPanel(PANEL.PENDING)}
                 >
                   Đăng ký chờ duyệt
                   {eventsNeedApproval > 0 && (
-                    <span className="badge">{eventsNeedApproval}</span>
+                    <span className={styles.badge}>{eventsNeedApproval}</span>
                   )}
                 </button>
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.ENGAGEMENT ? "active" : ""}
+                  className={
+                    selectedPanel === PANEL.ENGAGEMENT ? styles.active : ""
+                  }
                   onClick={() => setSelectedPanel(PANEL.ENGAGEMENT)}
                 >
                   Engagement metrics
@@ -470,7 +500,7 @@ const ManagerDashboard = () => {
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.HOT ? "active" : ""}
+                  className={selectedPanel === PANEL.HOT ? styles.active : ""}
                   onClick={() => setSelectedPanel(PANEL.HOT)}
                 >
                   Sự kiện hot nhất
@@ -478,7 +508,9 @@ const ManagerDashboard = () => {
               </li>
               <li>
                 <button
-                  className={selectedPanel === PANEL.ALERTS ? "active" : ""}
+                  className={
+                    selectedPanel === PANEL.ALERTS ? styles.active : ""
+                  }
                   onClick={() => setSelectedPanel(PANEL.ALERTS)}
                 >
                   Alerts & Nhắc nhở
@@ -487,7 +519,7 @@ const ManagerDashboard = () => {
             </ul>
           </nav>
 
-          <section className="dashboard-main-panel panel">
+          <section className={`${styles.dashboardMainPanel} ${styles.panel}`}>
             <h2>
               {selectedPanel === PANEL.OVERVIEW && "Tổng quan sự kiện quản lý"}
               {selectedPanel === PANEL.PENDING && "Đăng ký chờ phê duyệt"}
@@ -501,7 +533,7 @@ const ManagerDashboard = () => {
         </section>
 
         {error && (
-          <div className="dashboard-error">
+          <div className={styles.dashboardError}>
             Có lỗi xảy ra: {error.message || String(error)}
           </div>
         )}

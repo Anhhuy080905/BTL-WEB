@@ -22,18 +22,18 @@
   display: flex;
   gap: 12px;
 }
-.hero-stats .stat {
+.stat {
   background: #fff;
   border-radius: 8px;
   padding: 12px 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   text-align: center;
 }
-.hero-stats .num {
+.num {
   font-size: 20px;
   font-weight: 700;
 }
-.hero-stats .label {
+.label {
   font-size: 12px;
   color: #666;
 }
@@ -85,10 +85,44 @@
   font-weight: 700;
 }
 
+.value {
+  font-weight: 700;
+}
+
 .personal-actions {
   margin-top: 12px;
   display: flex;
   gap: 8px;
+}
+
+/* Button styles */
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #1976d2;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1565c0;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #1976d2;
+  border: 1px solid #1976d2;
+}
+
+.btn-outline:hover {
+  background: #e3f2fd;
 }
 
 .dashboard-loading {
