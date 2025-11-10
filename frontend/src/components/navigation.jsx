@@ -320,6 +320,56 @@ const Navigation = (props) => {
                 </div>
               </Link>
             )}
+            {userRole === "volunteer" && (
+              <Link to="/volunteer-dashboard">
+                <div className="navigation-link">
+                  <span className="navigation-link-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                      ></path>
+                    </svg>
+                  </span>
+                  <span>Bảng điều khiển</span>
+                </div>
+              </Link>
+            )}
+            {userRole === "event_manager" && (
+              <Link to="/manager-dashboard">
+                <div className="navigation-link">
+                  <span className="navigation-link-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                      ></path>
+                    </svg>
+                  </span>
+                  <span>Bảng điều khiển</span>
+                </div>
+              </Link>
+            )}
           </div>
           <div className="navigation-actions">
             {isLoggedIn ? (
