@@ -80,6 +80,20 @@ export const adminService = {
     }
   },
 
+  // Reset user password
+  resetUserPassword: async (userId) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/users/${userId}/reset-password`,
+        {},
+        getAuthHeader()
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Delete user
   deleteUser: async (userId) => {
     try {

@@ -6,6 +6,7 @@ const {
   lockUser,
   unlockUser,
   updateUserRole,
+  resetUserPassword,
   deleteUser,
   exportUsers,
   getUserStats,
@@ -33,6 +34,9 @@ router.put("/:id/unlock", unlockUser);
 
 // Update role
 router.put("/:id/role", updateUserRole);
+
+// Reset password
+router.put("/:id/reset-password", resetUserPassword);
 
 // Delete user
 router.delete("/:id", deleteUser);
