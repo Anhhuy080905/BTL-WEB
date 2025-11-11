@@ -37,6 +37,18 @@ const Profile = () => {
     totalUsers: 0,
   });
 
+  // State cho đổi mật khẩu
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   useEffect(() => {
     fetchUserProfile();
     fetchUserStats();
@@ -195,6 +207,90 @@ const Profile = () => {
     }
   };
 
+  // Xử lý đổi mật khẩu
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error khi user nhập
+    if (passwordErrors[name]) {
+      setPasswordErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const validatePasswordForm = () => {
+    const newErrors = {};
+
+    if (!passwordData.currentPassword) {
+      newErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại";
+    }
+
+    if (!passwordData.newPassword) {
+      newErrors.newPassword = "Vui lòng nhập mật khẩu mới";
+    } else if (passwordData.newPassword.length < 6) {
+      newErrors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
+    }
+
+    if (!passwordData.confirmPassword) {
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
+    } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+
+    setPasswordErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    try {
+      const response = await authAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
+      if (response.success) {
+        setSuccessMessage("Đổi mật khẩu thành công!");
+        setShowPasswordModal(false);
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        setTimeout(() => setSuccessMessage(""), 3000);
+      }
+    } catch (error) {
+      console.error("Change password error:", error);
+      if (error.response?.data?.message) {
+        setPasswordErrors({ general: error.response.data.message });
+      } else {
+        setPasswordErrors({
+          general: "Đổi mật khẩu thất bại. Vui lòng thử lại!",
+        });
+      }
+    }
+  };
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordErrors({});
+  };
+
   const getRoleName = (role) => {
     const roleMap = {
       volunteer: "Tình nguyện viên",
@@ -259,26 +355,35 @@ const Profile = () => {
               </div>
             </div>
             {!editMode && (
-              <button
-                className="btn btn-primary edit-profile-btn"
-                onClick={() => setEditMode(true)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <div className="profile-header-actions">
+                <button
+                  className="btn btn-primary edit-profile-btn"
+                  onClick={() => setEditMode(true)}
                 >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Chỉnh sửa
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Chỉnh sửa
+                </button>
+
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="btn-change-password"
+                >
+                  🔒 Đổi mật khẩu
+                </button>
+              </div>
             )}
           </div>
 
@@ -566,6 +671,128 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal đổi mật khẩu */}
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={handleClosePasswordModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Đổi mật khẩu</h2>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="password-form">
+              {passwordErrors.general && (
+                <div className="alert alert-error">
+                  {passwordErrors.general}
+                </div>
+              )}
+
+              {/* Mật khẩu hiện tại */}
+              <div className="form-group">
+                <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
+                <div className="password-input-wrapper">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    id="currentPassword"
+                    name="currentPassword"
+                    className={`form-input ${
+                      passwordErrors.currentPassword ? "error" : ""
+                    }`}
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập mật khẩu hiện tại"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    {showCurrentPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+                {passwordErrors.currentPassword && (
+                  <span className="error-message">
+                    {passwordErrors.currentPassword}
+                  </span>
+                )}
+              </div>
+
+              {/* Mật khẩu mới */}
+              <div className="form-group">
+                <label htmlFor="newPassword">Mật khẩu mới</label>
+                <div className="password-input-wrapper">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    id="newPassword"
+                    name="newPassword"
+                    className={`form-input ${
+                      passwordErrors.newPassword ? "error" : ""
+                    }`}
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+                {passwordErrors.newPassword && (
+                  <span className="error-message">
+                    {passwordErrors.newPassword}
+                  </span>
+                )}
+              </div>
+
+              {/* Xác nhận mật khẩu mới */}
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Xác nhận mật khẩu mới</label>
+                <div className="password-input-wrapper">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    className={`form-input ${
+                      passwordErrors.confirmPassword ? "error" : ""
+                    }`}
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập lại mật khẩu mới"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+                {passwordErrors.confirmPassword && (
+                  <span className="error-message">
+                    {passwordErrors.confirmPassword}
+                  </span>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleClosePasswordModal}
+                >
+                  Hủy
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Đổi mật khẩu
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

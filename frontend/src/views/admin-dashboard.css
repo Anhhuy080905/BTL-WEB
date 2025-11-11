@@ -354,6 +354,14 @@
   background-color: #c8e6c9;
 }
 
+.btn-reset-password {
+  background-color: #fff3e0;
+}
+
+.btn-reset-password:hover {
+  background-color: #ffe0b2;
+}
+
 .btn-delete {
   background-color: #fee;
 }

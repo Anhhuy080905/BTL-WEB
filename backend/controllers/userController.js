@@ -193,6 +193,45 @@ exports.updateUserRole = async (req, res) => {
   }
 };
 
+// @desc    Reset user password (Admin only)
+// @route   PUT /api/users/:id/reset-password
+// @access  Private/Admin
+exports.resetUserPassword = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    // Prevent resetting admin password
+    if (user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Không thể reset mật khẩu tài khoản Admin",
+      });
+    }
+
+    // Set password to 000000
+    user.password = "000000";
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Đã reset mật khẩu về 000000",
+    });
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res.status(500).json({
+      success: false,
+      message: "Không thể reset mật khẩu",
+    });
+  }
+};
+
 // @desc    Delete user (Admin only)
 // @route   DELETE /api/users/:id
 // @access  Private/Admin

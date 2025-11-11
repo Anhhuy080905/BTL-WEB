@@ -120,7 +120,7 @@ const UserDropdown = () => {
           {user.avatar && user.avatar !== "https://via.placeholder.com/150" ? (
             <img
               src={user.avatar}
-              alt={user.username}
+              alt={user.fullName}
               className="user-avatar-img"
             />
           ) : (
@@ -128,7 +128,7 @@ const UserDropdown = () => {
               className="user-avatar-initials"
               style={{ backgroundColor: getAvatarColor(user.role) }}
             >
-              {getInitials(user.username)}
+              {getInitials(user.fullName)}
             </div>
           )}
         </button>
@@ -141,10 +141,10 @@ const UserDropdown = () => {
                 className="user-dropdown-avatar"
                 style={{ backgroundColor: getAvatarColor(user.role) }}
               >
-                {getInitials(user.username)}
+                {getInitials(user.fullName)}
               </div>
               <div className="user-dropdown-info">
-                <div className="user-dropdown-name">{user.username}</div>
+                <div className="user-dropdown-name">{user.fullName}</div>
                 <div className="user-dropdown-email">{user.email}</div>
               </div>
             </div>
