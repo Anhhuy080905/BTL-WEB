@@ -129,7 +129,7 @@ exports.login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Vui lòng nhập email/tên đăng nhập và mật khẩu",
+        message: "Vui lòng nhập tài khoản và mật khẩu",
       });
     }
 
@@ -141,7 +141,7 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Email/tên đăng nhập hoặc mật khẩu không chính xác",
+        message: "Tài khoản hoặc mật khẩu không chính xác",
       });
     }
 
@@ -151,7 +151,7 @@ exports.login = async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        message: "Email hoặc mật khẩu không chính xác",
+        message: "Tài khoản hoặc mật khẩu không chính xác",
       });
     }
 
