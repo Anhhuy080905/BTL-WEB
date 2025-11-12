@@ -22,6 +22,8 @@ import DiscussionChannel from "./views/discussion-channel.jsx";
 import DiscussionListFB from "./views/discussion-list-fb.jsx";
 import AdminDashboard from "./views/admin-dashboard.jsx";
 import NotFound from "./views/not-found.jsx";
+import VolunteerDashboard from "./views/volunteer-dashboard.jsx";
+import ManagerDashboard from "./views/manager-dashboard.jsx";
 
 const App = () => {
   return (
@@ -34,6 +36,12 @@ const App = () => {
         <Route component={Login} exact path="/login" />
         <Route component={Register} exact path="/register" />
         <Route component={Profile} exact path="/profile" />
+        <Route
+          component={VolunteerDashboard}
+          exact
+          path="/volunteer-dashboard"
+        />
+        <Route component={ManagerDashboard} exact path="/manager-dashboard" />
         <Route component={MyEvents} exact path="/my-events" />
         <Route component={EventManagement} exact path="/event-management" />
         <Route component={AdminDashboard} exact path="/admin-dashboard" />
