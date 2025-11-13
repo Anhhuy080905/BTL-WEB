@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const connectDB = require("./config/database");
-const pushSubscriptionRoutes = require('./routes/pushSubscription');
 const { startAllReminderJobs } = require('./jobs/eventReminders');
 
 
@@ -52,7 +51,7 @@ app.use((err, req, res, next) => {
 });
 
 // subscription routes
-app.use('/api/push', pushSubscriptionRoutes);
+app.use('/api/push', require('./routes/pushSubscription'));
 
 // Start server
 app.listen(PORT, () => {

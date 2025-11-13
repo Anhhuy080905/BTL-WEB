@@ -1,6 +1,6 @@
 const Event = require("../models/Event");
 const { createNotification } = require("./notificationController");
-const { sendPushToUser } = require('../utils/pushNotifications')
+const { sendPushToUser } = require('../utils/pushNotification')
 
 // Helper: Lấy ảnh mặc định theo category
 const getDefaultImageByCategory = (category) => {

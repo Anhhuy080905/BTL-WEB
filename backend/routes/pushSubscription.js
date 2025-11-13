@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authorize } = require('../middleware/auth');
 const User = require('../models/User');
 const bodyParser = require('body-parser')
 
 router.use(bodyParser.json())
 
 // Subscribe to push notifications
-router.post('/subscribe', auth, async (req, res) => {
+router.post('/subscribe', authorize, async (req, res) => {
   try {
     const subscription = req.body;
     
@@ -47,7 +47,7 @@ router.post('/subscribe', auth, async (req, res) => {
   }
 });
 
-router.delete('/unsubscribe', auth, async (req, res) => {
+router.delete('/unsubscribe', authorize, async (req, res) => {
   try {
     const { endpoint } = req.body;
     
@@ -74,7 +74,7 @@ router.delete('/unsubscribe', auth, async (req, res) => {
 });
 
 // Update push settings
-router.patch('/settings', auth, async (req, res) => {
+router.patch('/settings', authorize, async (req, res) => {
   try {
     const { enabled, registrationApproved, eventCompleted, newComment, upcomingEvent } = req.body;
     
