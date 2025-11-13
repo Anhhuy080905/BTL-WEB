@@ -143,6 +143,30 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleResetPassword = async (userId) => {
+    showConfirm(
+      "Bạn có chắc muốn reset mật khẩu tài khoản này về 000000?",
+      async () => {
+        try {
+          await adminService.resetUserPassword(userId);
+
+          setNotification({
+            type: "success",
+            title: "Thành công!",
+            message: "Đã reset mật khẩu về 000000!",
+          });
+        } catch (error) {
+          setNotification({
+            type: "error",
+            title: "Lỗi!",
+            message:
+              error.response?.data?.message || "Không thể reset mật khẩu",
+          });
+        }
+      }
+    );
+  };
+
   const handleDeleteUser = async (userId) => {
     showConfirm(
       "Bạn có chắc muốn XÓA tài khoản này? Hành động này không thể hoàn tác!",
@@ -578,13 +602,22 @@ const AdminDashboard = () => {
                               </button>
                             )}
                             {user.role !== "admin" && (
-                              <button
-                                className="btn-action btn-delete"
-                                onClick={() => handleDeleteUser(user._id)}
-                                title="Xóa"
-                              >
-                                🗑️
-                              </button>
+                              <>
+                                <button
+                                  className="btn-action btn-reset-password"
+                                  onClick={() => handleResetPassword(user._id)}
+                                  title="Reset mật khẩu về 000000"
+                                >
+                                  🔑
+                                </button>
+                                <button
+                                  className="btn-action btn-delete"
+                                  onClick={() => handleDeleteUser(user._id)}
+                                  title="Xóa"
+                                >
+                                  🗑️
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
@@ -690,7 +723,6 @@ const AdminDashboard = () => {
                 >
                   <option value="volunteer">Tình nguyện viên</option>
                   <option value="event_manager">Quản lý sự kiện</option>
-                  <option value="admin">Quản trị viên</option>
                 </select>
               </div>
             </div>

@@ -21,12 +21,11 @@ const Login = (props) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Email validation
+    // Username validation
     if (!email) {
-      newErrors.email = "Vui lòng nhập email";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email không hợp lệ";
+      newErrors.email = "Vui lòng nhập tên đăng nhập";
     }
+    // Không validate format vì có thể là username hoặc email
 
     // Password validation
     if (!password) {
@@ -196,13 +195,13 @@ const Login = (props) => {
             >
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
-                  Email hoặc Tên đăng nhập
+                  Tên đăng nhập
                 </label>
                 <input
                   type="text"
                   id="email"
                   className={`form-input ${errors.email ? "error" : ""}`}
-                  placeholder="Nhập email hoặc tên đăng nhập"
+                  placeholder="Nhập tên đăng nhập"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />

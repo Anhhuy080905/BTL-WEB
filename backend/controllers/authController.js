@@ -129,17 +129,19 @@ exports.login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Vui lòng nhập email và mật khẩu",
+        message: "Vui lòng nhập tài khoản và mật khẩu",
       });
     }
 
-    // Tìm user và include password
-    const user = await User.findOne({ email }).select("+password");
+    // Tìm user bằng email hoặc username và include password
+    const user = await User.findOne({
+      $or: [{ email: email }, { username: email }],
+    }).select("+password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Email hoặc mật khẩu không chính xác",
+        message: "Tài khoản hoặc mật khẩu không chính xác",
       });
     }
 
@@ -149,7 +151,7 @@ exports.login = async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        message: "Email hoặc mật khẩu không chính xác",
+        message: "Tài khoản hoặc mật khẩu không chính xác",
       });
     }
 
