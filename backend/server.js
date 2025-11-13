@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const connectDB = require("./config/database");
+const pushSubscriptionRoutes = require('./routes/pushSubscription');
+const { startAllReminderJobs } = require('./jobs/eventReminders');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +50,9 @@ app.use((err, req, res, next) => {
     error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
+
+// subscription routes
+app.use('/api/push', pushSubscriptionRoutes);
 
 // Start server
 app.listen(PORT, () => {

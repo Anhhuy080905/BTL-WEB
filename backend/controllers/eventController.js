@@ -1,5 +1,6 @@
 const Event = require("../models/Event");
 const { createNotification } = require("./notificationController");
+const { sendPushToUser } = require('../utils/pushNotifications')
 
 // Helper: Lấy ảnh mặc định theo category
 const getDefaultImageByCategory = (category) => {
@@ -142,8 +143,15 @@ exports.createEvent = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Tạo sự kiện thành công",
-      data: event,
+      data: event, 
     });
+
+    await sendPushToUser(
+      {
+        title: 'Tạo sự kiện mới',
+        data: {type: 'event', eventId: event._id.toString(), action: 'new'}
+      }
+    )
   } catch (error) {
     console.error("Error in createEvent:", error);
 

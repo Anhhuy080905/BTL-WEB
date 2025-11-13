@@ -76,6 +76,43 @@ const userSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
+
+    pushSubscriptions: [{
+      endpoint: String,
+      keys: {
+        p256dh: String,
+        auth: String
+      },
+      expirationTime: Date,
+      userAgent: String,
+      subscribedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+
+    pushSettings: {
+      enabled: {
+        type: Boolean,
+        default: true
+      },
+      registrationApproved: {
+        type: Boolean,
+        default: true
+      },
+      eventCompleted: {
+        type: Boolean,
+        default: true
+      },
+      newComment: {
+        type: Boolean,
+        default: true
+      },
+      upcomingEvent: {
+        type: Boolean,
+        default: true
+      }
+    }
   },
   {
     timestamps: true, // Tự động tạo createdAt và updatedAt
