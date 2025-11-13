@@ -103,11 +103,13 @@ const ManagerDashboard = () => {
 
   // Pending registrations across all events
   const allPendingRegs = allRegistrations.flatMap((reg) =>
-    (reg.data?.pending || []).map((p) => ({
-      ...p,
-      eventTitle: reg.eventTitle,
-      eventId: reg.eventId,
-    }))
+    (reg.data?.pending || [])
+      .filter((p) => p.user) // Filter out registrations without user data
+      .map((p) => ({
+        ...p,
+        eventTitle: reg.eventTitle,
+        eventId: reg.eventId,
+      }))
   );
 
   // Engagement metrics (events sorted by activity)
@@ -139,6 +141,10 @@ const ManagerDashboard = () => {
   const eventsNeedApproval = allPendingRegs.length;
 
   const handleApprove = async (eventId, userId) => {
+    if (!userId) {
+      alert("Không tìm thấy thông tin người dùng!");
+      return;
+    }
     try {
       await eventsService.approveRegistration(eventId, userId);
       alert("Đã phê duyệt đăng ký!");
@@ -150,6 +156,10 @@ const ManagerDashboard = () => {
   };
 
   const handleReject = async (eventId, userId) => {
+    if (!userId) {
+      alert("Không tìm thấy thông tin người dùng!");
+      return;
+    }
     try {
       await eventsService.rejectRegistration(eventId, userId);
       alert("Đã từ chối đăng ký!");
@@ -297,13 +307,17 @@ const ManagerDashboard = () => {
                     <div className={styles.regActions}>
                       <button
                         className={`${styles.btn} ${styles.btnSuccess} ${styles.btnSm}`}
-                        onClick={() => handleApprove(reg.eventId, reg.user._id)}
+                        onClick={() =>
+                          handleApprove(reg.eventId, reg.user?._id)
+                        }
+                        disabled={!reg.user}
                       >
                         Phê duyệt
                       </button>
                       <button
                         className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
-                        onClick={() => handleReject(reg.eventId, reg.user._id)}
+                        onClick={() => handleReject(reg.eventId, reg.user?._id)}
+                        disabled={!reg.user}
                       >
                         Từ chối
                       </button>

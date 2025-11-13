@@ -461,7 +461,6 @@ const Register = (props) => {
                     <option value="📋 Quản lý sự kiện">
                       📋 Quản lý sự kiện
                     </option>
-                    <option value="⚙️ Admin">⚙️ Admin</option>
                   </select>
                 </div>
                 <p className="form-hint">

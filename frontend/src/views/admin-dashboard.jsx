@@ -723,7 +723,6 @@ const AdminDashboard = () => {
                 >
                   <option value="volunteer">Tình nguyện viên</option>
                   <option value="event_manager">Quản lý sự kiện</option>
-                  <option value="admin">Quản trị viên</option>
                 </select>
               </div>
             </div>
