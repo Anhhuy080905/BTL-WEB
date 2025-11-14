@@ -69,21 +69,8 @@ const DiscussionListFB = () => {
       const eventsMap = {};
       const allPosts = [];
 
-      // Chỉ fetch posts từ events mà user có khả năng cao có quyền truy cập
+      // Fetch posts từ tất cả events mà user có quyền truy cập
       for (const event of allEvents) {
-        // Pre-filter: Chỉ thử fetch nếu:
-        // 1. User là creator, hoặc
-        // 2. Event có registrationStatus = 'approved' (backend trả về)
-        const isCreator =
-          event.creator?._id === currentUserId ||
-          event.createdBy === currentUserId;
-        const hasApprovedStatus = event.registrationStatus === "approved";
-
-        if (!isCreator && !hasApprovedStatus) {
-          // Bỏ qua các events mà user rõ ràng không có quyền
-          continue;
-        }
-
         try {
           const eventPosts = await postsService.getEventPosts(event._id);
           // Nếu fetch thành công, nghĩa là user có quyền truy cập
@@ -435,7 +422,7 @@ const DiscussionListFB = () => {
   };
 
   const getUserName = (user) => {
-    return user?.username || user?.fullName || "Unknown";
+    return user?.fullName || user?.username || "Unknown";
   };
 
   const isLiked = (post) => {

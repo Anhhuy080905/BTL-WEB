@@ -31,6 +31,15 @@ export const eventsService = {
       if (filters.search) {
         params.append("search", filters.search);
       }
+      if (filters.timeRange && filters.timeRange !== "all") {
+        params.append("timeRange", filters.timeRange);
+      }
+      if (filters.startDate) {
+        params.append("startDate", filters.startDate);
+      }
+      if (filters.endDate) {
+        params.append("endDate", filters.endDate);
+      }
 
       const response = await axios.get(`${API_URL}?${params.toString()}`, {
         headers: getAuthHeader(),

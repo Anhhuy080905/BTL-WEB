@@ -21,7 +21,8 @@ const getDefaultImageByCategory = (category) => {
 // Lấy tất cả sự kiện
 exports.getAllEvents = async (req, res) => {
   try {
-    const { category, status, search } = req.query;
+    const { category, status, search, timeRange, startDate, endDate } =
+      req.query;
     let query = {};
 
     // Filter theo category
@@ -32,6 +33,117 @@ exports.getAllEvents = async (req, res) => {
     // Filter theo status
     if (status) {
       query.status = status;
+    }
+
+    // Filter theo thời gian
+    if (timeRange || startDate || endDate) {
+      const now = new Date();
+      let dateQuery = {};
+
+      if (timeRange) {
+        switch (timeRange) {
+          case "today":
+            const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+            const endOfToday = new Date(now.setHours(23, 59, 59, 999));
+            dateQuery = {
+              date: {
+                $gte: startOfToday,
+                $lte: endOfToday,
+              },
+            };
+            break;
+
+          case "week":
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+            dateQuery = {
+              date: {
+                $gte: startOfWeek,
+                $lte: endOfWeek,
+              },
+            };
+            break;
+
+          case "month":
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(
+              now.getFullYear(),
+              now.getMonth() + 1,
+              0,
+              23,
+              59,
+              59,
+              999
+            );
+            dateQuery = {
+              date: {
+                $gte: startOfMonth,
+                $lte: endOfMonth,
+              },
+            };
+            break;
+
+          case "quarter":
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            const startOfQuarter = new Date(
+              now.getFullYear(),
+              currentQuarter * 3,
+              1
+            );
+            const endOfQuarter = new Date(
+              now.getFullYear(),
+              (currentQuarter + 1) * 3,
+              0,
+              23,
+              59,
+              59,
+              999
+            );
+            dateQuery = {
+              date: {
+                $gte: startOfQuarter,
+                $lte: endOfQuarter,
+              },
+            };
+            break;
+
+          case "upcoming":
+            dateQuery = {
+              date: { $gte: now },
+            };
+            break;
+
+          case "past":
+            dateQuery = {
+              date: { $lt: now },
+            };
+            break;
+        }
+      }
+
+      // Custom date range
+      if (startDate && endDate) {
+        dateQuery = {
+          date: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+        };
+      } else if (startDate) {
+        dateQuery = {
+          date: { $gte: new Date(startDate) },
+        };
+      } else if (endDate) {
+        dateQuery = {
+          date: { $lte: new Date(endDate) },
+        };
+      }
+
+      query = { ...query, ...dateQuery };
     }
 
     // Search theo title, location, hoặc description

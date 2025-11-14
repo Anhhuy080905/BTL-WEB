@@ -105,16 +105,16 @@ npm install
 Tạo file `.env` trong thư mục `backend/`:
 
 ```env
-# MongoDB Connection
-MONGODB_URI=mongodb://localhost:27017/volunteerhub
-# hoặc sử dụng MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/volunteerhub
-
-# JWT Secret
-JWT_SECRET=your_very_secure_jwt_secret_key_here
-
-# Server Port
 PORT=5000
+NODE_ENV=development
+
+# MongoDB Connection
+MONGODB_URI=mongodb+srv://anhhuy050908_db_user:Huydz123@volunteerhub.aipwx0f.mongodb.net/volunteerhub?retryWrites=true&w=majority
+
+# JWT Secret (thay đổi thành chuỗi bí mật của bạn)
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRE=7d
+
 ```
 
 #### Chạy Backend
@@ -231,202 +231,194 @@ BTL-WEB/
 └── README.md                     # File này
 ```
 
-## 📡 API Documentation
+## 📡 Các chức năng API
 
-### Base URL
+### Địa chỉ API
 
 ```
 http://localhost:5000/api
 ```
 
-### Authentication Endpoints
+### 🔐 Xác thực tài khoản
 
-#### POST `/auth/register`
+#### Đăng ký tài khoản mới → `/api/auth/register`
 
-Đăng ký tài khoản mới
+Tạo tài khoản mới cho người dùng
 
-**Request Body:**
+**Thông tin cần cung cấp:**
 
 ```json
 {
-  "username": "string",
-  "email": "string",
-  "password": "string",
-  "fullName": "string",
-  "phone": "string"
+  "username": "Tên đăng nhập",
+  "email": "Email của bạn",
+  "password": "Mật khẩu",
+  "fullName": "Họ và tên đầy đủ",
+  "phone": "Số điện thoại"
 }
 ```
 
-#### POST `/auth/login`
+#### Đăng nhập → `/api/auth/login`
 
-Đăng nhập
+Đăng nhập vào hệ thống
 
-**Request Body:**
+**Thông tin cần cung cấp:**
 
 ```json
 {
-  "email": "string",
-  "password": "string"
+  "email": "Email của bạn",
+  "password": "Mật khẩu"
 }
 ```
 
-**Response:**
+**Hệ thống trả về:**
 
 ```json
 {
-  "token": "jwt_token",
+  "token": "Mã xác thực để sử dụng các chức năng khác",
   "user": {
-    "_id": "string",
-    "username": "string",
-    "email": "string",
-    "role": "volunteer|event_manager|admin",
-    "fullName": "string"
+    "_id": "ID người dùng",
+    "username": "Tên đăng nhập",
+    "email": "Email",
+    "role": "Vai trò (volunteer/event_manager/",
+    "fullName": "Họ và tên"
   }
 }
 ```
 
-### Event Endpoints
+### 🎪 Quản lý Sự kiện
 
-#### GET `/events`
+#### Xem tất cả sự kiện → `/api/events` (xem danh sách)
 
-Lấy danh sách tất cả sự kiện (public)
+Xem danh sách tất cả các sự kiện (không cần đăng nhập)
 
-#### GET `/events/my-events`
+#### Xem sự kiện đã đăng ký → `/api/events/my-events` (xem danh sách)
 
-Lấy danh sách sự kiện đã đăng ký (authenticated)
+Xem các sự kiện mình đã đăng ký (cần đăng nhập)
 
-**Headers:**
+#### Xem chi tiết sự kiện → `/api/events/:id` (xem chi tiết)
 
-```
-Authorization: Bearer <token>
-```
+Xem thông tin chi tiết của một sự kiện cụ thể
 
-#### GET `/events/:id`
+#### Tạo sự kiện mới → `/api/events` (gửi dữ liệu tạo mới)
 
-Lấy chi tiết sự kiện
+Tạo sự kiện mới (chỉ dành cho event_manager và admin)
 
-#### POST `/events`
-
-Tạo sự kiện mới (event_manager, admin)
-
-**Request Body:**
+**Thông tin cần cung cấp:**
 
 ```json
 {
-  "title": "string",
-  "description": "string",
-  "date": "ISO8601 date",
-  "location": "string",
-  "category": "string",
-  "maxParticipants": "number",
-  "requirements": ["string"],
-  "benefits": ["string"],
-  "duration": "string"
+  "title": "Tên sự kiện",
+  "description": "Mô tả chi tiết",
+  "date": "Ngày tổ chức",
+  "location": "Địa điểm",
+  "category": "Lĩnh vực",
+  "maxParticipants": "Số người tối đa",
+  "requirements": ["Yêu cầu 1", "Yêu cầu 2"],
+  "benefits": ["Quyền lợi 1", "Quyền lợi 2"],
+  "duration": "Thời lượng"
 }
 ```
 
-#### PUT `/events/:id`
+#### Cập nhật sự kiện → `/api/events/:id` (gửi dữ liệu cập nhật)
 
-Cập nhật sự kiện (creator only)
+Chỉnh sửa thông tin sự kiện (chỉ người tạo mới được sửa)
 
-#### DELETE `/events/:id`
+#### Xóa sự kiện → `/api/events/:id` (yêu cầu xóa)
 
-Xóa sự kiện (creator, admin)
+Xóa sự kiện (người tạo hoặc admin)
 
-#### POST `/events/:id/register`
+#### Đăng ký tham gia → `/api/events/:id/register` (gửi đơn đăng ký)
 
-Đăng ký tham gia sự kiện (volunteer)
+Đăng ký tham gia một sự kiện (dành cho tình nguyện viên)
 
-#### POST `/events/:id/registrations/:registrationId/approve`
+#### Phê duyệt đăng ký → `/api/events/:id/registrations/:registrationId/approve` (xác nhận duyệt)
 
-Phê duyệt đăng ký (event manager)
+Chấp nhận đơn đăng ký (dành cho người quản lý sự kiện)
 
-#### POST `/events/:id/registrations/:registrationId/reject`
+#### Từ chối đăng ký → `/api/events/:id/registrations/:registrationId/reject` (xác nhận từ chối)
 
-Từ chối đăng ký (event manager)
+Từ chối đơn đăng ký (dành cho người quản lý sự kiện)
 
-#### POST `/events/:id/registrations/:registrationId/checkin`
+#### Check-in người tham gia → `/api/events/:id/registrations/:registrationId/checkin` (xác nhận điểm danh)
 
-Check-in cho người tham gia (event manager)
+Điểm danh người tham gia tại sự kiện (dành cho người quản lý)
 
-#### POST `/events/:id/complete`
+#### Đánh dấu hoàn thành → `/api/events/:id/complete` (xác nhận hoàn thành)
 
-Đánh dấu hoàn thành cho tất cả (event manager)
+Đánh dấu tất cả người tham gia đã hoàn thành sự kiện
 
-### User Endpoints
+### 👤 Quản lý Người dùng
 
-#### GET `/users/profile`
+#### Xem thông tin cá nhân → `/api/users/profile` (xem thông tin)
 
-Lấy thông tin profile (authenticated)
+Xem thông tin profile của bản thân
 
-#### PUT `/users/profile`
+#### Cập nhật thông tin → `/api/users/profile` (gửi dữ liệu cập nhật)
 
-Cập nhật profile (authenticated)
+Chỉnh sửa thông tin cá nhân
 
-#### GET `/users` (admin only)
+#### Xem danh sách người dùng → `/api/users` (xem danh sách - chỉ admin)
 
-Lấy danh sách tất cả users
+Xem tất cả người dùng (chỉ admin)
 
-#### POST `/users/:id/make-manager` (admin only)
+#### Cấp quyền quản lý → `/api/users/:id/make-manager` (xác nhận cấp quyền - chỉ admin)
 
-Cấp quyền event_manager
+Nâng cấp người dùng lên event_manager (chỉ admin)
 
-### Post Endpoints
+### 💬 Bài viết và Trao đổi
 
-#### GET `/posts`
+#### Xem tất cả bài viết → `/api/posts` (xem danh sách)
 
-Lấy tất cả posts
+Xem toàn bộ bài viết trong hệ thống
 
-#### GET `/posts/event/:eventId`
+#### Xem bài viết theo sự kiện → `/api/posts/event/:eventId` (xem danh sách)
 
-Lấy posts của 1 sự kiện
+Xem các bài viết của một sự kiện cụ thể
 
-#### POST `/posts`
+#### Tạo bài viết mới → `/api/posts` (gửi dữ liệu tạo mới)
 
-Tạo post mới
+Đăng bài viết mới
 
-**Request Body:**
+**Thông tin cần cung cấp:**
 
 ```json
 {
-  "eventId": "string",
-  "content": "string"
+  "eventId": "ID sự kiện",
+  "content": "Nội dung bài viết"
 }
 ```
 
-#### POST `/posts/:id/like`
+#### Thích/Bỏ thích → `/api/posts/:id/like` (bật/tắt like)
 
-Like/Unlike post
+Bày tỏ cảm xúc với bài viết
 
-#### POST `/posts/:id/comment`
+#### Bình luận → `/api/posts/:id/comment` (gửi bình luận mới)
 
-Thêm comment
-
-**Request Body:**
+**Thông tin cần cung cấp:**
 
 ```json
 {
-  "content": "string"
+  "content": "Nội dung bình luận"
 }
 ```
 
-#### DELETE `/posts/:id`
+#### Xóa bài viết → `/api/posts/:id` (yêu cầu xóa)
 
-Xóa post (owner, admin)
+Xóa bài viết (chủ bài hoặc admin)
 
-### Notification Endpoints
+### 🔔 Thông báo
 
-#### GET `/notifications`
+#### Xem thông báo → `/api/notifications` (xem danh sách)
 
-Lấy danh sách thông báo (authenticated)
+Xem danh sách thông báo của bạn
 
-#### PUT `/notifications/:id/read`
+#### Đánh dấu đã đọc → `/api/notifications/:id/read` (cập nhật trạng thái)
 
-Đánh dấu đã đọc
+Đánh dấu một thông báo đã đọc
 
-#### PUT `/notifications/read-all`
+#### Đánh dấu tất cả đã đọc → `/api/notifications/read-all` (cập nhật trạng thái)
 
-Đánh dấu tất cả đã đọc
+Đánh dấu tất cả thông báo đã đọc
 
 ## 👥 Phân quyền
 
@@ -465,11 +457,13 @@ Lấy danh sách thông báo (authenticated)
 
 ## 📝 License
 
-Dự án này thuộc về nhóm BTL WEB - Trường Đại học Bách Khoa Hà Nội.
+Dự án này thuộc về nhóm BTL WEB - Trường Đại học Công Nghệ - Đại Học Quốc Gia Hà Nội.
 
 ## 👨‍💻 Nhóm phát triển
 
 - **Nguyễn Anh Huy** - [@Anhhuy080905](https://github.com/Anhhuy080905)
+- **Nguyễn Mạnh Hà** - [@Hardiant2802](https://github.com/Hardiant2802)
+- **Đặng Anh Quế** - [@cinnamoll](https://github.com/cinnamoll)
 
 ## 📞 Liên hệ
 

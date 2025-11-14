@@ -27,6 +27,11 @@ const ManagerDashboard = () => {
   // which panel is selected
   const [selectedPanel, setSelectedPanel] = useState(PANEL.OVERVIEW);
 
+  // Time filter
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+
   useEffect(() => {
     fetchData();
     const unsub = eventsService.subscribe(() => fetchData());
@@ -90,13 +95,67 @@ const ManagerDashboard = () => {
   const now = new Date();
   const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
+  // Filter events by time
+  const filteredMyEvents = myEvents.filter((event) => {
+    if (timeFilter === "all") return true;
+
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (timeFilter) {
+      case "today": {
+        const todayEnd = new Date(today);
+        todayEnd.setHours(23, 59, 59, 999);
+        return eventDate >= today && eventDate <= todayEnd;
+      }
+      case "week": {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+      }
+      case "month": {
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          0
+        );
+        endOfMonth.setHours(23, 59, 59, 999);
+        return eventDate >= startOfMonth && eventDate <= endOfMonth;
+      }
+      case "upcoming": {
+        return eventDate >= today;
+      }
+      case "past": {
+        return eventDate < today;
+      }
+      case "custom": {
+        if (!customStartDate && !customEndDate) return true;
+        const start = customStartDate ? new Date(customStartDate) : new Date(0);
+        const end = customEndDate
+          ? new Date(customEndDate)
+          : new Date("2100-01-01");
+        end.setHours(23, 59, 59, 999);
+        return eventDate >= start && eventDate <= end;
+      }
+      default:
+        return true;
+    }
+  });
+
   // Overview stats
-  const totalEvents = myEvents.length;
-  const upcomingEvents = myEvents.filter((e) => e.status === "upcoming").length;
-  const completedEvents = myEvents.filter(
+  const totalEvents = filteredMyEvents.length;
+  const upcomingEvents = filteredMyEvents.filter(
+    (e) => e.status === "upcoming"
+  ).length;
+  const completedEvents = filteredMyEvents.filter(
     (e) => e.status === "completed"
   ).length;
-  const totalParticipants = myEvents.reduce(
+  const totalParticipants = filteredMyEvents.reduce(
     (sum, e) => sum + (e.registered || 0),
     0
   );
@@ -113,7 +172,7 @@ const ManagerDashboard = () => {
   );
 
   // Engagement metrics (events sorted by activity)
-  const eventsWithEngagement = myEvents
+  const eventsWithEngagement = filteredMyEvents
     .map((e) => {
       const reg = allRegistrations.find((r) => r.eventId === e._id);
       const stats = reg?.statistics || {};
@@ -124,12 +183,12 @@ const ManagerDashboard = () => {
     .sort((a, b) => b.engagement - a.engagement);
 
   // Hot events (most registrations)
-  const hotEvents = [...myEvents]
+  const hotEvents = [...filteredMyEvents]
     .sort((a, b) => (b.registered || 0) - (a.registered || 0))
     .slice(0, 5);
 
   // Alerts
-  const upcomingSoonEvents = myEvents.filter((e) => {
+  const upcomingSoonEvents = filteredMyEvents.filter((e) => {
     const eventDate = new Date(e.date);
     return (
       e.status === "upcoming" &&
@@ -222,11 +281,13 @@ const ManagerDashboard = () => {
 
             <div className={styles.eventListSection}>
               <h3>Danh sách sự kiện của bạn</h3>
-              {myEvents.length === 0 ? (
-                <div className={styles.empty}>Bạn chưa tạo sự kiện nào.</div>
+              {filteredMyEvents.length === 0 ? (
+                <div className={styles.empty}>
+                  Không có sự kiện phù hợp với bộ lọc.
+                </div>
               ) : (
                 <div className={styles.eventList}>
-                  {myEvents.slice(0, 6).map((e, i) => (
+                  {filteredMyEvents.slice(0, 6).map((e, i) => (
                     <div key={e._id || i} className={styles.eventItem}>
                       <div className={styles.eventItemHeader}>
                         <h4>{e.title}</h4>
@@ -472,6 +533,89 @@ const ManagerDashboard = () => {
             </div>
           </div>
         </header>
+
+        {/* Time Filter Section */}
+        <div className={styles.timeFilterSection}>
+          <label className={styles.filterLabel}>📅 Lọc theo thời gian:</label>
+          <div className={styles.timeFilterButtons}>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "all" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("all")}
+            >
+              Tất cả
+            </button>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "today" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("today")}
+            >
+              Hôm nay
+            </button>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "week" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("week")}
+            >
+              Tuần này
+            </button>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "month" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("month")}
+            >
+              Tháng này
+            </button>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "upcoming" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("upcoming")}
+            >
+              Sắp diễn ra
+            </button>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "past" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("past")}
+            >
+              Đã qua
+            </button>
+            <button
+              className={`${styles.filterBtnSm} ${
+                timeFilter === "custom" ? styles.active : ""
+              }`}
+              onClick={() => setTimeFilter("custom")}
+            >
+              Tùy chỉnh
+            </button>
+          </div>
+          {timeFilter === "custom" && (
+            <div className={styles.customDateRangeInline}>
+              <div className={styles.dateInputGroupInline}>
+                <label>Từ:</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                />
+              </div>
+              <div className={styles.dateInputGroupInline}>
+                <label>Đến:</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
         <section className={styles.dashboardGridWithSidebar}>
           <nav

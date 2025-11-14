@@ -15,6 +15,9 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedTimeRange, setSelectedTimeRange] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -50,17 +53,39 @@ const Events = () => {
     loadEvents();
   }, []);
 
-  // Load events khi search query hoặc category thay đổi
+  // Load events khi search query hoặc category hoặc timeRange thay đổi
   useEffect(() => {
-    if (debouncedSearchQuery !== "" || selectedCategory !== "all") {
+    if (
+      debouncedSearchQuery !== "" ||
+      selectedCategory !== "all" ||
+      selectedTimeRange !== "all"
+    ) {
       loadEvents();
     }
-  }, [debouncedSearchQuery, selectedCategory]);
+  }, [
+    debouncedSearchQuery,
+    selectedCategory,
+    selectedTimeRange,
+    customStartDate,
+    customEndDate,
+  ]);
 
   const loadEvents = async () => {
     try {
       setSearchLoading(true);
-      const eventsData = await eventsService.getAllEvents();
+      const filters = {
+        category: selectedCategory,
+        search: debouncedSearchQuery,
+        timeRange: selectedTimeRange,
+      };
+
+      // Nếu chọn custom date range
+      if (selectedTimeRange === "custom") {
+        if (customStartDate) filters.startDate = customStartDate;
+        if (customEndDate) filters.endDate = customEndDate;
+      }
+
+      const eventsData = await eventsService.getAllEvents(filters);
       setEvents(eventsData);
     } catch (error) {
       console.error("Error loading events:", error);
@@ -116,9 +141,31 @@ const Events = () => {
   };
 
   const handleViewDetail = (event) => {
+    console.log("Selected event:", event); // Debug log
     setSelectedEvent(event);
     setShowDetailModal(true);
   };
+
+  // Reset scroll khi mở modal
+  useEffect(() => {
+    if (showDetailModal) {
+      // Force scroll về top ngay lập tức nhiều lần
+      const scrollToTop = () => {
+        const modalBody = document.querySelector(".modal-body");
+        if (modalBody) {
+          modalBody.scrollTop = 0;
+        }
+      };
+
+      scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 10);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 100);
+      setTimeout(scrollToTop, 200);
+      setTimeout(scrollToTop, 300);
+    }
+  }, [showDetailModal, selectedEvent]);
 
   const handleRegister = async (eventId) => {
     if (!user) {
@@ -173,16 +220,8 @@ const Events = () => {
     setPendingRegistration(null);
   };
 
-  // Filter events
-  const filteredEvents = events.filter((event) => {
-    const matchCategory =
-      selectedCategory === "all" || event.category === selectedCategory;
-    const matchSearch =
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  // Hiển thị events từ backend (đã được filter)
+  const filteredEvents = events;
 
   if (loading) {
     return (
@@ -306,6 +345,115 @@ const Events = () => {
               >
                 👶 Trẻ em
               </button>
+            </div>
+
+            {/* Time Filter */}
+            <div className="time-filter">
+              <label className="filter-label">📅 Lọc theo thời gian:</label>
+              <div className="time-filter-buttons">
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "all" ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTimeRange("all");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Tất cả
+                </button>
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "today" ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTimeRange("today");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Hôm nay
+                </button>
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "week" ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTimeRange("week");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Tuần này
+                </button>
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "month" ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTimeRange("month");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Tháng này
+                </button>
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "quarter" ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTimeRange("quarter");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Quý này
+                </button>
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "upcoming" ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTimeRange("upcoming");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Sắp tới
+                </button>
+                <button
+                  className={`filter-btn ${
+                    selectedTimeRange === "custom" ? "active" : ""
+                  }`}
+                  onClick={() => setSelectedTimeRange("custom")}
+                >
+                  Tùy chỉnh
+                </button>
+              </div>
+
+              {/* Custom Date Range */}
+              {selectedTimeRange === "custom" && (
+                <div className="custom-date-range">
+                  <div className="date-input-group">
+                    <label>Từ ngày:</label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="date-input-group">
+                    <label>Đến ngày:</label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -436,7 +584,9 @@ const Events = () => {
                       </div>
                     </div>
 
-                    <p className="event-description">{event.description}</p>
+                    <p className="event-description" title={event.description}>
+                      {event.description}
+                    </p>
 
                     <div className="event-actions">
                       <button
@@ -580,44 +730,73 @@ const Events = () => {
         <div
           className="modal-overlay"
           onClick={() => setShowDetailModal(false)}
+          key={selectedEvent.id}
         >
           <div
             className="modal-content modal-large"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>{selectedEvent.title}</h2>
-            </div>
+            <h2
+              style={{
+                margin: "0",
+                padding: "24px 24px 16px 24px",
+                fontSize: "22px",
+                fontWeight: "700",
+                color: "#1a1a1a",
+                borderBottom: "2px solid #e0e0e0",
+                background: "white",
+                borderRadius: "16px 16px 0 0",
+              }}
+            >
+              {selectedEvent.title}
+            </h2>
 
-            <div className="modal-body">
-              <div className="detail-section">
-                <h3>Thông tin chung</h3>
-                <div className="detail-info-grid">
+            <div
+              className="modal-body"
+              ref={(el) => {
+                if (el) {
+                  el.scrollTop = 0;
+                }
+              }}
+            >
+              <div
+                className="detail-section"
+                style={{ display: "block", width: "100%", paddingTop: "8px" }}
+              >
+                <div
+                  className="detail-info-grid"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: "16px",
+                    width: "100%",
+                  }}
+                >
                   <div className="detail-info-item">
-                    <strong>Tổ chức:</strong>
-                    <span>{selectedEvent.organization}</span>
+                    <strong>🏢 Tổ chức:</strong>
+                    <span>{selectedEvent.organization || "Chưa cập nhật"}</span>
                   </div>
                   <div className="detail-info-item">
-                    <strong>Ngày:</strong>
+                    <strong>📅 Ngày:</strong>
                     <span>{formatDate(selectedEvent.date)}</span>
                   </div>
                   <div className="detail-info-item">
-                    <strong>Địa điểm:</strong>
-                    <span>{selectedEvent.location}</span>
+                    <strong>📍 Địa điểm:</strong>
+                    <span>{selectedEvent.location || "Chưa cập nhật"}</span>
                   </div>
                   <div className="detail-info-item">
-                    <strong>Lĩnh vực:</strong>
+                    <strong>🎯 Lĩnh vực:</strong>
                     <span>{getCategoryName(selectedEvent.category)}</span>
                   </div>
                   <div className="detail-info-item">
-                    <strong>Số giờ:</strong>
-                    <span>{selectedEvent.hours} giờ tình nguyện</span>
+                    <strong>⏰ Số giờ:</strong>
+                    <span>{selectedEvent.hours || 0} giờ tình nguyện</span>
                   </div>
                   <div className="detail-info-item">
-                    <strong>Số người:</strong>
+                    <strong>👥 Số người:</strong>
                     <span>
-                      {selectedEvent.registered}/{selectedEvent.maxParticipants}{" "}
-                      người
+                      {selectedEvent.registered || 0}/
+                      {selectedEvent.maxParticipants || 0} người
                     </span>
                   </div>
                 </div>
@@ -625,26 +804,31 @@ const Events = () => {
 
               <div className="detail-section">
                 <h3>Mô tả</h3>
-                <p>{selectedEvent.description}</p>
+                <p>{selectedEvent.description || "Chưa có mô tả"}</p>
               </div>
 
-              <div className="detail-section">
-                <h3>Yêu cầu</h3>
-                <ul className="detail-list">
-                  {selectedEvent.requirements.map((req, index) => (
-                    <li key={index}>{req}</li>
-                  ))}
-                </ul>
-              </div>
+              {selectedEvent.requirements &&
+                selectedEvent.requirements.length > 0 && (
+                  <div className="detail-section">
+                    <h3>Yêu cầu</h3>
+                    <ul className="detail-list">
+                      {selectedEvent.requirements.map((req, index) => (
+                        <li key={index}>{req}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              <div className="detail-section">
-                <h3>Quyền lợi</h3>
-                <ul className="detail-list">
-                  {selectedEvent.benefits.map((benefit, index) => (
-                    <li key={index}>{benefit}</li>
-                  ))}
-                </ul>
-              </div>
+              {selectedEvent.benefits && selectedEvent.benefits.length > 0 && (
+                <div className="detail-section">
+                  <h3>Quyền lợi</h3>
+                  <ul className="detail-list">
+                    {selectedEvent.benefits.map((benefit, index) => (
+                      <li key={index}>{benefit}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">
