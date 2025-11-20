@@ -1,19 +1,30 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { subscribePush, unsubscribePush } = require('../controllers/pushController')
+const {
+  getMyNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  getUnreadCount,
+} = require("../controllers/notificationController");
+const { protect } = require("../middleware/auth");
 
-router.post('/subscribe', subscribePush)
+// Tất cả routes đều cần đăng nhập
+router.use(protect);
 
-router.delete('/unsubscribe', unsubscribePush)
+// Lấy tất cả thông báo
+router.get("/", getMyNotifications);
 
-router.get('/api/vapid-public', (req, res) => {
-  res.send.json({
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY
-  })
-})
+// Lấy số lượng chưa đọc
+router.get("/unread-count", getUnreadCount);
 
-router.get('/test', (req, res) => {
-  res.json({ message: 'Notification route is working!' });
-});
+// Đánh dấu tất cả đã đọc
+router.put("/mark-all-read", markAllAsRead);
+
+// Đánh dấu một thông báo đã đọc
+router.put("/:id/read", markAsRead);
+
+// Xóa thông báo
+router.delete("/:id", deleteNotification);
 
 module.exports = router;

@@ -29,8 +29,10 @@ app.use("/api/auth", require("./routes/authRoutes"));
 // Event routes
 app.use("/api/events", require("./routes/eventRoutes"));
 
-// Notification routes
 app.use("/api/notifications", require("./routes/notificationRoutes"));
+
+// Push routes
+app.use("/api/push", require("./routes/pushRoutes"));
 
 // Post routes (Discussion channel)
 app.use("/api/posts", require("./routes/postRoutes"));
