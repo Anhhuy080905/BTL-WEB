@@ -1540,10 +1540,10 @@
 }
 
 .post-detail-content .modal-body {
-  overflow-y: auto;
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-post {
@@ -1624,8 +1624,10 @@
 .modal-comments {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  overflow-x: hidden;
+  padding: 16px 20px 0 20px;
   background: #f0f2f5;
+  min-height: 0;
 }
 
 .modal-comments h3 {

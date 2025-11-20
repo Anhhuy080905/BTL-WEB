@@ -69,7 +69,8 @@ const DiscussionListFB = () => {
       const eventsMap = {};
       const allPosts = [];
 
-      // Fetch posts từ tất cả events mà user có quyền truy cập
+      // Thử fetch posts từ tất cả events
+      // Backend sẽ kiểm tra quyền và trả về 403 nếu không có quyền
       for (const event of allEvents) {
         try {
           const eventPosts = await postsService.getEventPosts(event._id);
@@ -82,6 +83,10 @@ const DiscussionListFB = () => {
         } catch (err) {
           // Nếu lỗi 403, nghĩa là không có quyền -> bỏ qua event này
           // Silently skip
+          console.log(
+            `Không có quyền truy cập event ${event._id}:`,
+            err.response?.status
+          );
         }
       }
 
@@ -94,8 +99,11 @@ const DiscussionListFB = () => {
 
       allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setPosts(allPosts);
+      console.log(
+        `Đã tải ${allPosts.length} bài viết từ ${accessibleEventIds.length} events`
+      );
     } catch (err) {
-      // Silently handle
+      console.error("Lỗi khi fetch posts:", err);
     } finally {
       setLoading(false);
     }
