@@ -1,6 +1,7 @@
 const Post = require("../models/Post");
 const Event = require("../models/Event");
 const Notification = require("../models/Notification");
+const { sendPushToUser } = require("../utils/pushNotification");
 
 // Kiểm tra quyền truy cập kênh trao đổi
 const checkDiscussionAccess = async (userId, eventId, userRole) => {
@@ -223,7 +224,7 @@ exports.toggleLike = async (req, res) => {
 exports.addComment = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { content, images } = req.body;
+    const { content, images, parentCommentId } = req.body;
 
     if (!content || content.trim().length === 0) {
       return res.status(400).json({
@@ -240,17 +241,22 @@ exports.addComment = async (req, res) => {
       });
     }
 
-    post.comments.push({
+    const newComment = {
       user: req.user._id,
       content,
       images: images || [],
-    });
+    }
+
+    post.comments.push(
+      newComment
+    );
 
     await post.save();
 
+    const justAddedComment = post.comments[post.comments.length - 1]
     console.log(
       "Comment saved with images:",
-      post.comments[post.comments.length - 1].images
+      justAddedComment.images
     );
 
     // Tạo thông báo cho chủ bài viết (nếu không phải tự comment)
@@ -269,6 +275,23 @@ exports.addComment = async (req, res) => {
         relatedUser: req.user._id,
         link: `/discussion-list?postId=${post._id}`,
       });
+
+      await sendPushToUser(post.user, {
+        title: "Có bình luận mới",
+        body: `${req.user.username || req.user.fullName} đã bình luận bài viết của bạn`,
+        url: `/discussion-list?postId=${post._id}`
+      });
+
+      if (parentCommentId) {
+        const parentComment = posts.comments.id(parentCommentId)
+        if (parentComment) {
+          await sendPushToUser(parentComment.user, {
+            title: "Có phản hồi mới",
+            body: `${commenterName} đã trả lời bình luận của bạn`,
+            url: `/discussion-list?postId=${post._id}`
+          })
+        }
+      }
     }
 
     await post.populate([

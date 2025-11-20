@@ -1,6 +1,6 @@
 const Event = require("../models/Event");
 const { createNotification } = require("./notificationController");
-const { sendPushToUser } = require('../utils/pushNotification')
+const { sendPushToUser, sendPushToEventParticipants, NotificationTemplates } = require('../utils/pushNotification');
 
 // Helper: Lấy ảnh mặc định theo category
 const getDefaultImageByCategory = (category) => {
@@ -140,6 +140,19 @@ exports.createEvent = async (req, res) => {
 
     const event = await Event.create(eventData);
 
+    const participants = await Event.find({
+      participants: {
+        $elemMatch: {
+          status: "approved"
+        }
+      }
+    })
+
+    await sendPushToUsers(
+      participants.map(f => f.id),
+      NotificationTemplates.eventCreated(event)
+    )
+
     res.status(201).json({
       success: true,
       message: "Tạo sự kiện thành công",
@@ -216,6 +229,11 @@ exports.updateEvent = async (req, res) => {
         runValidators: true,
       }
     );
+
+    await sendPushToEventParticipants(
+      event._id,
+      NotificationTemplates.eventCompleted(event)
+    )
 
     res.json({
       success: true,
@@ -388,6 +406,12 @@ exports.registerForEvent = async (req, res) => {
           relatedUserId: req.user._id,
           link: `/event-management`,
         });
+
+        await sendPushToUser(userId, {
+          title: "Đăng ký đã được duyệt!",
+          body: `Chúc mừng! Bạn đã được tham gia sự kiện "${event.name}".`,
+          url: `/event/${eventId}`
+        });
       }
     } catch (notifError) {
       // Bỏ qua lỗi notification
@@ -434,6 +458,12 @@ exports.unregisterFromEvent = async (req, res) => {
     // Xóa khỏi danh sách participants
     event.participants.splice(participantIndex, 1);
     event.registered -= 1;
+
+    await sendPushToUser(userId, {
+      title: "Đã hủy đăng ký",
+      body: "Bạn đã hủy đăng ký sự kiện này",
+      url: `/event/${eventId}`
+    });
 
     await event.save();
 
@@ -948,6 +978,12 @@ exports.markAsCompleted = async (req, res) => {
     });
 
     await event.populate("participants.user", "username email");
+
+    await sendPushToUser(participantIds, {
+    title: "Sự kiện đã kết thúc",
+    body: `Cảm ơn bạn đã tham gia "${event.name}"! Hẹn gặp lại.`,
+    url: `/event/${eventId}`
+  });
 
     res.json({
       success: true,

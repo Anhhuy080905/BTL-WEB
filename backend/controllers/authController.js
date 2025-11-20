@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const sendPushToUser = require("../utils/pushNotification")
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -81,6 +82,7 @@ exports.register = async (req, res) => {
         },
         token,
       },
+
     });
   } catch (error) {
     console.error("Register error:", error.message);

@@ -1,99 +1,69 @@
-const webpush = require('web-push')
+const webpush = require("web-push");
+const User = require("../models/User.js");
 
 webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT,
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-)
+  process.env.VAPID_SUBJECT,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
-const sendPushNotification = async(subscription, payload) => {
-    try {
-        await webpush.sendNotification(subscription, JSON.stringify(payload))
-        return { success: true}
-    } catch (error) {
-        console.error(error)
-        if (error.statusCode === 410 || error.statusCode === 404) {
-            return { success: False, expired: True }
-        }
+// Gửi thông báo tới một subscription
+const sendNotification = async (subscription, title, body, data = {}) => {
+  const payload = JSON.stringify({ title, body, ...data });
 
-        return { success: false }
-    }
-}
-
-const sendPushToUser = async (userId, notification) => {
   try {
-    const User = require("../models/User")
-    const user = await User.getUserById(userId)
+    await webpush.sendNotification(subscription, payload);
+    console.log("Push sent:", title);
+  } catch (error) {
+    console.error("Push error:", error);
 
-    if (!user || !user.pushSubscriptions || user.pushSubscriptions.length === 0) {
-      return { success: false, message: "Không tìm thấy đăng ký" }
+    if (error.statusCode === 410 || error.statusCode === 404) {
+      return { expired: true };
     }
+    throw error;
+  }
+  return { expired: false };
+};
 
-    // Check settings
-    const notificationType = notification.type;
-    if (!user.pushSettings.enabled || !user.pushSettings[notificationType]) {
-      return {
-        success: false,
-        message: "Đã tắt cho loại thông báo này",
-      }
-    }
+// Gửi cho nhiều user
+const sendToMany = async (subscriptions, title, body, data = {}) => {
+  const results = await Promise.allSettled(
+    subscriptions.map((sub) =>
+      sendNotification(sub.subscription, title, body, data)
+    )
+  );
+
+  const expiredIndices = results
+    .map((r, i) => (r.status === "fulfilled" && r.value.expired ? i : -1))
+    .filter((i) => i !== -1);
+
+  return expiredIndices;
+};
+
+const sendPushToUser = async (userId, title, body, url = null) => {
+  try {
+    const user = await User.findById(userId).select("pushSubscriptions");
+    if (!user?.pushSubscriptions) return;
 
     const payload = {
-      title: notification.title,
-      body: notification.message,
-      icon: "frontend/public/bell.png",
-      data: {
-        url: notification.link || "/",
-        type: notification.type,
-        ...notification.data,
-      },
+      title,
+      body,
+      icon: "/logo192.png",
+      badge: "/logo192.png",
+      data: url ? { url } : undefined,
     };
 
-    const results = await Promise.all(
-      user.pushSubscriptions.map(async (subscription) => {
-        const result = await sendPushNotification(subscription, payload);
+    const result = await sendNotification(user.pushSubscriptions, payload);
 
-        // Nếu subscription expired, xóa khỏi database
-        if (result.expired) {
-          user.pushSubscriptions = user.pushSubscriptions.filter(
-            (sub) => sub.endpoint !== subscription.endpoint
-          );
-        }
-
-        return result;
-      })
-    );
-
-    // Lưu nếu có subscription bị xóa
-    if (results.some((r) => r.expired)) {
-      await user.save();
+    // Nếu subscription expired → xóa
+    if (result?.expired) {
+      await User.findByIdAndUpdate(userId, {
+        $set: { pushSubscriptions: null },
+      });
     }
-
-    return {
-      success: true,
-      sent: results.filter((r) => r.success).length,
-      failed: results.filter((r) => !r.success).length,
-    };
-  } catch (error) {
-    console.log(error);
-    return { success: false, error: error.message };
+  } catch (err) {
+    console.error("sendPushToUser error:", err);
   }
 };
 
-const sendPushToUsers = async (userIds, notification) => {
-  const results = await Promise.all(
-    userIds.map(userId => sendPushToUser(userId, notification))
-  );
-  
-  return {
-    total: userIds.length,
-    sent: results.filter(r => r.success).length,
-    failed: results.filter(r => !r.success).length
-  };
-};
-
-module.exports = {
-  sendPushNotification,
-  sendPushToUser,
-  sendPushToUsers
-};
+module.exports = { sendNotification, sendToMany, sendPushToUser };
