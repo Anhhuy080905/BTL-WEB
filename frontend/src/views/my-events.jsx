@@ -24,6 +24,12 @@ const MyEvents = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   const fetchData = async () => {
     try {
       // Fetch user profile
@@ -85,6 +91,13 @@ const MyEvents = () => {
   const handleViewDetails = (event) => {
     setSelectedEvent(event);
     setShowDetailModal(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const handleCloseModal = () => {
+    setShowDetailModal(false);
+    setSelectedEvent(null);
+    document.body.style.overflow = "auto";
   };
 
   const handleCancelRegistration = async (eventId) => {
@@ -419,20 +432,14 @@ const MyEvents = () => {
 
       {/* Event Detail Modal */}
       {showDetailModal && selectedEvent && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowDetailModal(false)}
-        >
+        <div className="modal-overlay" onClick={handleCloseModal}>
           <div
             className="modal-content event-detail-modal"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
               <h2>{selectedEvent.title}</h2>
-              <button
-                className="modal-close-btn"
-                onClick={() => setShowDetailModal(false)}
-              >
+              <button className="modal-close-btn" onClick={handleCloseModal}>
                 ×
               </button>
             </div>
@@ -520,10 +527,7 @@ const MyEvents = () => {
             </div>
 
             <div className="modal-footer">
-              <button
-                className="btn btn-outline"
-                onClick={() => setShowDetailModal(false)}
-              >
+              <button className="btn btn-outline" onClick={handleCloseModal}>
                 Đóng
               </button>
             </div>
