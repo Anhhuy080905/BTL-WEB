@@ -39,6 +39,12 @@ const EventsManager = () => {
   }, []);
 
   useEffect(() => {
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
     filterEvents();
   }, [
     events,
@@ -176,6 +182,13 @@ const EventsManager = () => {
   const handleViewDetails = (event) => {
     setSelectedEvent(event);
     setShowDetailModal(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const handleCloseModal = () => {
+    setShowDetailModal(false);
+    setSelectedEvent(null);
+    document.body.style.overflow = "auto";
   };
 
   const getStatusBadge = (status) => {
@@ -472,10 +485,7 @@ const EventsManager = () => {
 
       {/* Detail Modal */}
       {showDetailModal && selectedEvent && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowDetailModal(false)}
-        >
+        <div className="modal-overlay" onClick={handleCloseModal}>
           <div
             className="modal-content modal-large"
             onClick={(e) => e.stopPropagation()}
@@ -570,10 +580,7 @@ const EventsManager = () => {
             </div>
 
             <div className="modal-footer">
-              <button
-                className="btn btn-outline"
-                onClick={() => setShowDetailModal(false)}
-              >
+              <button className="btn btn-outline" onClick={handleCloseModal}>
                 Đóng
               </button>
             </div>
