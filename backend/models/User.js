@@ -76,6 +76,11 @@ const userSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
+
+    pushSubscriptions: {
+      type: Object,
+      default: null
+    },
   },
   {
     timestamps: true, // Tự động tạo createdAt và updatedAt
