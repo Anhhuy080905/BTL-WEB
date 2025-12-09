@@ -331,14 +331,18 @@ const Navigation = (props) => {
                       viewBox="0 0 24 24"
                       aria-hidden="true"
                     >
-                      <path
+                      <g
                         fill="none"
                         stroke="currentColor"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
-                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                      ></path>
+                      >
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </g>
                     </svg>
                   </span>
                   <span>Bảng điều khiển</span>
@@ -356,14 +360,17 @@ const Navigation = (props) => {
                       viewBox="0 0 24 24"
                       aria-hidden="true"
                     >
-                      <path
+                      <g
                         fill="none"
                         stroke="currentColor"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
-                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                      ></path>
+                      >
+                        <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                        <rect x="10" y="8" width="5" height="13" rx="1"></rect>
+                        <rect x="17" y="12" width="5" height="9" rx="1"></rect>
+                      </g>
                     </svg>
                   </span>
                   <span>Bảng điều khiển</span>

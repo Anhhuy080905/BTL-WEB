@@ -114,7 +114,7 @@ const About = (props) => {
           <div className="journey-content">
             <div className="journey-text">
               <p>
-                VolunteerHub được thành lập vào năm 2020 với mong muốn tạo ra
+                VolunteerHub được thành lập vào năm 2025 với mong muốn tạo ra
                 một nền tảng giúp kết nối các tình nguyện viên và các dự án xã
                 hội có ý nghĩa. Chúng tôi tin rằng mọi người đều có thể làm ra
                 những điều tốt đẹp cho cộng đồng khi được tạo điều kiện phù hợp.

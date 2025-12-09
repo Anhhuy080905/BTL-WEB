@@ -18,6 +18,11 @@ const EventsManager = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
+  // Time filter
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+
   const categories = [
     { value: "all", label: "Tất cả", icon: "🌐" },
     { value: "environment", label: "Môi trường", icon: "🌱" },
@@ -35,7 +40,14 @@ const EventsManager = () => {
 
   useEffect(() => {
     filterEvents();
-  }, [events, searchTerm, selectedCategory]);
+  }, [
+    events,
+    searchTerm,
+    selectedCategory,
+    timeFilter,
+    customStartDate,
+    customEndDate,
+  ]);
 
   const fetchUser = async () => {
     try {
@@ -97,6 +109,65 @@ const EventsManager = () => {
           event.location.toLowerCase().includes(search) ||
           event.organization.toLowerCase().includes(search)
       );
+    }
+
+    // Filter by time
+    if (timeFilter !== "all") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      filtered = filtered.filter((event) => {
+        const eventDate = new Date(event.date);
+
+        switch (timeFilter) {
+          case "today": {
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+            return eventDate >= today && eventDate <= todayEnd;
+          }
+          case "week": {
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+            return eventDate >= startOfWeek && eventDate <= endOfWeek;
+          }
+          case "month": {
+            const startOfMonth = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              1
+            );
+            const endOfMonth = new Date(
+              today.getFullYear(),
+              today.getMonth() + 1,
+              0
+            );
+            endOfMonth.setHours(23, 59, 59, 999);
+            return eventDate >= startOfMonth && eventDate <= endOfMonth;
+          }
+          case "upcoming": {
+            return eventDate >= today;
+          }
+          case "past": {
+            return eventDate < today;
+          }
+          case "custom": {
+            if (!customStartDate && !customEndDate) return true;
+            const start = customStartDate
+              ? new Date(customStartDate)
+              : new Date(0);
+            const end = customEndDate
+              ? new Date(customEndDate)
+              : new Date("2100-01-01");
+            end.setHours(23, 59, 59, 999);
+            return eventDate >= start && eventDate <= end;
+          }
+          default:
+            return true;
+        }
+      });
     }
 
     setFilteredEvents(filtered);
@@ -178,6 +249,89 @@ const EventsManager = () => {
               <div className="stat-label">Lượt đăng ký</div>
             </div>
           </div>
+        </div>
+
+        {/* Time Filter Section */}
+        <div className="time-filter-section">
+          <label className="filter-label">📅 Lọc theo thời gian:</label>
+          <div className="time-filter-buttons">
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "all" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("all")}
+            >
+              Tất cả
+            </button>
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "today" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("today")}
+            >
+              Hôm nay
+            </button>
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "week" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("week")}
+            >
+              Tuần này
+            </button>
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "month" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("month")}
+            >
+              Tháng này
+            </button>
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "upcoming" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("upcoming")}
+            >
+              Sắp diễn ra
+            </button>
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "past" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("past")}
+            >
+              Đã qua
+            </button>
+            <button
+              className={`filter-btn-sm ${
+                timeFilter === "custom" ? "active" : ""
+              }`}
+              onClick={() => setTimeFilter("custom")}
+            >
+              Tùy chỉnh
+            </button>
+          </div>
+          {timeFilter === "custom" && (
+            <div className="custom-date-range-inline">
+              <div className="date-input-group-inline">
+                <label>Từ:</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                />
+              </div>
+              <div className="date-input-group-inline">
+                <label>Đến:</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Search and Filter */}
@@ -326,71 +480,98 @@ const EventsManager = () => {
             className="modal-content modal-large"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>{selectedEvent.title}</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowDetailModal(false)}
+            <h2
+              style={{
+                margin: "0",
+                padding: "24px 24px 10px 24px",
+                fontSize: "22px",
+                fontWeight: "700",
+                color: "#1a1a1a",
+                borderBottom: "2px solid #e0e0e0",
+                background: "white",
+                borderRadius: "16px 16px 0 0",
+              }}
+            >
+              {selectedEvent.title}
+            </h2>
+
+            <div
+              className="modal-body"
+              ref={(el) => {
+                if (el) {
+                  el.scrollTop = 0;
+                }
+              }}
+            >
+              <div
+                className="detail-section"
+                style={{ display: "block", width: "100%", paddingTop: "8px" }}
               >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="event-info-grid">
-                <div className="info-item">
-                  <strong>Trạng thái:</strong>
-                  <span
-                    className={`status-badge ${
-                      getStatusBadge(selectedEvent.status).class
-                    }`}
-                  >
-                    {getStatusBadge(selectedEvent.status).text}
-                  </span>
-                </div>
-                <div className="info-item">
-                  <strong>Lĩnh vực:</strong>
-                  <span>{getCategoryLabel(selectedEvent.category)}</span>
-                </div>
-                <div className="info-item">
-                  <strong>Ngày:</strong>
-                  <span>
-                    {new Date(selectedEvent.date).toLocaleDateString("vi-VN")}
-                  </span>
-                </div>
-                <div className="info-item">
-                  <strong>Địa điểm:</strong>
-                  <span>{selectedEvent.location}</span>
-                </div>
-                <div className="info-item">
-                  <strong>Số giờ:</strong>
-                  <span>{selectedEvent.hours} giờ</span>
-                </div>
-                <div className="info-item">
-                  <strong>Đăng ký:</strong>
-                  <span>
-                    {selectedEvent.registered || 0}/
-                    {selectedEvent.maxParticipants}
-                  </span>
+                <div
+                  className="detail-info-grid"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: "16px",
+                    width: "100%",
+                    marginTop: "30px",
+                  }}
+                >
+                  <div className="detail-info-item">
+                    <strong>Tổ chức:</strong>
+                    <span>
+                      {selectedEvent.organization ||
+                        selectedEvent.createdBy?.username ||
+                        "N/A"}
+                    </span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Ngày:</strong>
+                    <span>
+                      {new Date(selectedEvent.date).toLocaleDateString("vi-VN")}
+                    </span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Địa điểm:</strong>
+                    <span>{selectedEvent.location}</span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Lĩnh vực:</strong>
+                    <span>{getCategoryLabel(selectedEvent.category)}</span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Số giờ:</strong>
+                    <span>{selectedEvent.hours} giờ tình nguyện</span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Số người:</strong>
+                    <span>
+                      {selectedEvent.registered || 0}/
+                      {selectedEvent.maxParticipants} người
+                    </span>
+                  </div>
+                  <div className="detail-info-item">
+                    <strong>Trạng thái:</strong>
+                    <span
+                      className={`status-badge ${
+                        getStatusBadge(selectedEvent.status).class
+                      }`}
+                    >
+                      {getStatusBadge(selectedEvent.status).text}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="event-description">
-                <h3>Mô tả sự kiện</h3>
+              <div className="detail-section">
+                <h3>Mô tả</h3>
                 <p>{selectedEvent.description}</p>
-              </div>
-
-              <div className="event-organization-info">
-                <strong>Tổ chức bởi:</strong>{" "}
-                {selectedEvent.organization ||
-                  selectedEvent.createdBy?.username ||
-                  "N/A"}
               </div>
             </div>
 
             <div className="modal-footer">
               <button
-                className="btn btn-secondary"
+                className="btn btn-outline"
                 onClick={() => setShowDetailModal(false)}
               >
                 Đóng

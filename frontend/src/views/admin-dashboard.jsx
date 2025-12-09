@@ -17,6 +17,9 @@ const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
   const [stats, setStats] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -335,11 +338,66 @@ const AdminDashboard = () => {
       user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredEvents = events.filter(
-    (event) =>
+  const filteredEvents = events.filter((event) => {
+    const matchSearch =
       event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchSearch) return false;
+
+    // Time filter
+    if (timeFilter === "all") return true;
+
+    const eventDate = new Date(event.date);
+    const now = new Date();
+
+    switch (timeFilter) {
+      case "today":
+        const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(now.setHours(23, 59, 59, 999));
+        return eventDate >= startOfToday && eventDate <= endOfToday;
+
+      case "week":
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+
+      case "month":
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        );
+        return eventDate >= startOfMonth && eventDate <= endOfMonth;
+
+      case "upcoming":
+        return eventDate >= now;
+
+      case "past":
+        return eventDate < now;
+
+      case "custom":
+        if (customStartDate && customEndDate) {
+          const start = new Date(customStartDate);
+          const end = new Date(customEndDate);
+          end.setHours(23, 59, 59, 999);
+          return eventDate >= start && eventDate <= end;
+        }
+        return true;
+
+      default:
+        return true;
+    }
+  });
 
   const getRoleBadgeClass = (role) => {
     const roleMap = {
@@ -646,6 +704,114 @@ const AdminDashboard = () => {
                 >
                   📥 Xuất CSV
                 </button>
+              </div>
+
+              {/* Time Filter */}
+              <div className="time-filter-section">
+                <label className="filter-label">📅 Lọc theo thời gian:</label>
+                <div className="time-filter-buttons">
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "all" ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      setTimeFilter("all");
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }}
+                  >
+                    Tất cả
+                  </button>
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "today" ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      setTimeFilter("today");
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }}
+                  >
+                    Hôm nay
+                  </button>
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "week" ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      setTimeFilter("week");
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }}
+                  >
+                    Tuần này
+                  </button>
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "month" ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      setTimeFilter("month");
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }}
+                  >
+                    Tháng này
+                  </button>
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "upcoming" ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      setTimeFilter("upcoming");
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }}
+                  >
+                    Sắp tới
+                  </button>
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "past" ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      setTimeFilter("past");
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }}
+                  >
+                    Đã qua
+                  </button>
+                  <button
+                    className={`filter-btn-sm ${
+                      timeFilter === "custom" ? "active" : ""
+                    }`}
+                    onClick={() => setTimeFilter("custom")}
+                  >
+                    Tùy chỉnh
+                  </button>
+                </div>
+
+                {timeFilter === "custom" && (
+                  <div className="custom-date-range-inline">
+                    <div className="date-input-group-inline">
+                      <label>Từ:</label>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div className="date-input-group-inline">
+                      <label>Đến:</label>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="events-grid">

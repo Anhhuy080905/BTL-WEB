@@ -405,11 +405,11 @@ const Profile = () => {
                   <div className="info-grid">
                     <div className="info-item">
                       <label>Tên đăng nhập</label>
-                      <p>{user.fullName}</p>
+                      <p>{user.username}</p>
                     </div>
                     <div className="info-item">
                       <label>Họ và tên</label>
-                      <p>{user.username}</p>
+                      <p>{user.fullName}</p>
                     </div>
                     <div className="info-item">
                       <label>Email</label>
@@ -547,15 +547,15 @@ const Profile = () => {
                     <h2 className="section-title">Chỉnh sửa thông tin</h2>
                     <div className="form-grid">
                       <div className="form-group">
-                        <label htmlFor="username" className="form-label">
+                        <label htmlFor="fullName" className="form-label">
                           Họ và tên
                         </label>
                         <input
                           type="text"
-                          id="username"
-                          name="username"
+                          id="fullName"
+                          name="fullName"
                           className="form-input"
-                          value={formData.username}
+                          value={formData.fullName}
                           onChange={handleInputChange}
                         />
                       </div>

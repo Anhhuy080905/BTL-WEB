@@ -139,6 +139,87 @@
   opacity: 0.9;
 }
 
+/* Time Filter Section */
+.timeFilterSection {
+  background: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e4e6eb;
+}
+
+.filterLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.timeFilterButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterBtnSm {
+  padding: 6px 14px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filterBtnSm:hover {
+  border-color: #1877f2;
+  color: #1877f2;
+  background: #f0f6ff;
+}
+
+.filterBtnSm.active {
+  background: #1877f2;
+  color: white;
+  border-color: #1877f2;
+}
+
+.customDateRangeInline {
+  display: flex;
+  gap: 15px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.dateInputGroupInline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateInputGroupInline label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+}
+
+.dateInputGroupInline input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+
+.dateInputGroupInline input[type="date"]:focus {
+  outline: none;
+  border-color: #1877f2;
+  box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.1);
+}
+
 /* Sidebar Layout */
 .dashboardGridWithSidebar {
   display: grid;
