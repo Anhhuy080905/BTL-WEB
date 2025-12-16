@@ -1,7 +1,12 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+const hpp = require("hpp");
 require("dotenv").config();
 const connectDB = require("./config/database");
+const { apiLimiter } = require("./middleware/security");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -9,10 +14,73 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB
 connectDB();
 
-// Middleware
-app.use(cors());
+// Security Middleware
+// Set security HTTP headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// CORS configuration
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = "CORS policy không cho phép truy cập từ origin này.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Body parser middleware
 app.use(express.json({ limit: "50mb" })); // Tăng giới hạn cho Base64 images
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Data sanitization against XSS
+app.use(xss());
+
+// Prevent HTTP Parameter Pollution
+app.use(
+  hpp({
+    whitelist: [
+      "category",
+      "location",
+      "status",
+      "requiredVolunteers",
+      "sort",
+      "fields",
+    ],
+  })
+);
+
+// Apply rate limiting to all routes
+app.use("/api", apiLimiter);
 
 // Routes
 app.get("/", (req, res) => {

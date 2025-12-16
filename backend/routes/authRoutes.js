@@ -8,14 +8,19 @@ const {
   changePassword,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
+const {
+  loginLimiter,
+  registerLimiter,
+  strictLimiter,
+} = require("../middleware/security");
 
-// Public routes
-router.post("/register", register);
-router.post("/login", login);
+// Public routes với rate limiting
+router.post("/register", registerLimiter, register);
+router.post("/login", loginLimiter, login);
 
 // Protected routes (yêu cầu đăng nhập)
 router.get("/me", protect, getMe);
 router.put("/update", protect, updateProfile);
-router.put("/change-password", protect, changePassword);
+router.put("/change-password", protect, strictLimiter, changePassword);
 
 module.exports = router;
