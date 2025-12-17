@@ -53,15 +53,15 @@ const Events = () => {
     loadEvents();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   // Load events khi search query hoặc category hoặc timeRange thay đổi
   useEffect(() => {
-    if (
-      debouncedSearchQuery !== "" ||
-      selectedCategory !== "all" ||
-      selectedTimeRange !== "all"
-    ) {
-      loadEvents();
-    }
+    loadEvents();
   }, [
     debouncedSearchQuery,
     selectedCategory,
@@ -144,11 +144,19 @@ const Events = () => {
     console.log("Selected event:", event); // Debug log
     setSelectedEvent(event);
     setShowDetailModal(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const handleCloseModal = () => {
+    setShowDetailModal(false);
+    setSelectedEvent(null);
+    document.body.style.overflow = "auto";
   };
 
   // Reset scroll khi mở modal
   useEffect(() => {
     if (showDetailModal) {
+      document.body.style.overflow = "hidden";
       // Force scroll về top ngay lập tức nhiều lần
       const scrollToTop = () => {
         const modalBody = document.querySelector(".modal-body");
@@ -164,8 +172,10 @@ const Events = () => {
       setTimeout(scrollToTop, 100);
       setTimeout(scrollToTop, 200);
       setTimeout(scrollToTop, 300);
+    } else {
+      document.body.style.overflow = "auto";
     }
-  }, [showDetailModal, selectedEvent]);
+  }, [showDetailModal]);
 
   const handleRegister = async (eventId) => {
     if (!user) {
@@ -204,7 +214,7 @@ const Events = () => {
         pendingRegistration._id || pendingRegistration.id
       );
       showToast("Đăng ký thành công! Đang chờ quản lý phê duyệt.", "success");
-      setShowDetailModal(false);
+      handleCloseModal();
       await loadEvents(); // Reload để cập nhật số lượng đã đăng ký
     } catch (error) {
       const errorMessage =
@@ -729,7 +739,7 @@ const Events = () => {
       {showDetailModal && selectedEvent && (
         <div
           className="modal-overlay"
-          onClick={() => setShowDetailModal(false)}
+          onClick={handleCloseModal}
           key={selectedEvent.id}
         >
           <div
@@ -832,10 +842,7 @@ const Events = () => {
             </div>
 
             <div className="modal-footer">
-              <button
-                className="btn btn-outline"
-                onClick={() => setShowDetailModal(false)}
-              >
+              <button className="btn btn-outline" onClick={handleCloseModal}>
                 Đóng
               </button>
               <button

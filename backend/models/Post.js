@@ -82,6 +82,11 @@ const postSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    parentComment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post.comments',
+      default: null
+    },
     comments: [commentSchema],
     createdAt: {
       type: Date,
