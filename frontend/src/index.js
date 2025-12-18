@@ -33,6 +33,15 @@ const Layout = ({ children }) => {
   // Hide Navigation and Footer on login/register pages
   const hideLayout = ["/login", "/register"].includes(location.pathname);
 
+  // Add/remove body padding based on whether navbar is shown
+  React.useEffect(() => {
+    if (hideLayout) {
+      document.body.style.paddingTop = "0";
+    } else {
+      document.body.style.paddingTop = "72px";
+    }
+  }, [hideLayout]);
+
   return (
     <>
       {!hideLayout && <Navigation />}
