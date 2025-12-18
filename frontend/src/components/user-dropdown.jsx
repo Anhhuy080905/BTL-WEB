@@ -254,7 +254,7 @@ const UserDropdown = () => {
               {user.role === "admin" && (
                 <>
                   <Link
-                    to="/my-events"
+                    to="/event-management"
                     className="user-dropdown-item"
                     onClick={() => setIsOpen(false)}
                   >
@@ -274,28 +274,7 @@ const UserDropdown = () => {
                       <line x1="8" y1="2" x2="8" y2="6" />
                       <line x1="3" y1="10" x2="21" y2="10" />
                     </svg>
-                    <span>Hoạt động & Sự kiện</span>
-                  </Link>
-                  <Link
-                    to="/admin"
-                    className="user-dropdown-item"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.25M15.54 15.54l4.24 4.25M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" />
-                    </svg>
-                    <span>Quản trị hệ thống</span>
+                    <span>Quản lý sự kiện</span>
                   </Link>
                 </>
               )}

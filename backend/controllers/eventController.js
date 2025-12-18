@@ -256,33 +256,10 @@ exports.createEvent = async (req, res) => {
 
     const event = await Event.create(eventData);
 
-    const participants = await Event.find({
-      participants: {
-        $elemMatch: {
-          status: "approved",
-        },
-      },
-    });
-
-    // Gửi push notification cho từng participant
-    for (const participant of participants) {
-      await sendPushToUser(
-        participant.id,
-        "Sự kiện mới",
-        `Sự kiện "${event.title}" vừa được tạo`,
-        `/events/${event._id}`
-      );
-    }
-
     res.status(201).json({
       success: true,
       message: "Tạo sự kiện thành công",
       data: event,
-    });
-
-    await sendPushToUser({
-      title: "Tạo sự kiện mới",
-      data: { type: "event", eventId: event._id.toString(), action: "new" },
     });
   } catch (error) {
     console.error("Error in createEvent:", error);

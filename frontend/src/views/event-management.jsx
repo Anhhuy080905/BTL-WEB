@@ -160,6 +160,19 @@ const EventManagement = () => {
     setShowModal(true);
   };
 
+  // Auto scroll và focus khi mở modal
+  React.useEffect(() => {
+    if (showModal) {
+      setTimeout(() => {
+        const titleInput = document.getElementById("title");
+        if (titleInput) {
+          titleInput.focus();
+          titleInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+    }
+  }, [showModal]);
+
   const openEditModal = (event) => {
     setEditingEvent(event);
     setFormData({
@@ -867,21 +880,24 @@ const EventManagement = () => {
       {/* Modal Create/Edit Event */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal-content-form"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h2>{editingEvent ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}</h2>
             </div>
 
-            <form onSubmit={handleSubmit} className="modal-form">
+            <form onSubmit={handleSubmit} className="event-form">
               <div className="form-group">
-                <label htmlFor="title" className="form-label">
+                <label htmlFor="title">
                   Tên sự kiện <span className="required">*</span>
                 </label>
                 <input
                   type="text"
                   id="title"
                   name="title"
-                  className={`form-input ${errors.title ? "error" : ""}`}
+                  className={errors.title ? "error" : ""}
                   value={formData.title}
                   onChange={handleInputChange}
                   placeholder="VD: Chiến dịch trồng cây xanh tại Hà Nội"
@@ -893,14 +909,14 @@ const EventManagement = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="date" className="form-label">
+                  <label htmlFor="date">
                     Ngày tổ chức <span className="required">*</span>
                   </label>
                   <input
                     type="date"
                     id="date"
                     name="date"
-                    className={`form-input ${errors.date ? "error" : ""}`}
+                    className={errors.date ? "error" : ""}
                     value={formData.date}
                     onChange={handleInputChange}
                   />
@@ -910,13 +926,13 @@ const EventManagement = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="category" className="form-label">
+                  <label htmlFor="category">
                     Lĩnh vực <span className="required">*</span>
                   </label>
                   <select
                     id="category"
                     name="category"
-                    className={`form-input ${errors.category ? "error" : ""}`}
+                    className={errors.category ? "error" : ""}
                     value={formData.category}
                     onChange={handleInputChange}
                   >
@@ -935,14 +951,14 @@ const EventManagement = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="location" className="form-label">
+                <label htmlFor="location">
                   Địa điểm <span className="required">*</span>
                 </label>
                 <input
                   type="text"
                   id="location"
                   name="location"
-                  className={`form-input ${errors.location ? "error" : ""}`}
+                  className={errors.location ? "error" : ""}
                   value={formData.location}
                   onChange={handleInputChange}
                   placeholder="VD: Công viên Thống Nhất, Hà Nội"
@@ -954,16 +970,14 @@ const EventManagement = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="maxParticipants" className="form-label">
+                  <label htmlFor="maxParticipants">
                     Số lượng người tham gia <span className="required">*</span>
                   </label>
                   <input
                     type="number"
                     id="maxParticipants"
                     name="maxParticipants"
-                    className={`form-input ${
-                      errors.maxParticipants ? "error" : ""
-                    }`}
+                    className={errors.maxParticipants ? "error" : ""}
                     value={formData.maxParticipants}
                     onChange={handleInputChange}
                     placeholder="VD: 100"
@@ -976,14 +990,14 @@ const EventManagement = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="hours" className="form-label">
+                  <label htmlFor="hours">
                     Số giờ tình nguyện <span className="required">*</span>
                   </label>
                   <input
                     type="number"
                     id="hours"
                     name="hours"
-                    className={`form-input ${errors.hours ? "error" : ""}`}
+                    className={errors.hours ? "error" : ""}
                     value={formData.hours}
                     onChange={handleInputChange}
                     placeholder="VD: 4"
@@ -997,15 +1011,13 @@ const EventManagement = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="description" className="form-label">
+                <label htmlFor="description">
                   Mô tả sự kiện <span className="required">*</span>
                 </label>
                 <textarea
                   id="description"
                   name="description"
-                  className={`form-textarea ${
-                    errors.description ? "error" : ""
-                  }`}
+                  className={errors.description ? "error" : ""}
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="Mô tả chi tiết về sự kiện, mục đích, yêu cầu đối với tình nguyện viên..."
@@ -1023,7 +1035,7 @@ const EventManagement = () => {
                 <div className="alert alert-error">{errors.general}</div>
               )}
 
-              <div className="modal-actions">
+              <div className="form-actions">
                 <button
                   type="button"
                   className="btn btn-outline"
