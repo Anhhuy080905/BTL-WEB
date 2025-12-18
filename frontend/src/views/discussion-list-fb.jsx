@@ -1015,9 +1015,6 @@ const DiscussionListFB = () => {
           <div className="sidebar-section">
             <h3>
               <span>Sự Kiện Của Bạn</span>
-              <span style={{ color: "#1877f2", cursor: "pointer" }}>
-                Xem tất cả
-              </span>
             </h3>
             <div className="event-list">
               {Object.values(events).map((event) => (
