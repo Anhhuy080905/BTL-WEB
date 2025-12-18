@@ -1,7 +1,5 @@
 import React from "react";
 import { Helmet } from "react-helmet";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import "./about.css";
 
 const About = (props) => {
@@ -11,7 +9,6 @@ const About = (props) => {
         <title>Về Chúng Tôi - VolunteerHub</title>
         <meta property="og:title" content="Về Chúng Tôi - VolunteerHub" />
       </Helmet>
-      <Navigation></Navigation>
 
       {/* Hero Section */}
       <section className="about-hero">
@@ -304,8 +301,6 @@ const About = (props) => {
           </div>
         </div>
       </section>
-
-      <Footer></Footer>
     </div>
   );
 };

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import EventCard from "../components/EventCard.jsx";
@@ -232,12 +230,10 @@ const ManagerDashboard = () => {
   if (loading) {
     return (
       <div className={styles.managerDashboardContainer}>
-        <Navigation />
-        <main className={styles.managerLoading}>
+        <main className={styles.dashboardLoading}>
           <div className={styles.spinner} />
           <p>Đang tải thông tin Dashboard...</p>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -504,8 +500,6 @@ const ManagerDashboard = () => {
         <title>Manager Dashboard - VolunteerHub</title>
       </Helmet>
 
-      <Navigation />
-
       <main
         className={`${styles.managerDashboardContainer} ${styles.withSidebar}`}
       >
@@ -696,8 +690,6 @@ const ManagerDashboard = () => {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 };

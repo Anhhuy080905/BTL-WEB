@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import Notification from "../components/Notification.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
@@ -584,12 +582,10 @@ const EventManagement = () => {
   if (loading) {
     return (
       <div className="event-management-container">
-        <Navigation />
         <div className="event-loading">
           <div className="spinner"></div>
           <p>Đang tải...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -604,8 +600,6 @@ const EventManagement = () => {
         <title>Quản Lý Sự Kiện - VolunteerHub</title>
         <meta property="og:title" content="Quản Lý Sự Kiện - VolunteerHub" />
       </Helmet>
-
-      <Navigation />
 
       {confirmDialog.show && (
         <div className="modal-overlay" onClick={handleCancel}>
@@ -1329,8 +1323,6 @@ const EventManagement = () => {
           onClose={() => setNotification(null)}
         />
       )}
-
-      <Footer />
     </div>
   );
 };
