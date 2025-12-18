@@ -130,6 +130,10 @@ const eventSchema = new mongoose.Schema(
         },
       },
     ],
+    reminderSent: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

@@ -1,5 +1,5 @@
 self.addEventListener('push', event => {
-  const data = event.data.json();
+  const data = event.data.json() ?? {};
   const options = {
     body: data.body,
     icon: './public/bell.png',
@@ -31,4 +31,8 @@ self.addEventListener('notificationclick', event => {
       }
     })
   );
+});
+
+self.addEventListener('notificationclose', (event) => {
+  console.log('Notification closed:', event);
 });

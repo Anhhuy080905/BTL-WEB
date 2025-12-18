@@ -276,22 +276,16 @@ exports.addComment = async (req, res) => {
         link: `/discussion-list?postId=${post._id}`,
       });
 
-      await sendPushToUser(post.user, {
-        title: "Có bình luận mới",
-        body: `${req.user.username || req.user.fullName} đã bình luận bài viết của bạn`,
-        url: `/discussion-list?postId=${post._id}`
-      });
+      await sendPushToUser(post.user, "Có bình luận mới", `${req.user.username || req.user.fullName} đã bình luận bài viết của bạn`);
 
-      if (parentCommentId) {
-        const parentComment = posts.comments.id(parentCommentId)
+      const parentComment = post.comments.id(parentCommentId);
         if (parentComment) {
-          await sendPushToUser(parentComment.user, {
-            title: "Có phản hồi mới",
-            body: `${commenterName} đã trả lời bình luận của bạn`,
-            url: `/discussion-list?postId=${post._id}`
-          })
+          await sendPushToUser(
+            parentComment.user,
+            "Có phản hồi mới",
+            `${req.user.username || req.user.fullName} đã trả lời bình luận của bạn`
+          );
         }
-      }
     }
 
     await post.populate([

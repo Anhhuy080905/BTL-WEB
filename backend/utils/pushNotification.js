@@ -2,10 +2,11 @@ const webpush = require("web-push");
 const User = require("../models/User.js");
 
 webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
+  'mailto:your-email@example.com',
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
+
 
 // Gửi thông báo tới một subscription
 const sendNotification = async (subscription, title, body, data = {}) => {

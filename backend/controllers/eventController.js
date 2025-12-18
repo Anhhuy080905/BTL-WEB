@@ -252,31 +252,11 @@ exports.createEvent = async (req, res) => {
 
     const event = await Event.create(eventData);
 
-    const participants = await Event.find({
-      participants: {
-        $elemMatch: {
-          status: "approved"
-        }
-      }
-    })
-
-    await sendPushToUsers(
-      participants.map(f => f.id),
-      NotificationTemplates.eventCreated(event)
-    )
-
     res.status(201).json({
       success: true,
       message: "Tạo sự kiện thành công",
       data: event, 
     });
-
-    await sendPushToUser(
-      {
-        title: 'Tạo sự kiện mới',
-        data: {type: 'event', eventId: event._id.toString(), action: 'new'}
-      }
-    )
   } catch (error) {
     console.error("Error in createEvent:", error);
 
@@ -518,12 +498,6 @@ exports.registerForEvent = async (req, res) => {
           relatedUserId: req.user._id,
           link: `/event-management`,
         });
-
-        await sendPushToUser(userId, {
-          title: "Đăng ký đã được duyệt!",
-          body: `Chúc mừng! Bạn đã được tham gia sự kiện "${event.name}".`,
-          url: `/event/${eventId}`
-        });
       }
     } catch (notifError) {
       // Bỏ qua lỗi notification
@@ -570,12 +544,6 @@ exports.unregisterFromEvent = async (req, res) => {
     // Xóa khỏi danh sách participants
     event.participants.splice(participantIndex, 1);
     event.registered -= 1;
-
-    await sendPushToUser(userId, {
-      title: "Đã hủy đăng ký",
-      body: "Bạn đã hủy đăng ký sự kiện này",
-      url: `/event/${eventId}`
-    });
 
     await event.save();
 
@@ -772,21 +740,31 @@ exports.reviewRegistration = async (req, res) => {
     await event.save();
 
     // Tạo thông báo cho tình nguyện viên
+    const notificationType = status === "approved" ? "registration_approved" : "registration_rejected";
+    const notificationTitle = status === "approved" ? "Đăng ký được phê duyệt" : "Đăng ký bị từ chối";
+    const notificationMessage = status === "approved"
+      ? `Đăng ký của bạn cho sự kiện "${event.title}" đã được phê duyệt. Hãy tham gia đúng giờ!`
+      : `Rất tiếc, đăng ký của bạn cho sự kiện "${event.title}" đã bị từ chối.`;
+
     await createNotification({
       userId: userId,
-      type:
-        status === "approved"
-          ? "registration_approved"
-          : "registration_rejected",
-      title:
-        status === "approved" ? "Đăng ký được phê duyệt" : "Đăng ký bị từ chối",
-      message:
-        status === "approved"
-          ? `Đăng ký của bạn cho sự kiện "${event.title}" đã được phê duyệt. Hãy tham gia đúng giờ!`
-          : `Rất tiếc, đăng ký của bạn cho sự kiện "${event.title}" đã bị từ chối.`,
+      type: notificationType,
+      title: notificationTitle,
+      message: notificationMessage,
       eventId: event._id,
       link: `/my-events`,
     });
+
+    // Gửi push notification
+    try {
+      await sendPushToUser(
+        userId,
+        notificationTitle,
+        notificationMessage
+      );
+    } catch (pushError) {
+      console.error("Push notification error:", pushError);
+    }
 
     // Populate để trả về thông tin đầy đủ
     await event.populate("participants.user", "username email");
