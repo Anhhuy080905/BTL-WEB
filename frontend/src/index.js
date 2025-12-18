@@ -24,6 +24,7 @@ import AdminDashboard from "./views/admin-dashboard.jsx";
 import NotFound from "./views/not-found.jsx";
 import VolunteerDashboard from "./views/volunteer-dashboard.jsx";
 import ManagerDashboard from "./views/manager-dashboard.jsx";
+import { registerServiceWorker } from './utils/pushNotification';
 
 const App = () => {
   return (
@@ -60,3 +61,11 @@ const App = () => {
 };
 
 ReactDOM.render(<App />, document.getElementById("app"));
+
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+  window.addEventListener('load', () => {
+    registerServiceWorker().catch(err => {
+      console.error('Service Worker registration failed:', err);
+    });
+  });
+}
