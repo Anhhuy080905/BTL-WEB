@@ -15,6 +15,8 @@ const urlBase64ToUint8Array = (base64String) => {
   return outputArray;
 };
 
+console.log('✅ pushNotification utils loaded!');
+
 export const subscribePush = async () => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return;
@@ -59,3 +61,9 @@ export const unsubscribePush = async () => {
     console.error('Failed to unsubscribe', err);
   }
 };
+
+export async function registerServiceWorker() {
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    await navigator.serviceWorker.register('/service-worker.js');
+  }
+}

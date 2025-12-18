@@ -7,6 +7,7 @@ import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import { adminService } from "../services/adminService";
 import "./profile.css";
+import PushNotification from './PushNotification';
 
 const Profile = () => {
   const history = useHistory();
@@ -454,6 +455,13 @@ const Profile = () => {
                     {!Object.values(user.interests || {}).some((v) => v) && (
                       <p className="text-muted">Chưa chọn lĩnh vực quan tâm</p>
                     )}
+
+                    <h2 className="section-title">🔔 Cài đặt thông báo đẩy</h2>
+                    <p className="section-description">
+                      Nhận thông báo ngay trên trình duyệt khi có đăng ký được duyệt, 
+                      bình luận mới, hoặc sự kiện sắp diễn ra — ngay cả khi không mở trang web.
+                    </p>
+                    <PushNotification userId={user._id} />
                   </div>
                 </div>
 
