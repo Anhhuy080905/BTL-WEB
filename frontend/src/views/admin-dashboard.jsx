@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation";
-import Footer from "../components/footer";
 import Notification from "../components/Notification";
 import { adminService } from "../services/adminService";
 import { eventsService } from "../services/eventsService";
@@ -420,7 +418,6 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="admin-dashboard-container">
-        <Navigation />
         <div className="admin-loading">
           <div className="spinner"></div>
           <p>Đang tải dữ liệu...</p>
@@ -434,8 +431,6 @@ const AdminDashboard = () => {
       <Helmet>
         <title>Admin Dashboard - VolunteerHub</title>
       </Helmet>
-
-      <Navigation />
 
       {/* Confirm Dialog */}
       {confirmDialog.show && (
@@ -905,8 +900,6 @@ const AdminDashboard = () => {
           onClose={() => setNotification(null)}
         />
       )}
-
-      <Footer />
     </div>
   );
 };

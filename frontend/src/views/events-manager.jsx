@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import { eventsService } from "../services/eventsService";
 import { authAPI } from "../services/api";
 import "./events-manager.css";
@@ -17,6 +15,7 @@ const EventsManager = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const hasFetchedRef = React.useRef(false);
 
   // Time filter
   const [timeFilter, setTimeFilter] = useState("all");
@@ -34,8 +33,12 @@ const EventsManager = () => {
   ];
 
   useEffect(() => {
-    fetchUser();
-    loadEvents();
+    // Chỉ fetch một lần khi component mount để tránh duplicate requests
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchUser();
+      loadEvents();
+    }
   }, []);
 
   useEffect(() => {
@@ -209,12 +212,10 @@ const EventsManager = () => {
   if (loading) {
     return (
       <div className="events-manager-container">
-        <Navigation />
         <div className="events-loading">
           <div className="spinner"></div>
           <p>Đang tải sự kiện...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -228,8 +229,6 @@ const EventsManager = () => {
       <Helmet>
         <title>Danh Sách Sự Kiện - Quản Lý - VolunteerHub</title>
       </Helmet>
-
-      <Navigation />
 
       <div className="events-manager-wrapper">
         {/* Hero Section */}
@@ -587,8 +586,6 @@ const EventsManager = () => {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 };

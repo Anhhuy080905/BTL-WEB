@@ -787,13 +787,21 @@
 
 .navigation-wrapper {
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
-  position: sticky;
+  position: fixed;
+  width: 100%;
   background: var(--color-surface);
   transition: box-shadow 0.3s ease, background 0.3s ease;
   border-bottom: 1px solid
     color-mix(in srgb, var(--color-on-surface) 8%, transparent);
   backdrop-filter: blur(12px);
+}
+
+/* Add padding to main content to prevent it from being hidden under fixed navbar */
+body {
+  padding-top: 72px; /* Height of navbar */
 }
 
 .navigation-container {

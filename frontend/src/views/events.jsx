@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import Notification from "../components/Notification.jsx";
 import Toast from "../components/Toast.jsx";
 import { authAPI } from "../services/api";
@@ -236,12 +234,10 @@ const Events = () => {
   if (loading) {
     return (
       <div className="events-container">
-        <Navigation />
         <div className="events-loading">
           <div className="spinner"></div>
-          <p>Đang tải sự kiện...</p>
+          <p>Đang tải...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -264,8 +260,6 @@ const Events = () => {
           onClose={() => setNotification(null)}
         />
       )}
-
-      <Navigation />
 
       <div className="events-wrapper">
         {/* Hero Section */}
@@ -922,8 +916,6 @@ const Events = () => {
           />
         ))}
       </div>
-
-      <Footer />
     </div>
   );
 };

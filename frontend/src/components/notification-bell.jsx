@@ -14,8 +14,8 @@ const NotificationBell = () => {
     isMountedRef.current = true;
     loadNotifications();
 
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(loadNotifications, 30000);
+    // Poll for new notifications every 60 seconds (giảm từ 30s để tránh rate limit)
+    const interval = setInterval(loadNotifications, 60000);
 
     // Close dropdown when clicking outside
     const handleClickOutside = (event) => {

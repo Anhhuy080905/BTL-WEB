@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Script from "dangerous-html/react";
 import UserDropdown from "./user-dropdown";
 import NotificationBell from "./notification-bell";
@@ -10,6 +10,12 @@ import "./navigation.css";
 const Navigation = (props) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const location = useLocation();
+
+  // Helper function to check if a link is active
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   useEffect(() => {
     // Check if user is logged in and get role
@@ -188,8 +194,10 @@ const Navigation = (props) => {
             </div>
           </Link>
           <div className="navigation-links">
-            <a href="/">
-              <div className="navigation-link">
+            <Link to="/">
+              <div
+                className={`navigation-link ${isActive("/") ? "active" : ""}`}
+              >
                 <span className="navigation-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -210,9 +218,13 @@ const Navigation = (props) => {
                 </span>
                 <span>Trang Chủ</span>
               </div>
-            </a>
-            <a href="/about">
-              <div className="navigation-link">
+            </Link>
+            <Link to="/about">
+              <div
+                className={`navigation-link ${
+                  isActive("/about") ? "active" : ""
+                }`}
+              >
                 <span className="navigation-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -243,9 +255,15 @@ const Navigation = (props) => {
                 </span>
                 <span>Về Chúng Tôi</span>
               </div>
-            </a>
+            </Link>
             <Link to={getEventsUrl()}>
-              <div className="navigation-link">
+              <div
+                className={`navigation-link ${
+                  isActive("/events") || isActive("/events-manager")
+                    ? "active"
+                    : ""
+                }`}
+              >
                 <span className="navigation-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -271,7 +289,11 @@ const Navigation = (props) => {
               </div>
             </Link>
             <Link to="/discussion-list">
-              <div className="navigation-link">
+              <div
+                className={`navigation-link ${
+                  isActive("/discussion-list") ? "active" : ""
+                }`}
+              >
                 <span className="navigation-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -295,7 +317,11 @@ const Navigation = (props) => {
             </Link>
             {userRole === "admin" && (
               <Link to="/admin-dashboard">
-                <div className="navigation-link">
+                <div
+                  className={`navigation-link ${
+                    isActive("/admin-dashboard") ? "active" : ""
+                  }`}
+                >
                   <span className="navigation-link-icon">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -322,7 +348,11 @@ const Navigation = (props) => {
             )}
             {userRole === "volunteer" && (
               <Link to="/volunteer-dashboard">
-                <div className="navigation-link">
+                <div
+                  className={`navigation-link ${
+                    isActive("/volunteer-dashboard") ? "active" : ""
+                  }`}
+                >
                   <span className="navigation-link-icon">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -351,7 +381,11 @@ const Navigation = (props) => {
             )}
             {userRole === "event_manager" && (
               <Link to="/manager-dashboard">
-                <div className="navigation-link">
+                <div
+                  className={`navigation-link ${
+                    isActive("/manager-dashboard") ? "active" : ""
+                  }`}
+                >
                   <span className="navigation-link-icon">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -476,8 +510,14 @@ const Navigation = (props) => {
         </div>
         <div id="navigation-mobile" className="navigation-mobile">
           <div className="navigation-mobile-content">
-            <a href="#hoat-dong">
-              <div className="navigation-mobile-link">
+            <Link to={getEventsUrl()}>
+              <div
+                className={`navigation-mobile-link ${
+                  isActive("/events") || isActive("/events-manager")
+                    ? "active"
+                    : ""
+                }`}
+              >
                 <span className="navigation-mobile-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -501,9 +541,13 @@ const Navigation = (props) => {
                 </span>
                 <span>Hoạt Động</span>
               </div>
-            </a>
+            </Link>
             <Link to="/discussion-list">
-              <div className="navigation-mobile-link">
+              <div
+                className={`navigation-mobile-link ${
+                  isActive("/discussion-list") ? "active" : ""
+                }`}
+              >
                 <span className="navigation-mobile-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -525,8 +569,12 @@ const Navigation = (props) => {
                 <span>Kênh Trao Đổi</span>
               </div>
             </Link>
-            <a href="#ve-chung-toi">
-              <div className="navigation-mobile-link">
+            <Link to="/about">
+              <div
+                className={`navigation-mobile-link ${
+                  isActive("/about") ? "active" : ""
+                }`}
+              >
                 <span className="navigation-mobile-link-icon">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -549,7 +597,7 @@ const Navigation = (props) => {
                 </span>
                 <span>Về Chúng Tôi</span>
               </div>
-            </a>
+            </Link>
             <div className="navigation-mobile-actions">
               {isLoggedIn ? (
                 <div
