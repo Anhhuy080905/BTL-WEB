@@ -16,6 +16,8 @@ const getDefaultImageByCategory = (category) => {
     youth: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400",
     elderly:
       "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=400",
+    disabled:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400",
     healthcare:
       "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400",
     other: "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400",
@@ -503,11 +505,15 @@ exports.registerForEvent = async (req, res) => {
           link: `/event-management`,
         });
 
-        await sendPushToUser(userId, {
-          title: "Đăng ký đã được duyệt!",
-          body: `Chúc mừng! Bạn đã được tham gia sự kiện "${event.name}".`,
-          url: `/event/${eventId}`,
-        });
+        // Gửi Web Push Notification cho Manager
+        await sendPushToUser(
+          event.createdBy,
+          "👤 Có đăng ký mới!",
+          `${
+            req.user.username || req.user.fullName || "Một người dùng"
+          } đã đăng ký tham gia sự kiện "${event.title}"`,
+          `/event-management`
+        );
       }
     } catch (notifError) {
       // Bỏ qua lỗi notification
@@ -771,6 +777,18 @@ exports.reviewRegistration = async (req, res) => {
       eventId: event._id,
       link: `/my-events`,
     });
+
+    // Gửi Web Push Notification
+    await sendPushToUser(
+      userId,
+      status === "approved"
+        ? "✅ Đăng ký được phê duyệt!"
+        : "❌ Đăng ký bị từ chối",
+      status === "approved"
+        ? `Đăng ký của bạn cho sự kiện "${event.title}" đã được phê duyệt. Hãy tham gia đúng giờ!`
+        : `Rất tiếc, đăng ký của bạn cho sự kiện "${event.title}" đã bị từ chối.`,
+      `/my-events`
+    );
 
     // Populate để trả về thông tin đầy đủ
     await event.populate("participants.user", "username email");
@@ -1073,13 +1091,15 @@ exports.markAsCompleted = async (req, res) => {
       link: `/my-events`,
     });
 
-    await event.populate("participants.user", "username email");
+    // Gửi Web Push Notification
+    await sendPushToUser(
+      userId,
+      "🎉 Hoàn thành sự kiện!",
+      `Chúc mừng! Bạn đã hoàn thành sự kiện "${event.title}". Cảm ơn sự đóng góp của bạn!`,
+      `/my-events`
+    );
 
-    await sendPushToUser(participantIds, {
-      title: "Sự kiện đã kết thúc",
-      body: `Cảm ơn bạn đã tham gia "${event.name}"! Hẹn gặp lại.`,
-      url: `/event/${eventId}`,
-    });
+    await event.populate("participants.user", "username email");
 
     res.json({
       success: true,

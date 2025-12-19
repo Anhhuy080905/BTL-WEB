@@ -17,6 +17,21 @@ const NotificationBell = () => {
     // Poll for new notifications every 60 seconds (giảm từ 30s để tránh rate limit)
     const interval = setInterval(loadNotifications, 60000);
 
+    // Lắng nghe message từ Service Worker khi có push notification mới
+    const handleServiceWorkerMessage = (event) => {
+      if (event.data && event.data.type === "NEW_NOTIFICATION") {
+        console.log("🔔 Nhận được push notification, đang reload...");
+        loadNotifications();
+      }
+    };
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener(
+        "message",
+        handleServiceWorkerMessage
+      );
+    }
+
     // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -29,6 +44,12 @@ const NotificationBell = () => {
       isMountedRef.current = false;
       document.removeEventListener("mousedown", handleClickOutside);
       clearInterval(interval);
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.removeEventListener(
+          "message",
+          handleServiceWorkerMessage
+        );
+      }
     };
   }, []);
 
