@@ -541,9 +541,7 @@
   width: 90vw;
   min-width: 800px;
   max-width: 1400px;
-  height: 90vh;
-  min-height: 600px;
-  max-height: 98vh;
+  max-height: 95vh;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
@@ -569,6 +567,7 @@
   padding: 32px;
   border-bottom: 1px solid #e0e0e0;
   flex-shrink: 0;
+  background: white;
 }
 
 .modal-header h2 {
@@ -604,10 +603,35 @@
   padding: 32px;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* Scrollbar styling for modal body */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .event-detail-section {
   margin-bottom: 24px;
+}
+
+.event-detail-section:first-child {
+  margin-top: 16px;
 }
 
 .event-detail-section h3 {
@@ -624,6 +648,9 @@
   margin: 0;
   color: #666;
   line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .event-detail-grid {
@@ -654,6 +681,9 @@
   font-size: 16px;
   color: #333;
   font-weight: 500;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .status-badge {
@@ -690,13 +720,17 @@
 
 @media (max-width: 768px) {
   .modal-content {
-    max-width: 95%;
-    max-height: 90vh;
-    margin: 0 10px;
+    width: 95vw;
+    max-width: 95vw;
+    max-height: 85vh;
   }
 
   .event-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-header {
+    padding: 20px;
   }
 
   .modal-header h2 {
@@ -704,7 +738,7 @@
   }
 
   .modal-body {
-    padding: 16px;
+    padding: 20px;
   }
 
   .modal-footer {
