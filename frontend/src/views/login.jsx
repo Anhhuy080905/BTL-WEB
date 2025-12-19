@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useHistory } from "react-router-dom";
 import Notification from "../components/Notification";
 import { authAPI } from "../services/api";
+import { subscribePush } from "../utils/pushNotification";
 import "./login.css";
 
 const Login = (props) => {
@@ -59,8 +60,31 @@ const Login = (props) => {
       const response = await authAPI.login({ email, password });
 
       if (response.success) {
+        console.log(
+          "✅ Login thành công, bắt đầu đăng ký push notification..."
+        );
+
         // Show success notification
         setShowSuccessNotification(true);
+
+        // Đăng ký push notification sau khi login thành công
+        setTimeout(async () => {
+          try {
+            console.log("🔔 Bắt đầu subscribe push...");
+            const pushResult = await subscribePush();
+            console.log("🔔 Kết quả subscribe:", pushResult);
+            if (pushResult?.success) {
+              console.log("✅ Push notification enabled");
+            } else {
+              console.warn(
+                "⚠️ Push notification không thành công:",
+                pushResult?.message
+              );
+            }
+          } catch (err) {
+            console.error("❌ Lỗi subscribe push:", err);
+          }
+        }, 500);
 
         // Redirect after 1.5 seconds
         setTimeout(() => {
