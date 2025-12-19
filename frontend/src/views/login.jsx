@@ -4,91 +4,17 @@ import { Link, useHistory } from "react-router-dom";
 import Notification from "../components/Notification";
 import { authAPI } from "../services/api";
 import "./login.css";
+import { loginSchema } from "../validation/authSchema";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 const Login = (props) => {
   const history = useHistory();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);;
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [showErrorNotification, setShowErrorNotification] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [notification, setNotification] = useState(null);
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Username validation
-    if (!email) {
-      newErrors.email = "Vui lòng nhập tên đăng nhập";
-    }
-    // Không validate format vì có thể là username hoặc email
-
-    // Password validation
-    if (!password) {
-      newErrors.password = "Vui lòng nhập mật khẩu";
-    } else if (password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    // Luôn ngăn chặn hành vi mặc định của form
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    try {
-      console.log("=== LOGIN SUBMIT ===");
-
-      if (!validateForm()) {
-        console.log("=== VALIDATION FAILED ===");
-        return;
-      }
-
-      setLoading(true);
-      setErrors({});
-
-      const response = await authAPI.login({ email, password });
-
-      if (response.success) {
-        // Show success notification
-        setShowSuccessNotification(true);
-
-        // Redirect after 1.5 seconds
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1500);
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-
-      let message = "Đăng nhập thất bại. Vui lòng thử lại!";
-      if (error.response?.data?.message) {
-        message = error.response.data.message;
-      }
-
-      console.log("=== SHOWING ERROR NOTIFICATION ===", message);
-
-      // Hiển thị error notification
-      setErrorMessage(message);
-      setShowErrorNotification(true);
-
-      // Tự động đóng sau 3 giây
-      setTimeout(() => {
-        setShowErrorNotification(false);
-      }, 3000);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
 
   const handleGoogleLogin = () => {
     // TODO: Implement Google OAuth login
@@ -97,6 +23,46 @@ const Login = (props) => {
       title: "Thông báo",
       message: "Tính năng đăng nhập với Google sẽ được cập nhật sớm!",
     });
+  };
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: {
+      identifier: "",
+      password: "",
+      rememberMe: false,
+    },
+  });
+
+  const onSubmit = async (data) => {
+    try {
+      const submitData = {
+        email: data.identifier,   
+        password: data.password,
+      };
+
+      const response = await authAPI.login(submitData);
+      if (response.success) {
+        setShowSuccessNotification(true);
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      }
+      
+    } catch (error) {
+      const message = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại!";
+      setNotification({
+        type: "error",
+        title: "Đăng nhập thất bại!",
+        message,
+      });
+      setTimeout(() => setNotification(null), 3000);
+    }
   };
 
   return (
@@ -185,29 +151,17 @@ const Login = (props) => {
               Chào mừng bạn trở lại với VolunteerHub
             </p>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleSubmit(e);
-              }}
-              className="login-form"
-            >
+            <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   Tên đăng nhập
                 </label>
                 <input
-                  type="text"
-                  id="email"
-                  className={`form-input ${errors.email ? "error" : ""}`}
-                  placeholder="Nhập tên đăng nhập"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("identifier")}
+                  className={errors.identifier ? "error" : ""}
+                  placeholder="Nhập tên đăng nhập hoặc email"
                 />
-                {errors.email && (
-                  <span className="error-message">{errors.email}</span>
-                )}
+                {errors.identifier && <span className="error-message">{errors.identifier.message}</span>}
               </div>
 
               <div className="form-group">
@@ -217,11 +171,9 @@ const Login = (props) => {
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
-                    id="password"
-                    className={`form-input ${errors.password ? "error" : ""}`}
-                    placeholder="Nhập mật khẩu của bạn"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    {...register("password")}
+                    className={errors.password ? "error" : ""}
+                    placeholder="Nhập mật khẩu"
                   />
                   <button
                     type="button"
@@ -261,18 +213,12 @@ const Login = (props) => {
                     )}
                   </button>
                 </div>
-                {errors.password && (
-                  <span className="error-message">{errors.password}</span>
-                )}
+                {errors.password && <span className="error-message">{errors.password.message}</span>}
               </div>
 
               <div className="form-options">
                 <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
+                  <input type="checkbox" {...register("rememberMe")} />
                   <span>Ghi nhớ đăng nhập</span>
                 </label>
                 <Link to="/forgot-password" className="forgot-password-link">
@@ -280,9 +226,9 @@ const Login = (props) => {
                 </Link>
               </div>
 
-              <button type="submit" className="login-button" disabled={loading}>
-                {loading ? "Đang đăng nhập..." : "Đăng Nhập"}
-                {!loading && (
+              <button type="submit" className="login-button" disabled={isSubmitting}>
+                {isSubmitting ? "Đang đăng nhập..." : "Đăng Nhập"}
+                {!isSubmitting && (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"

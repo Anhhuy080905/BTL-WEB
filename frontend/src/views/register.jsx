@@ -3,264 +3,64 @@ import { Helmet } from "react-helmet";
 import { Link, useHistory } from "react-router-dom";
 import { authAPI } from "../services/api";
 import "./register.css";
+import { registerSchema } from "../validation/authSchema";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 const Register = (props) => {
   const history = useHistory();
-  const [formData, setFormData] = useState({
-    fullName: "",
-    username: "",
-    email: "",
-    phone: "",
-    nationality: "👤 Tình nguyện viên",
-    password: "",
-    confirmPassword: "",
-    birthDate: "",
-    interests: {
-      environment: false,
-      education: false,
-      youth: false,
-      elderly: false,
-      disabled: false,
-      healthcare: false,
-    },
-    agreeTerms: false,
-    agreePrivacy: false,
-  });
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showInfoNotification, setShowInfoNotification] = useState(false);
 
-  // Real-time validation khi user blur khỏi field
-  const validateField = (name, value) => {
-    let error = "";
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isSubmitting },
+    watch,
+    setValue,
+  } = useForm({
+    resolver: yupResolver(registerSchema),
+    mode: "onChange", // validate realtime
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      fullName: "",
+      phone: "",
+      birthDate: "",
+      role: "volunteer", // mặc định tình nguyện viên
+      agreeToTerms: false,
+    },
+  });
 
-    switch (name) {
-      case "fullName":
-        if (!value.trim()) {
-          error = "Vui lòng nhập họ và tên";
-        } else if (value.length < 3) {
-          error = "Họ và tên phải có ít nhất 3 ký tự";
-        } else if (value.length > 50) {
-          error = "Họ và tên không được vượt quá 50 ký tự";
-        }
-        break;
+  const selectedRole = watch("role");
 
-      case "username":
-        if (!value.trim()) {
-          error = "Vui lòng nhập tên đăng nhập";
-        } else if (value.length < 3) {
-          error = "Tên đăng nhập phải có ít nhất 3 ký tự";
-        } else if (value.length > 30) {
-          error = "Tên đăng nhập không được vượt quá 30 ký tự";
-        }
-        break;
-
-      case "email":
-        if (!value) {
-          error = "Vui lòng nhập email";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = "Email không hợp lệ";
-        }
-        break;
-
-      case "phone":
-        if (!value) {
-          error = "Vui lòng nhập số điện thoại";
-        } else if (!/^[0-9]{10,11}$/.test(value)) {
-          error = "Số điện thoại không hợp lệ (10-11 số)";
-        }
-        break;
-
-      case "password":
-        if (!value) {
-          error = "Vui lòng nhập mật khẩu";
-        } else if (value.length < 6) {
-          error = "Mật khẩu phải có ít nhất 6 ký tự";
-        } else if (!/(?=.*[a-z])/.test(value)) {
-          error = "Mật khẩu phải có ít nhất 1 chữ thường";
-        } else if (!/(?=.*[A-Z])/.test(value)) {
-          error = "Mật khẩu phải có ít nhất 1 chữ hoa";
-        } else if (!/(?=.*[0-9])/.test(value)) {
-          error = "Mật khẩu phải có ít nhất 1 số";
-        }
-        break;
-
-      case "confirmPassword":
-        if (!value) {
-          error = "Vui lòng xác nhận mật khẩu";
-        } else if (value !== formData.password) {
-          error = "Mật khẩu xác nhận không khớp";
-        }
-        break;
-
-      case "birthDate":
-        if (!value) {
-          error = "Vui lòng chọn ngày sinh";
-        } else {
-          const age = new Date().getFullYear() - new Date(value).getFullYear();
-          if (age < 13) {
-            error = "Bạn phải từ 13 tuổi trở lên";
-          }
-        }
-        break;
-
-      default:
-        break;
-    }
-
-    return error;
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Full name validation
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Vui lòng nhập tên đăng nhập";
-    } else if (formData.fullName.length < 3) {
-      newErrors.fullName = "Tên đăng nhập phải có ít nhất 3 ký tự";
-    }
-
-    // Username validation
-    if (!formData.username.trim()) {
-      newErrors.username = "Vui lòng nhập họ và tên";
-    }
-
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = "Vui lòng nhập email";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email không hợp lệ";
-    }
-
-    // Phone validation
-    if (!formData.phone) {
-      newErrors.phone = "Vui lòng nhập số điện thoại";
-    } else if (!/^[0-9]{10,11}$/.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại không hợp lệ (10-11 số)";
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Vui lòng nhập mật khẩu";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    }
-
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
-    }
-
-    // Birth date validation
-    if (!formData.birthDate) {
-      newErrors.birthDate = "Vui lòng chọn ngày sinh";
-    }
-
-    // Terms validation
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms = "Bạn phải đồng ý với điều khoản sử dụng";
-    }
-
-    if (!formData.agreePrivacy) {
-      newErrors.agreePrivacy = "Bạn phải đồng ý với chính sách bảo mật";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Real-time validation khi đã touched
-    if (touched[name]) {
-      const error = validateField(name, value);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
-    }
-  };
-
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    setTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-
-    const error = validateField(name, value);
-    setErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }));
-  };
-
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  };
-
-  const handleInterestChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      interests: {
-        ...prev.interests,
-        [name]: checked,
-      },
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data) => {
     setLoading(true);
-    setErrors({});
-
     try {
-      const response = await authAPI.register(formData);
+      // Map role từ text hiển thị về giá trị backend
+      const submitData = {
+        ...data,
+        role: data.role === "volunteer" ? "volunteer" : "event_manager",
+      };
+
+      const response = await authAPI.register(submitData);
 
       if (response.success) {
-        // Xóa token vì chưa đăng nhập
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
-        // Hiển thị notification success
         setShowSuccessNotification(true);
-
-        // Chuyển trang sau 2 giây
         setTimeout(() => {
           history.push("/login");
         }, 2000);
       }
     } catch (error) {
-      if (error.response?.data?.message) {
-        setErrors({ general: error.response.data.message });
-      } else if (error.response?.data?.errors) {
-        setErrors({ general: error.response.data.errors.join(", ") });
-      } else {
-        setErrors({ general: "Đăng ký thất bại. Vui lòng thử lại!" });
-      }
+      // Bạn có thể thêm xử lý lỗi chi tiết hơn nếu backend trả về
+      alert(error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -365,24 +165,18 @@ const Register = (props) => {
               <div className="alert alert-error">{errors.general}</div>
             )}
 
-            <form onSubmit={handleSubmit} className="register-form">
+            <form onSubmit={handleSubmit(onSubmit)} className="register-form" noValidate>
               {/* Tên đăng nhập */}
               <div className="form-group">
                 <label htmlFor="username" className="form-label">
                   Tên đăng nhập
                 </label>
                 <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  className={`form-input ${errors.username ? "error" : ""}`}
-                  placeholder="Nhập tên đăng nhập (3-30 ký tự)"
-                  value={formData.username}
-                  onChange={handleInputChange}
+                  {...register("username")}
+                  className={errors.username ? "error" : ""}
+                  placeholder="Nhập tên đăng nhập"
                 />
-                {errors.username && (
-                  <span className="error-message">{errors.username}</span>
-                )}
+                {errors.username && <span className="error-message">{errors.username.message}</span>}
               </div>
 
               {/* Họ và tên */}
@@ -391,17 +185,11 @@ const Register = (props) => {
                   Họ và tên
                 </label>
                 <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  className={`form-input ${errors.fullName ? "error" : ""}`}
+                  {...register("fullName")}
+                  className={errors.fullName ? "error" : ""}
                   placeholder="Nhập họ và tên đầy đủ"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
                 />
-                {errors.fullName && (
-                  <span className="error-message">{errors.fullName}</span>
-                )}
+                {errors.fullName && <span className="error-message">{errors.fullName.message}</span>}
               </div>
 
               {/* Email */}
@@ -411,16 +199,11 @@ const Register = (props) => {
                 </label>
                 <input
                   type="email"
-                  id="email"
-                  name="email"
-                  className={`form-input ${errors.email ? "error" : ""}`}
-                  placeholder="Nhập địa chỉ email của bạn"
-                  value={formData.email}
-                  onChange={handleInputChange}
+                  {...register("email")}
+                  className={errors.email ? "error" : ""}
+                  placeholder="Nhập email"
                 />
-                {errors.email && (
-                  <span className="error-message">{errors.email}</span>
-                )}
+                {errors.email && <span className="error-message">{errors.email.message}</span>}
               </div>
 
               {/* Số điện thoại */}
@@ -430,16 +213,11 @@ const Register = (props) => {
                 </label>
                 <input
                   type="tel"
-                  id="phone"
-                  name="phone"
-                  className={`form-input ${errors.phone ? "error" : ""}`}
-                  placeholder="Nhập số điện thoại (10-11 số)"
-                  value={formData.phone}
-                  onChange={handleInputChange}
+                  {...register("phone")}
+                  className={errors.phone ? "error" : ""}
+                  placeholder="Ví dụ: 0901234567"
                 />
-                {errors.phone && (
-                  <span className="error-message">{errors.phone}</span>
-                )}
+                {errors.phone && <span className="error-message">{errors.phone.message}</span>}
               </div>
 
               {/* Vai trò */}
@@ -448,19 +226,9 @@ const Register = (props) => {
                   Vai trò
                 </label>
                 <div className="select-wrapper">
-                  <select
-                    id="nationality"
-                    name="nationality"
-                    className="form-input form-select"
-                    value={formData.nationality}
-                    onChange={handleInputChange}
-                  >
-                    <option value="👤 Tình nguyện viên">
-                      👤 Tình nguyện viên
-                    </option>
-                    <option value="📋 Quản lý sự kiện">
-                      📋 Quản lý sự kiện
-                    </option>
+                  <select {...register("role")} className="form-input form-select">
+                    <option value="volunteer">👤 Tình nguyện viên</option>
+                    <option value="event_manager">📋 Quản lý sự kiện</option>
                   </select>
                 </div>
                 <p className="form-hint">
@@ -476,12 +244,9 @@ const Register = (props) => {
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    className={`form-input ${errors.password ? "error" : ""}`}
+                    {...register("password")}
+                    className={errors.password ? "error" : ""}
                     placeholder="Tạo mật khẩu"
-                    value={formData.password}
-                    onChange={handleInputChange}
                   />
                   <button
                     type="button"
@@ -521,9 +286,7 @@ const Register = (props) => {
                     )}
                   </button>
                 </div>
-                {errors.password && (
-                  <span className="error-message">{errors.password}</span>
-                )}
+                {errors.password && <span className="error-message">{errors.password.message}</span>}
               </div>
 
               {/* Xác nhận mật khẩu */}
@@ -534,14 +297,9 @@ const Register = (props) => {
                 <div className="password-input-wrapper">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    className={`form-input ${
-                      errors.confirmPassword ? "error" : ""
-                    }`}
+                    {...register("confirmPassword")}
+                    className={errors.confirmPassword ? "error" : ""}
                     placeholder="Nhập lại mật khẩu"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
                   />
                   <button
                     type="button"
@@ -581,11 +339,7 @@ const Register = (props) => {
                     )}
                   </button>
                 </div>
-                {errors.confirmPassword && (
-                  <span className="error-message">
-                    {errors.confirmPassword}
-                  </span>
-                )}
+                {errors.confirmPassword && <span className="error-message">{errors.confirmPassword.message}</span>}
               </div>
 
               {/* Ngày sinh */}
@@ -595,107 +349,52 @@ const Register = (props) => {
                 </label>
                 <input
                   type="date"
-                  id="birthDate"
-                  name="birthDate"
-                  className={`form-input ${errors.birthDate ? "error" : ""}`}
-                  placeholder="dd/mm/yyyy"
-                  value={formData.birthDate}
-                  onChange={handleInputChange}
+                  {...register("birthDate")}
+                  className={errors.birthDate ? "error" : ""}
+                  max={new Date().toISOString().split("T")[0]}
                 />
-                {errors.birthDate && (
-                  <span className="error-message">{errors.birthDate}</span>
-                )}
+                {errors.birthDate && <span className="error-message">{errors.birthDate.message}</span>}
               </div>
 
               {/* Lĩnh vực quan tâm */}
               <div className="form-group">
-                <label className="form-label">Lĩnh vực quan tâm</label>
+                <label>Lĩnh vực quan tâm (tùy chọn)</label>
                 <div className="interest-grid">
-                  <label className="interest-checkbox">
-                    <input
-                      type="checkbox"
-                      name="environment"
-                      checked={formData.interests.environment}
-                      onChange={handleInterestChange}
-                    />
-                    <span>Môi trường</span>
-                  </label>
-                  <label className="interest-checkbox">
-                    <input
-                      type="checkbox"
-                      name="education"
-                      checked={formData.interests.education}
-                      onChange={handleInterestChange}
-                    />
-                    <span>Giáo dục</span>
-                  </label>
-                  <label className="interest-checkbox">
-                    <input
-                      type="checkbox"
-                      name="youth"
-                      checked={formData.interests.youth}
-                      onChange={handleInterestChange}
-                    />
-                    <span>Y tế</span>
-                  </label>
-                  <label className="interest-checkbox">
-                    <input
-                      type="checkbox"
-                      name="elderly"
-                      checked={formData.interests.elderly}
-                      onChange={handleInterestChange}
-                    />
-                    <span>Người cao tuổi</span>
-                  </label>
-                  <label className="interest-checkbox">
-                    <input
-                      type="checkbox"
-                      name="disabled"
-                      checked={formData.interests.disabled}
-                      onChange={handleInterestChange}
-                    />
-                    <span>Người khuyết tật</span>
-                  </label>
-                  <label className="interest-checkbox">
-                    <input
-                      type="checkbox"
-                      name="healthcare"
-                      checked={formData.interests.healthcare}
-                      onChange={handleInterestChange}
-                    />
-                    <span>Trẻ em</span>
-                  </label>
+                  {["environment", "education", "youth", "elderly", "disabled", "healthcare"].map((field) => (
+                    <label key={field} className="interest-checkbox">
+                      <input
+                        type="checkbox"
+                        {...register(`interests.${field}`)}
+                      />
+                      <span>
+                        {field === "environment" && "🌱 Môi trường"}
+                        {field === "education" && "📚 Giáo dục"}
+                        {field === "youth" && "❤️ Y tế"}
+                        {field === "elderly" && "👴 Người cao tuổi"}
+                        {field === "disabled" && "♿ Người khuyết tật"}
+                        {field === "healthcare" && "👶 Trẻ em"}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
               {/* Terms and Conditions */}
               <div className="form-group">
                 <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="agreeTerms"
-                    checked={formData.agreeTerms}
-                    onChange={handleCheckboxChange}
-                  />
+                  <input type="checkbox" {...register("agreeToTerms")} />
                   <span>
-                    Tôi đồng ý với{" "}
-                    <Link to="/terms" className="link-primary">
-                      Điều khoản sử dụng
-                    </Link>
+                    Tôi đồng ý với <Link to="/terms" className="link-primary">Điều khoản sử dụng</Link>
                   </span>
                 </label>
-                {errors.agreeTerms && (
-                  <span className="error-message">{errors.agreeTerms}</span>
-                )}
+                {errors.agreeToTerms && <span className="error-message">{errors.agreeToTerms.message}</span>}
               </div>
 
               <div className="form-group">
                 <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="agreePrivacy"
-                    checked={formData.agreePrivacy}
-                    onChange={handleCheckboxChange}
+                  <input 
+                    type="checkbox" 
+                    {...register("agreePrivacy")}   // ← Quan trọng: register vào RHF
                   />
                   <span>
                     Tôi đồng ý với{" "}
@@ -705,14 +404,14 @@ const Register = (props) => {
                   </span>
                 </label>
                 {errors.agreePrivacy && (
-                  <span className="error-message">{errors.agreePrivacy}</span>
+                  <span className="error-message">{errors.agreePrivacy.message}</span>
                 )}
               </div>
 
               <button
                 type="submit"
                 className="register-button"
-                disabled={loading}
+                disabled={isSubmitting || !isValid}
               >
                 {loading ? "Đang đăng ký..." : "Đăng Ký"}
                 {!loading && (

@@ -4,7 +4,7 @@ const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const hpp = require("hpp");
-require("dotenv").config();
+require("dotenv").config({ path: '.env.example'});
 const connectDB = require("./config/database");
 const { apiLimiter } = require("./middleware/security");
 
