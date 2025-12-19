@@ -25,6 +25,7 @@ import NotFound from "./views/not-found.jsx";
 import VolunteerDashboard from "./views/volunteer-dashboard.jsx";
 import ManagerDashboard from "./views/manager-dashboard.jsx";
 import { registerServiceWorker } from './utils/pushNotification';
+import EventDetail from "./views/event-detail.jsx";
 
 const App = () => {
   return (
@@ -37,6 +38,7 @@ const App = () => {
         <Route component={Login} exact path="/login" />
         <Route component={Register} exact path="/register" />
         <Route component={Profile} exact path="/profile" />
+        <Route exact path="/events/:slug" component={EventDetail} />
         <Route
           component={VolunteerDashboard}
           exact

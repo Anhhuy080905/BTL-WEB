@@ -125,20 +125,37 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password, email, username } = req.body;
+
+    let loginIdentifier;
+    if (identifier) {
+      loginIdentifier = identifier.trim();
+    } else if (email) {
+      loginIdentifier = email.trim();
+    } else if (username) {
+      loginIdentifier = username.trim();
+    } else {
+      return res.status(400).json({ 
+        success: false,
+        message: "Vui lòng nhập tên đăng nhập hoặc email" 
+      });
+    }
 
     // Validate input
-    if (!email || !password) {
+    if (!password) {
       return res.status(400).json({
         success: false,
-        message: "Vui lòng nhập tài khoản và mật khẩu",
+        message: "Vui lòng nhập mật khẩu",
       });
     }
 
     // Tìm user bằng email hoặc username và include password
     const user = await User.findOne({
-      $or: [{ email: email }, { username: email }],
-    }).select("+password");
+      $or: [
+        { email: loginIdentifier },
+        { username: loginIdentifier }
+      ]
+    }).select('+password');
 
     if (!user) {
       return res.status(401).json({

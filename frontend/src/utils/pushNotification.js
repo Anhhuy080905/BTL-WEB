@@ -31,7 +31,7 @@ export const subscribePush = async () => {
     });
 
     // Gửi subscription lên backend
-    await fetch('/api/notifications/subscribe', {
+    await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export const unsubscribePush = async () => {
     const subscription = await registration.pushManager.getSubscription();
     if (subscription) {
       await subscription.unsubscribe();
-      await fetch('/api/notifications/unsubscribe', {
+      await fetch('/api/push/unsubscribe', {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });

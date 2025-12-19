@@ -1,6 +1,7 @@
 const Event = require("../models/Event");
 const { createNotification } = require("./notificationController");
-const { sendPushToUser, sendPushToEventParticipants, NotificationTemplates } = require('../utils/pushNotification');
+const { sendPushToUser, sendNotification, sendToMany } = require('../utils/pushNotification');
+const slugify = require('slugify');
 
 // Helper: Lấy ảnh mặc định theo category
 const getDefaultImageByCategory = (category) => {
@@ -239,10 +240,26 @@ exports.getEventById = async (req, res) => {
 // Tạo sự kiện mới (chỉ event_manager và admin)
 exports.createEvent = async (req, res) => {
   try {
+    const title = req.body.title
+    let slug = slugify(title, {
+      lower: true,
+      strict: true,  // Loại bỏ ký tự đặc biệt
+      locale: 'vi',   // Hỗ trợ tiếng Việt tốt nhất
+      trim: true
+    });
+
+    let uniqueSlug = slug;
+    let counter = 1;
+    while (await Event.findOne({ slug: uniqueSlug })) {
+      uniqueSlug = `${slug}-${counter}`;
+      counter++;
+    }
+
     const eventData = {
       ...req.body,
       createdBy: req.user._id,
       organization: req.user.username,
+      slug: uniqueSlug
     };
 
     // Nếu không có image, set default image theo category
@@ -313,6 +330,28 @@ exports.updateEvent = async (req, res) => {
       );
     }
 
+    if (req.body.title && req.body.title.trim() !== event.title.trim()) {
+      let baseSlug = slugify(req.body.title, {
+        lower: true,
+        locale: 'vi',     
+        trim: true
+      });
+
+      let slug = baseSlug;
+      let counter = 1;
+      while (true) {
+        const existingEvent = await Event.findOne({
+          slug,
+          _id: { $ne: event._id } 
+        });
+        if (!existingEvent) break;
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+
+      req.body.slug = slug; 
+    }
+
     const updatedEvent = await Event.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -322,9 +361,9 @@ exports.updateEvent = async (req, res) => {
       }
     );
 
-    await sendPushToEventParticipants(
+    await sendToMany(
       event._id,
-      NotificationTemplates.eventCompleted(event)
+      sendNotification.eventCompleted(event)
     )
 
     res.json({

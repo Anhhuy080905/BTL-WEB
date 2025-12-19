@@ -89,6 +89,18 @@ router.put(
   reviewRegistration
 );
 
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const event = await Event.findOne({ slug: req.params.slug }).populate('createdBy participants.user');
+    if (!event) {
+      return res.status(404).json({ message: "Sự kiện không tồn tại" });
+    }
+    res.json({ success: true, data: event });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
 // Routes cho event cụ thể (phải đặt cuối cùng vì dùng /:id)
 router.get("/:id", optionalProtect, getEventById);
 router.post("/:id/register", protect, registerForEvent);

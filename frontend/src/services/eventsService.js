@@ -287,4 +287,9 @@ export const eventsService = {
     listeners.add(callback);
     return () => listeners.delete(callback);
   },
+
+  getEventBySlug: async (slug) => {
+    const response = await axios.get(`/api/events/slug/${slug}`);
+    return response.data;
+  },
 };

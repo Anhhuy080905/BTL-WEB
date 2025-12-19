@@ -762,6 +762,11 @@ const EventManagement = () => {
                         onClick={() => handleViewRegistrations(event)}
                         title="Xem danh sách đăng ký"
                       >
+                        <Link 
+                          to={`/events/${event.slug}`}
+                          className="btn btn-info"
+                          title="Xem chi tiết sự kiện"
+                        ></Link>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="18"

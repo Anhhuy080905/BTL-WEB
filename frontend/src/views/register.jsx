@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet";
 import { Link, useHistory } from "react-router-dom";
 import { authAPI } from "../services/api";
 import "./register.css";
+import { registerSchema } from '../validation/authSchema';
 
 const Register = (props) => {
   const history = useHistory();
@@ -178,19 +179,17 @@ const Register = (props) => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    const newValue = type === "checkbox" ? checked : value;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: newValue,
     }));
 
-    // Real-time validation khi đã touched
+    // Nếu đã touched thì validate ngay
     if (touched[name]) {
-      const error = validateField(name, value);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
+      validateField(name, newValue);
     }
   };
 
@@ -216,6 +215,18 @@ const Register = (props) => {
     }));
   };
 
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ""); // Chỉ giữ số
+    if (value.length > 11) value = value.slice(0, 11);
+    if (value && !value.startsWith("0")) value = "0" + value.slice(0, 10);
+
+    setFormData((prev) => ({ ...prev, phone: value }));
+
+    if (touched.phone) {
+      validateField("phone", value);
+    }
+  };
+
   const handleInterestChange = (e) => {
     const { name, checked } = e.target;
     setFormData((prev) => ({
@@ -229,37 +240,36 @@ const Register = (props) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
     setErrors({});
+    setLoading(true);
 
     try {
-      const response = await authAPI.register(formData);
+      // Validate toàn bộ form bằng Yup
+      await registerSchema.validate(formData, { abortEarly: false });
+
+      // Gọi API đăng ký
+      const response = await authAPI.register({
+        ...formData,
+        role: formData.nationality.includes("Quản lý") ? "event_manager" : "volunteer",
+      });
 
       if (response.success) {
-        // Xóa token vì chưa đăng nhập
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-
-        // Hiển thị notification success
         setShowSuccessNotification(true);
-
-        // Chuyển trang sau 2 giây
         setTimeout(() => {
           history.push("/login");
         }, 2000);
       }
-    } catch (error) {
-      if (error.response?.data?.message) {
-        setErrors({ general: error.response.data.message });
-      } else if (error.response?.data?.errors) {
-        setErrors({ general: error.response.data.errors.join(", ") });
+    } catch (err) {
+      if (err.inner) {
+        // Lỗi validation từ Yup
+        const validationErrors = {};
+        err.inner.forEach((error) => {
+          validationErrors[error.path] = error.message;
+        });
+        setErrors(validationErrors);
       } else {
-        setErrors({ general: "Đăng ký thất bại. Vui lòng thử lại!" });
+        // Lỗi từ server
+        setErrors({ general: err.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!" });
       }
     } finally {
       setLoading(false);
@@ -368,28 +378,23 @@ const Register = (props) => {
             <form onSubmit={handleSubmit} className="register-form">
               {/* Tên đăng nhập */}
               <div className="form-group">
-                <label htmlFor="username" className="form-label">
-                  Tên đăng nhập
-                </label>
+                <label htmlFor="username" className="form-label">Tên đăng nhập <span className="required">*</span></label>
                 <input
                   type="text"
                   id="username"
                   name="username"
                   className={`form-input ${errors.username ? "error" : ""}`}
-                  placeholder="Nhập tên đăng nhập (3-30 ký tự)"
+                  placeholder="Nhập tên đăng nhập"
                   value={formData.username}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                 />
-                {errors.username && (
-                  <span className="error-message">{errors.username}</span>
-                )}
+                {errors.username && <span className="error-message">{errors.username}</span>}
               </div>
 
               {/* Họ và tên */}
               <div className="form-group">
-                <label htmlFor="fullName" className="form-label">
-                  Họ và tên
-                </label>
+                <label htmlFor="fullName" className="form-label">Họ và tên <span className="required">*</span></label>
                 <input
                   type="text"
                   id="fullName"
@@ -398,48 +403,41 @@ const Register = (props) => {
                   placeholder="Nhập họ và tên đầy đủ"
                   value={formData.fullName}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                 />
-                {errors.fullName && (
-                  <span className="error-message">{errors.fullName}</span>
-                )}
+                {errors.fullName && <span className="error-message">{errors.fullName}</span>}
               </div>
 
               {/* Email */}
               <div className="form-group">
-                <label htmlFor="email" className="form-label">
-                  Email
-                </label>
+                <label htmlFor="email" className="form-label">Email <span className="required">*</span></label>
                 <input
                   type="email"
                   id="email"
                   name="email"
                   className={`form-input ${errors.email ? "error" : ""}`}
-                  placeholder="Nhập địa chỉ email của bạn"
+                  placeholder="example@gmail.com"
                   value={formData.email}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                 />
-                {errors.email && (
-                  <span className="error-message">{errors.email}</span>
-                )}
+                {errors.email && <span className="error-message">{errors.email}</span>}
               </div>
 
               {/* Số điện thoại */}
               <div className="form-group">
-                <label htmlFor="phone" className="form-label">
-                  Số điện thoại (tùy chọn)
-                </label>
+                <label htmlFor="phone" className="form-label">Số điện thoại</label>
                 <input
                   type="tel"
                   id="phone"
                   name="phone"
                   className={`form-input ${errors.phone ? "error" : ""}`}
-                  placeholder="Nhập số điện thoại (10-11 số)"
+                  placeholder="0xxxxxxxxx"
                   value={formData.phone}
-                  onChange={handleInputChange}
+                  onChange={handlePhoneChange}
+                  onBlur={handleBlur}
                 />
-                {errors.phone && (
-                  <span className="error-message">{errors.phone}</span>
-                )}
+                {errors.phone && <span className="error-message">{errors.phone}</span>}
               </div>
 
               {/* Vai trò */}

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const slugify = require('slugify')
 
 const eventSchema = new mongoose.Schema(
   {
@@ -91,6 +92,11 @@ const eventSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    slug: {
+      type: String,
+      unique: true,  // Đảm bảo không trùng (MongoDB tạo index unique)
+      lowercase: true,
     },
     participants: [
       {

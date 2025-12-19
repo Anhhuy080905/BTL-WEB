@@ -8,6 +8,7 @@ import { eventsService } from "../services/eventsService";
 import { adminService } from "../services/adminService";
 import "./profile.css";
 import PushNotification from './PushNotification';
+import { profileSchema } from '../validation/profileSchema';
 
 const Profile = () => {
   const history = useHistory();
@@ -148,12 +149,20 @@ const Profile = () => {
       if (response.success) {
         setUser(response.data.user);
         setFormData({
+          fullName: response.data.user.fullName || "",
           username: response.data.user.username || "",
           phone: response.data.user.phone || "",
           birthDate: response.data.user.birthDate
             ? response.data.user.birthDate.split("T")[0]
             : "",
-          interests: response.data.user.interests || {},
+          interests: response.data.user.interests || {
+            environment: false,
+            education: false,
+            youth: false,
+            elderly: false,
+            disabled: false,
+            healthcare: false,
+          },
         });
       }
     } catch (error) {
@@ -185,13 +194,53 @@ const Profile = () => {
     }));
   };
 
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ''); // Chỉ giữ lại số (xóa ký tự không phải số)
+
+    // Giới hạn tối đa 10 chữ số
+    if (value.length > 10) {
+      value = value.slice(0, 10);
+    }
+
+    // Tự động thêm số 0 ở đầu nếu người dùng nhập không có (ví dụ: 912345678 → 0912345678)
+    if (value.length > 0 && !value.startsWith('0')) {
+      value = '0' + value;
+      // Nếu thêm 0 mà vượt 10 chữ số thì cắt bớt
+      if (value.length > 10) value = value.slice(0, 10);
+    }
+
+    // Cập nhật formData
+    setFormData((prev) => ({
+      ...prev,
+      phone: value,
+    }));
+
+    // Clear error phone nếu có (tùy chọn, giống event-management)
+    if (errors.phone) {
+      setErrors((prev) => ({
+        ...prev,
+        phone: undefined,
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
     setSuccessMessage("");
 
     try {
-      const response = await authAPI.updateProfile(formData);
+      // VALIDATION CLIENT-SIDE BẰNG YUP
+      await profileSchema.validate(formData, { abortEarly: false });
+
+      // Nếu validation pass → gọi API update
+      const response = await authAPI.updateProfile({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        birthDate: formData.birthDate,
+        interests: formData.interests,
+      });
+
       if (response.success) {
         setUser(response.data.user);
         setSuccessMessage("Cập nhật thông tin thành công!");
@@ -199,11 +248,19 @@ const Profile = () => {
         setTimeout(() => setSuccessMessage(""), 3000);
       }
     } catch (error) {
-      console.error("Update error:", error);
-      if (error.response?.data?.message) {
-        setErrors({ general: error.response.data.message });
+      if (error.inner) {
+        // Lỗi từ Yup validation
+        const validationErrors = {};
+        error.inner.forEach((err) => {
+          validationErrors[err.path] = err.message;
+        });
+        setErrors(validationErrors);
       } else {
-        setErrors({ general: "Cập nhật thất bại. Vui lòng thử lại!" });
+        // Lỗi từ API (server)
+        console.error("Update error:", error);
+        setErrors({
+          general: error.response?.data?.message || "Cập nhật thất bại. Vui lòng thử lại!",
+        });
       }
     }
   };
@@ -556,16 +613,18 @@ const Profile = () => {
                     <div className="form-grid">
                       <div className="form-group">
                         <label htmlFor="fullName" className="form-label">
-                          Họ và tên
+                          Họ và tên <span className="required">*</span>
                         </label>
                         <input
                           type="text"
                           id="fullName"
                           name="fullName"
-                          className="form-input"
-                          value={formData.fullName}
+                          className={`form-input ${errors.fullName ? "error" : ""}`}
+                          value={formData.fullName || ""}
                           onChange={handleInputChange}
+                          required
                         />
+                        {errors.fullName && <span className="error-text">{errors.fullName}</span>}
                       </div>
 
                       <div className="form-group">
@@ -573,13 +632,16 @@ const Profile = () => {
                           Số điện thoại
                         </label>
                         <input
-                          type="tel"
+                          type="tel"  // Tốt hơn là dùng type="tel" cho mobile keyboard số
                           id="phone"
                           name="phone"
-                          className="form-input"
-                          value={formData.phone}
-                          onChange={handleInputChange}
+                          className={`form-input ${errors.phone ? "error" : ""}`}
+                          value={formData.phone || ""}  // Đảm bảo không undefined
+                          onChange={handlePhoneChange}  // ← THAY ĐỔI CHÍNH Ở ĐÂY (thay vì handleInputChange)
+                          placeholder="VD: 0912345678"
+                          maxLength="10"  // Giới hạn hiển thị
                         />
+                        {errors.phone && <span className="error-text">{errors.phone}</span>}
                       </div>
 
                       <div className="form-group">
@@ -590,10 +652,11 @@ const Profile = () => {
                           type="date"
                           id="birthDate"
                           name="birthDate"
-                          className="form-input"
-                          value={formData.birthDate}
+                          className={`form-input ${errors.birthDate ? "error" : ""}`}
+                          value={formData.birthDate || ""}
                           onChange={handleInputChange}
                         />
+                        {errors.birthDate && <span className="error-text">{errors.birthDate}</span>}
                       </div>
                     </div>
                   </div>

@@ -52,7 +52,7 @@ const PushNotificationSettings = ({ userId }) => {
     }
     setLoading(true);
     try {
-      await fetch('/api/notifications/test', {
+      await fetch('/api/push/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),

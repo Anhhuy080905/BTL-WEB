@@ -4,6 +4,7 @@ import { Link, useHistory } from "react-router-dom";
 import Notification from "../components/Notification";
 import { authAPI } from "../services/api";
 import "./login.css";
+import { loginSchema } from '../validation/authSchema';
 
 const Login = (props) => {
   const history = useHistory();
@@ -17,6 +18,10 @@ const Login = (props) => {
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [notification, setNotification] = useState(null);
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: "",
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -38,53 +43,91 @@ const Login = (props) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Nếu đã blur qua field thì validate realtime
+    if (touched[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const validateField = async (name, value) => {
+    try {
+      await loginSchema.validateAt(name, { [name]: value });
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, [name]: err.message }));
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Xóa lỗi khi người dùng nhập lại
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const handleSubmit = async (e) => {
-    // Luôn ngăn chặn hành vi mặc định của form
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+    e.preventDefault();
+    setErrors({});
+    setLoading(true);
+
+    // Validation cơ bản (có thể dùng Yup nếu muốn)
+    if (!formData.identifier.trim()) {
+      setErrors({ identifier: "Tên đăng nhập hoặc Email là bắt buộc" });
+      setLoading(false);
+      return;
+    }
+    if (!formData.password) {
+      setErrors({ password: "Mật khẩu là bắt buộc" });
+      setLoading(false);
+      return;
     }
 
     try {
-      console.log("=== LOGIN SUBMIT ===");
+      // Xác định đây là email hay username
+      const isEmail = formData.identifier.includes("@");
 
-      if (!validateForm()) {
-        console.log("=== VALIDATION FAILED ===");
-        return;
+      let loginPayload;
+      if (isEmail) {
+        loginPayload = {
+          email: formData.identifier.trim(),
+          password: formData.password,
+        };
+      } else {
+        loginPayload = {
+          username: formData.identifier.trim(),
+          password: formData.password,
+        };
       }
 
-      setLoading(true);
-      setErrors({});
-
-      const response = await authAPI.login({ email, password });
+      // Gọi API login (giả sử authAPI.login nhận cả email hoặc username)
+      const response = await authAPI.login(loginPayload);
 
       if (response.success) {
-        // Show success notification
-        setShowSuccessNotification(true);
-
-        // Redirect after 1.5 seconds
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1500);
+        // Lưu token và redirect
+        localStorage.setItem("token", response.data.token);
+        // Có thể lưu thêm user info nếu cần
+        history.push("/"); // hoặc dashboard phù hợp
       }
     } catch (error) {
       console.error("Login error:", error);
 
-      let message = "Đăng nhập thất bại. Vui lòng thử lại!";
+      let errorMsg = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
+
       if (error.response?.data?.message) {
-        message = error.response.data.message;
+        errorMsg = error.response.data.message;
       }
 
-      console.log("=== SHOWING ERROR NOTIFICATION ===", message);
-
-      // Hiển thị error notification
-      setErrorMessage(message);
-      setShowErrorNotification(true);
-
-      // Tự động đóng sau 3 giây
-      setTimeout(() => {
-        setShowErrorNotification(false);
-      }, 3000);
+      setErrors({ general: errorMsg });
     } finally {
       setLoading(false);
     }
@@ -179,49 +222,38 @@ const Login = (props) => {
             Về trang chủ
           </Link>
 
-          <div className="login-form-container">
-            <h1 className="login-title">Đăng Nhập</h1>
-            <p className="login-subtitle">
-              Chào mừng bạn trở lại với VolunteerHub
-            </p>
+            <div className="login-form-container">
+              <h1 className="login-title">Đăng Nhập</h1>
+              <p className="login-subtitle">Chào mừng bạn trở lại với VolunteerHub</p>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleSubmit(e);
-              }}
-              className="login-form"
-            >
-              <div className="form-group">
-                <label htmlFor="email" className="form-label">
-                  Tên đăng nhập
-                </label>
-                <input
-                  type="text"
-                  id="email"
-                  className={`form-input ${errors.email ? "error" : ""}`}
-                  placeholder="Nhập tên đăng nhập"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {errors.email && (
-                  <span className="error-message">{errors.email}</span>
-                )}
-              </div>
+              <form onSubmit={handleSubmit} className="login-form">
+                <div className="form-group">
+                  <label>Tên đăng nhập hoặc Email *</label>
+                  <input
+                    type="text"
+                    name="identifier"
+                    value={formData.identifier}
+                    onChange={handleInputChange}
+                    className={`form-input ${errors.identifier ? "error" : ""}`}
+                    placeholder="Nhập username hoặc email"
+                    autoFocus
+                  />
+                  {errors.identifier && <span className="error-text">{errors.identifier}</span>}
+                </div>
 
               <div className="form-group">
                 <label htmlFor="password" className="form-label">
-                  Mật khẩu
+                  Mật khẩu <span className="required">*</span>
                 </label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     className={`form-input ${errors.password ? "error" : ""}`}
-                    placeholder="Nhập mật khẩu của bạn"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mật khẩu"
+                    required
                   />
                   <button
                     type="button"
@@ -229,41 +261,19 @@ const Login = (props) => {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                     )}
                   </button>
                 </div>
-                {errors.password && (
-                  <span className="error-message">{errors.password}</span>
-                )}
+                {errors.password && <span className="error-message">{errors.password}</span>}
               </div>
 
               <div className="form-options">

@@ -15,8 +15,20 @@ router.get('/vapid-public', (req, res) => {
   })
 })
 
-router.get('/test', (req, res) => {
-  res.json({ message: 'Notification route is working!' });
+router.post('/test', async (req, res) => {
+  const { userId } = req.body;
+  try {
+    const payload = {
+      title: 'Test Push Notification',
+      body: '🎉 Push notification từ VolunteerHub đang hoạt động!',
+      icon: '/logo192.png'
+    };
+    await sendPushNotification(userId, payload, 'test');
+    res.json({ message: 'Test notification sent' });
+  } catch (err) {
+    console.error('Test push error:', err);
+    res.status(500).json({ error: 'Test failed' });
+  }
 });
 
 module.exports = router;
