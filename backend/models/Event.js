@@ -95,7 +95,6 @@ const eventSchema = new mongoose.Schema(
     },
     slug: { 
       type: String, 
-      required: true, 
       unique: true, 
     },
     participants: [
@@ -153,9 +152,9 @@ eventSchema.pre('save', async function(next) {
     let slug = baseSlug;
     let counter = 1;
     
-    while (await mongoose.model('Event').findOne({ 
-      slug, 
-      _id: { $ne: this._id } 
+    while (await this.constructor.findOne({ 
+      slug: slug, 
+      _id: { $ne: this._id }
     })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
@@ -170,7 +169,6 @@ eventSchema.statics.findBySlug = function(slug) {
     .populate('createdBy', 'fullName email organization')
     .populate('registrations.user', 'fullName email avatar');
 };
-eventSchema.index({ slug: 1 });
 
 // Index để tăng performance
 eventSchema.index({ category: 1, status: 1 });

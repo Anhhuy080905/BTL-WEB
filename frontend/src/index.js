@@ -73,7 +73,7 @@ const App = () => {
           <Route component={EventManagement} exact path="/event-management" />
           <Route component={AdminDashboard} exact path="/admin-dashboard" />
           <Route component={DiscussionListFB} exact path="/discussion-list" />
-          <Route path="/events/:id/:slug?" component={Events} /> 
+          <Route path="/events/:slug?" component={Events} /> 
           <Route
             component={DiscussionChannel}
             exact

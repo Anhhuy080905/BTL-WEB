@@ -81,7 +81,7 @@ const Events = () => {
         const correctSlug = foundEvent.slug || "";
         if (slug !== correctSlug) {
             const eventId = foundEvent._id || foundEvent.id;
-            history.replace(`/events/${eventId}/${correctSlug}`);
+            history.replace(`/events//${correctSlug}`);
         }
       }
     }
