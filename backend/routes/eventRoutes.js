@@ -18,8 +18,7 @@ const {
   markAsCompleted,
   undoCompleted,
   exportEvents,
-  getEventSlug,
-  registerWithSlug
+  getEvent
 } = require("../controllers/eventController");
 const { protect, authorize, optionalProtect } = require("../middleware/auth");
 const { isValidSlug } = require('../utils/slugUtils');
@@ -92,12 +91,8 @@ router.put(
   reviewRegistration
 );
 
-router.get('/slug/:slug', getEventSlug);
-router.post('/slug/:slug/register', protect, registerWithSlug);
-router.delete('/slug/:slug/unregister', protect, unregisterWithSlug);
-
 // Routes cho event cụ thể (phải đặt cuối cùng vì dùng /:id)
-router.get("/:id", optionalProtect, getEventById);
+router.get("/:id", optionalProtect, getEvent);
 router.post("/:id/register", protect, registerForEvent);
 router.delete("/:id/unregister", protect, unregisterFromEvent);
 router.put("/:id", protect, authorize("event_manager", "admin"), updateEvent);

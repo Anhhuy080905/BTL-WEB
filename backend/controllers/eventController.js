@@ -520,7 +520,9 @@ const performEventRegistration = async (req, res, event) => {
 // Đăng ký tham gia sự kiện
 exports.registerForEvent = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
+    const { id } = req.params;
+    const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
+    const event = await Event.findOne(query);    
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -1282,40 +1284,6 @@ exports.exportEvents = async (req, res) => {
   }
 };
 
-exports.getEventSlug = async(req, res) => {
-  try {
-    const title = req.body.title;
-    const slug = slugify(title, { lower: true, locale: 'vi' });
-    
-    if (!isValidSlug(slug)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Slug không hợp lệ'
-      });
-    }
-    
-    const event = await Event.findBySlug(slug);
-    
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy sự kiện'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: event
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi server',
-      error: error.message
-    });
-  }
-}
-
 exports.registerWithSlug = async (req, res) => {
   try {
     const title = req.body.title;
@@ -1376,6 +1344,59 @@ exports.unregisterWithSlug = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Lỗi server khi hủy đăng ký bằng slug",
+    });
+  }
+};
+
+exports.getEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let query;
+
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      query = { _id: id };
+    } else {
+      query = { slug: id };
+    }
+
+    const event = await Event.findOne(query)
+      .populate("createdBy", "username email")
+      .populate("participants.user", "username email");
+
+    // Xử lý khi không tìm thấy
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sự kiện",
+      });
+    }
+
+    let eventData = event.toObject();
+    
+    if (req.user) {
+      const userRegistration = event.participants.find(
+        (p) => p.user._id.toString() === req.user._id.toString()
+      );
+
+      if (userRegistration) {
+        eventData.userRegistrationStatus = userRegistration.status;
+      } else {
+        eventData.userRegistrationStatus = null;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: eventData,
+    });
+
+  } catch (error) {
+    console.error("Error in getEvent:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy thông tin sự kiện",
+      error: error.message,
     });
   }
 };

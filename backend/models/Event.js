@@ -93,11 +93,10 @@ const eventSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    slug: {
-      type: String,
-      unique: true,
-      lowercase: true,
-      index: true
+    slug: { 
+      type: String, 
+      required: true, 
+      unique: true, 
     },
     participants: [
       {
