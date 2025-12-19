@@ -5,6 +5,7 @@ const {
   sendPushToEventParticipants,
   NotificationTemplates,
 } = require("../utils/pushNotification");
+const { isValidSlug } = require('../utils/slugUtils');
 
 // Helper: Lấy ảnh mặc định theo category
 const getDefaultImageByCategory = (category) => {
@@ -201,6 +202,12 @@ exports.getAllEvents = async (req, res) => {
 // Lấy sự kiện theo ID
 exports.getEventById = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.redirect(301, `/api/events/slug/${id}`);
+    }
+
     const event = await Event.findById(req.params.id)
       .populate("createdBy", "username email")
       .populate("participants.user", "username email");
@@ -395,19 +402,8 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
-// Đăng ký tham gia sự kiện
-exports.registerForEvent = async (req, res) => {
+const performEventRegistration = async (req, res, event) => {
   try {
-    const event = await Event.findById(req.params.id);
-
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy sự kiện",
-      });
-    }
-
-    // Check xem user có đủ thông tin không
     if (!req.user || !req.user._id) {
       return res.status(401).json({
         success: false,
@@ -446,7 +442,7 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
-    // Check status - chỉ cho phép đăng ký sự kiện sắp diễn ra
+    // Check status
     if (event.status !== "upcoming") {
       return res.status(400).json({
         success: false,
@@ -454,7 +450,7 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
-    // Check ngày sự kiện - không cho đăng ký nếu đã qua
+    // Check ngày sự kiện
     const eventDate = new Date(event.date);
     const now = new Date();
     if (eventDate < now) {
@@ -464,17 +460,16 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
-    // Thêm người dùng vào danh sách participants
+    // Thực hiện đăng ký
     event.participants.push({
       user: req.user._id,
       registeredAt: new Date(),
     });
     event.registered += 1;
 
-    // Save với validateBeforeSave: false để bỏ qua validation date
     await event.save({ validateBeforeSave: false });
 
-    // Tạo thông báo cho tình nguyện viên (không block nếu lỗi)
+    // === TẠO NOTIFICATION CHO NGƯỜI DÙNG ===
     try {
       await createNotification({
         userId: req.user._id,
@@ -485,10 +480,10 @@ exports.registerForEvent = async (req, res) => {
         link: `/my-events`,
       });
     } catch (notifError) {
-      // Bỏ qua lỗi notification
+      console.error("Lỗi tạo notification cho user:", notifError);
     }
 
-    // Tạo thông báo cho quản lý sự kiện (không block nếu lỗi)
+    // === TẠO NOTIFICATION CHO QUẢN LÝ ===
     try {
       if (event.createdBy) {
         await createNotification({
@@ -502,26 +497,89 @@ exports.registerForEvent = async (req, res) => {
           relatedUserId: req.user._id,
           link: `/event-management`,
         });
-
-        await sendPushToUser(userId, {
-          title: "Đăng ký đã được duyệt!",
-          body: `Chúc mừng! Bạn đã được tham gia sự kiện "${event.name}".`,
-          url: `/event/${eventId}`,
-        });
       }
     } catch (notifError) {
-      // Bỏ qua lỗi notification
+      console.error("Lỗi tạo notification cho quản lý:", notifError);
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Đăng ký tham gia sự kiện thành công",
       data: event,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Error in performEventRegistration:", error);
+    return res.status(500).json({
       success: false,
       message: "Lỗi khi đăng ký sự kiện",
+      error: error.message,
+    });
+  }
+};
+
+// Đăng ký tham gia sự kiện
+exports.registerForEvent = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sự kiện",
+      });
+    }
+
+    // Gọi hàm chung
+    return performEventRegistration(req, res, event);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tìm sự kiện",
+    });
+  }
+};
+
+const performEventUnregistration = async (req, res, event) => {
+  try {
+    // Check xem đã đăng ký chưa
+    const participantIndex = event.participants.findIndex(
+      (p) => p.user.toString() === req.user._id.toString()
+    );
+
+    if (participantIndex === -1) {
+      return res.status(400).json({
+        success: false,
+        message: "Bạn chưa đăng ký sự kiện này",
+      });
+    }
+
+    // Xóa khỏi danh sách participants
+    event.participants.splice(participantIndex, 1);
+    event.registered -= 1;
+
+    // Gửi push notification (sửa lỗi biến cũ)
+    try {
+      await sendPushToUser(req.user._id, {
+        title: "Đã hủy đăng ký",
+        body: "Bạn đã hủy đăng ký sự kiện này",
+        url: `/events/${event.slug || event._id}`, // ưu tiên slug nếu có
+      });
+    } catch (pushErr) {
+      // Không block nếu push lỗi
+      console.error("Lỗi gửi push khi hủy đăng ký:", pushErr);
+    }
+
+    await event.save();
+
+    return res.json({
+      success: true,
+      message: "Hủy đăng ký thành công",
+      data: event,
+    });
+  } catch (error) {
+    console.error("Error in performEventUnregistration:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi hủy đăng ký",
       error: error.message,
     });
   }
@@ -539,41 +597,11 @@ exports.unregisterFromEvent = async (req, res) => {
       });
     }
 
-    // Check xem đã đăng ký chưa
-    const participantIndex = event.participants.findIndex(
-      (p) => p.user.toString() === req.user._id.toString()
-    );
-
-    if (participantIndex === -1) {
-      return res.status(400).json({
-        success: false,
-        message: "Bạn chưa đăng ký sự kiện này",
-      });
-    }
-
-    // Xóa khỏi danh sách participants
-    event.participants.splice(participantIndex, 1);
-    event.registered -= 1;
-
-    await sendPushToUser(userId, {
-      title: "Đã hủy đăng ký",
-      body: "Bạn đã hủy đăng ký sự kiện này",
-      url: `/event/${eventId}`,
-    });
-
-    await event.save();
-
-    res.json({
-      success: true,
-      message: "Hủy đăng ký thành công",
-      data: event,
-    });
+    return performEventUnregistration(req, res, event);
   } catch (error) {
-    console.error("Error in unregisterFromEvent:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Lỗi khi hủy đăng ký",
-      error: error.message,
+      message: "Lỗi server",
     });
   }
 };
@@ -1250,6 +1278,104 @@ exports.exportEvents = async (req, res) => {
       success: false,
       message: "Không thể xuất dữ liệu sự kiện",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+exports.getEventSlug = async(req, res) => {
+  try {
+    const title = req.body.title;
+    const slug = slugify(title, { lower: true, locale: 'vi' });
+    
+    if (!isValidSlug(slug)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Slug không hợp lệ'
+      });
+    }
+    
+    const event = await Event.findBySlug(slug);
+    
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy sự kiện'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: event
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server',
+      error: error.message
+    });
+  }
+}
+
+exports.registerWithSlug = async (req, res) => {
+  try {
+    const title = req.body.title;
+    const slug = slugify(title, { lower: true, locale: 'vi' });
+
+    // Validate slug format
+    if (!slug || !isValidSlug(slug)) {
+      return res.status(400).json({
+        success: false,
+        message: "Slug không hợp lệ",
+      });
+    }
+
+    // Tìm event theo slug (populate createdBy để check creator)
+    const event = await Event.findOne({ slug }).populate("createdBy");
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sự kiện",
+      });
+    }
+
+    // Reuse toàn bộ logic đăng ký
+    return performEventRegistration(req, res, event);
+  } catch (error) {
+    console.error("Error in registerWithSlug:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi đăng ký bằng slug",
+    });
+  }
+};
+
+exports.unregisterWithSlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    if (!slug || !isValidSlug(slug)) {
+      return res.status(400).json({
+        success: false,
+        message: "Slug không hợp lệ",
+      });
+    }
+
+    const event = await Event.findOne({ slug });
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sự kiện",
+      });
+    }
+
+    return performEventUnregistration(req, res, event);
+  } catch (error) {
+    console.error("Error in unregisterWithSlug:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi hủy đăng ký bằng slug",
     });
   }
 };

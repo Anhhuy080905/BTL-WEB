@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 // Danh sách ảnh placeholder đa dạng cho events
 const placeholderImages = [
@@ -38,18 +39,27 @@ const EventCard = ({ event, featured = false, onRSVP, index = 0 }) => {
     return placeholderImages[index % placeholderImages.length];
   };
 
+  const eventDetailUrl = event.slug ? `/events/${event.slug}` : `/events/${event._id}`;
+
   if (featured) {
     return (
       <article
         aria-labelledby="featured-event-title"
         className="featured-event"
       >
+        <Link to={eventDetailUrl} className="featured-event__link">
+          <img
+            alt={event.title}
+            className="featured-event__image"
+            loading="lazy"
+          />
+        </Link>
         <div className="featured-event__content">
           <time dateTime={event.date} className="featured-event__date">
             {formatDate(event.date)}
           </time>
           <h3 id="featured-event-title" className="featured-event__title">
-            {event.title}
+            <Link to={eventDetailUrl}>{event.title}</Link>
           </h3>
           <div className="featured-event__meta">
             <span className="meta-item">

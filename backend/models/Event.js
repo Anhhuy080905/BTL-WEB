@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const slugify = require('slugify');
 
 const eventSchema = new mongoose.Schema(
   {
@@ -92,6 +93,12 @@ const eventSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    slug: {
+      type: String,
+      unique: true,
+      lowercase: true,
+      index: true
+    },
     participants: [
       {
         user: {
@@ -135,6 +142,36 @@ const eventSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+eventSchema.pre('save', async function(next) {
+  if (this.isNew || this.isModified('title')) {
+    let baseSlug = slugify(this.title, {
+      lower: true,
+      strict: true,
+      locale: 'vi'
+    });
+    
+    let slug = baseSlug;
+    let counter = 1;
+    
+    while (await mongoose.model('Event').findOne({ 
+      slug, 
+      _id: { $ne: this._id } 
+    })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    
+    this.slug = slug;
+  }
+  next();
+});
+eventSchema.statics.findBySlug = function(slug) {
+  return this.findOne({ slug })
+    .populate('createdBy', 'fullName email organization')
+    .populate('registrations.user', 'fullName email avatar');
+};
+eventSchema.index({ slug: 1 });
 
 // Index để tăng performance
 eventSchema.index({ category: 1, status: 1 });

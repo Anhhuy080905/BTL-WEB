@@ -18,8 +18,11 @@ const {
   markAsCompleted,
   undoCompleted,
   exportEvents,
+  getEventSlug,
+  registerWithSlug
 } = require("../controllers/eventController");
 const { protect, authorize, optionalProtect } = require("../middleware/auth");
+const { isValidSlug } = require('../utils/slugUtils');
 
 // Public routes - không cần đăng nhập nhưng có thể có thông tin user
 router.get("/", optionalProtect, getAllEvents);
@@ -88,6 +91,10 @@ router.put(
   authorize("event_manager", "admin"),
   reviewRegistration
 );
+
+router.get('/slug/:slug', getEventSlug);
+router.post('/slug/:slug/register', protect, registerWithSlug);
+router.delete('/slug/:slug/unregister', protect, unregisterWithSlug);
 
 // Routes cho event cụ thể (phải đặt cuối cùng vì dùng /:id)
 router.get("/:id", optionalProtect, getEventById);

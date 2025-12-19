@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet";
-import { useHistory } from "react-router-dom";
 import Notification from "../components/Notification.jsx";
 import Toast from "../components/Toast.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import "./events.css";
+import { useParams, useHistory } from "react-router-dom";
 
 const Events = () => {
   const history = useHistory();
@@ -26,6 +26,7 @@ const Events = () => {
   const [toasts, setToasts] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingRegistration, setPendingRegistration] = useState(null);
+  const { id, slug } = useParams();
 
   // Toast helper functions
   const showToast = (message, type = "info", duration = 3000) => {
@@ -68,6 +69,24 @@ const Events = () => {
     customEndDate,
   ]);
 
+  useEffect(() => {
+    if (id && events.length > 0) {
+      const foundEvent = events.find((e) => (e._id === id) || (e.id === id));
+      if (foundEvent) {
+        setSelectedEvent(foundEvent);
+        setShowDetailModal(true);
+        document.body.style.overflow = "hidden";
+
+        // Nếu slug không đúng → redirect URL đẹp
+        const correctSlug = foundEvent.slug || "";
+        if (slug !== correctSlug) {
+            const eventId = foundEvent._id || foundEvent.id;
+            history.replace(`/events/${eventId}/${correctSlug}`);
+        }
+      }
+    }
+  }, [id, slug, events, history]);
+
   const loadEvents = async () => {
     try {
       setSearchLoading(true);
@@ -106,6 +125,17 @@ const Events = () => {
     }
   };
 
+  const handleViewDetail = (event) => {
+    if (!event) return;
+    const eventId = event._id || event.id;
+    setSelectedEvent(event);
+    setShowDetailModal(true);
+    document.body.style.overflow = "hidden";
+
+    // Thay đổi URL thành dạng đẹp (không reload trang)
+    history.replace(`/events/${eventId}/${event.slug || ""}`);
+  };
+
   const getCategoryName = (category) => {
     const categories = {
       environment: "🌱 Môi trường",
@@ -138,17 +168,11 @@ const Events = () => {
     });
   };
 
-  const handleViewDetail = (event) => {
-    console.log("Selected event:", event); // Debug log
-    setSelectedEvent(event);
-    setShowDetailModal(true);
-    document.body.style.overflow = "hidden";
-  };
-
   const handleCloseModal = () => {
     setShowDetailModal(false);
     setSelectedEvent(null);
     document.body.style.overflow = "auto";
+    history.replace("/events", { replace: true });
   };
 
   // Reset scroll khi mở modal
@@ -244,14 +268,32 @@ const Events = () => {
 
   return (
     <div className="events-container">
+      {/* SỬA: Dùng Helmet nhưng nội dung Động (Dynamic) */}
       <Helmet>
-        <title>Sự Kiện Tình Nguyện - VolunteerHub</title>
+        <title>
+          {selectedEvent
+            ? `${selectedEvent.title} | VolunteerHub`
+            : "Sự Kiện Tình Nguyện - VolunteerHub"}
+        </title>
+        <meta
+          name="description"
+          content={
+            selectedEvent
+              ? selectedEvent.description?.substring(0, 160)
+              : "Tham gia các hoạt động ý nghĩa, góp phần xây dựng cộng đồng tốt đẹp hơn"
+          }
+        />
         <meta
           property="og:title"
-          content="Sự Kiện Tình Nguyện - VolunteerHub"
+          content={selectedEvent?.title || "Sự Kiện Tình Nguyện - VolunteerHub"}
         />
+        {selectedEvent?.images?.[0] && (
+          <meta property="og:image" content={selectedEvent.images[0]} />
+        )}
+        <link rel="canonical" href={window.location.href} />
       </Helmet>
 
+      {/* Notifications */}
       {notification && (
         <Notification
           type={notification.type}
@@ -301,140 +343,54 @@ const Events = () => {
             </div>
 
             <div className="category-filter">
-              <button
-                className={`filter-btn ${
-                  selectedCategory === "all" ? "active" : ""
-                }`}
-                onClick={() => setSelectedCategory("all")}
-              >
-                Tất cả
-              </button>
-              <button
-                className={`filter-btn ${
-                  selectedCategory === "environment" ? "active" : ""
-                }`}
-                onClick={() => setSelectedCategory("environment")}
-              >
-                🌱 Môi trường
-              </button>
-              <button
-                className={`filter-btn ${
-                  selectedCategory === "education" ? "active" : ""
-                }`}
-                onClick={() => setSelectedCategory("education")}
-              >
-                📚 Giáo dục
-              </button>
-              <button
-                className={`filter-btn ${
-                  selectedCategory === "youth" ? "active" : ""
-                }`}
-                onClick={() => setSelectedCategory("youth")}
-              >
-                ❤️ Y tế
-              </button>
-              <button
-                className={`filter-btn ${
-                  selectedCategory === "elderly" ? "active" : ""
-                }`}
-                onClick={() => setSelectedCategory("elderly")}
-              >
-                👴 Người cao tuổi
-              </button>
-              <button
-                className={`filter-btn ${
-                  selectedCategory === "healthcare" ? "active" : ""
-                }`}
-                onClick={() => setSelectedCategory("healthcare")}
-              >
-                👶 Trẻ em
-              </button>
+              {["all", "environment", "education", "youth", "elderly", "healthcare"].map(
+                (cat) => (
+                  <button
+                    key={cat}
+                    className={`filter-btn ${selectedCategory === cat ? "active" : ""}`}
+                    onClick={() => setSelectedCategory(cat)}
+                  >
+                    {cat === "all" ? "Tất cả" : getCategoryName(cat)}
+                  </button>
+                )
+              )}
             </div>
 
             {/* Time Filter */}
             <div className="time-filter">
               <label className="filter-label">📅 Lọc theo thời gian:</label>
               <div className="time-filter-buttons">
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "all" ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedTimeRange("all");
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }}
-                >
-                  Tất cả
-                </button>
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "today" ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedTimeRange("today");
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }}
-                >
-                  Hôm nay
-                </button>
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "week" ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedTimeRange("week");
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }}
-                >
-                  Tuần này
-                </button>
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "month" ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedTimeRange("month");
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }}
-                >
-                  Tháng này
-                </button>
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "quarter" ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedTimeRange("quarter");
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }}
-                >
-                  Quý này
-                </button>
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "upcoming" ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedTimeRange("upcoming");
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }}
-                >
-                  Sắp tới
-                </button>
-                <button
-                  className={`filter-btn ${
-                    selectedTimeRange === "custom" ? "active" : ""
-                  }`}
-                  onClick={() => setSelectedTimeRange("custom")}
-                >
-                  Tùy chỉnh
-                </button>
+                {["all", "today", "week", "month", "quarter", "upcoming", "custom"].map(
+                  (range) => (
+                    <button
+                      key={range}
+                      className={`filter-btn ${
+                        selectedTimeRange === range ? "active" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedTimeRange(range);
+                        if (range !== "custom") {
+                          setCustomStartDate("");
+                          setCustomEndDate("");
+                        }
+                      }}
+                    >
+                      {range === "all"
+                        ? "Tất cả"
+                        : range === "today"
+                        ? "Hôm nay"
+                        : range === "week"
+                        ? "Tuần này"
+                        : range === "month"
+                        ? "Tháng này"
+                        : range === "quarter"
+                        ? "Quý này"
+                        : range === "upcoming"
+                        ? "Sắp tới"
+                        : "Tùy chỉnh"}
+                    </button>
+                  )
+                )}
               </div>
 
               {/* Custom Date Range */}
@@ -503,92 +459,25 @@ const Events = () => {
 
                     <div className="event-info">
                       <div className="info-row">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <rect
-                            x="3"
-                            y="4"
-                            width="18"
-                            height="18"
-                            rx="2"
-                            ry="2"
-                          />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        <span>{formatDate(event.date)}</span>
+                        <span>📅 {formatDate(event.date)}</span>
                       </div>
-
                       <div className="info-row">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        <span>{event.location}</span>
+                        <span>📍 {event.location}</span>
                       </div>
-
                       <div className="info-row">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        <span>{event.hours} giờ</span>
+                        <span>⏰ {event.hours} giờ</span>
                       </div>
-
                       <div className="info-row">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                          <circle cx="9" cy="7" r="4" />
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
                         <span>
-                          {event.registered}/{event.maxParticipants} người
+                          👥 {event.registered}/{event.maxParticipants} người
                         </span>
                       </div>
                     </div>
 
-                    <p className="event-description" title={event.description}>
+                    <p
+                      className="event-description"
+                      title={event.description}
+                    >
                       {event.description}
                     </p>
 
@@ -597,75 +486,19 @@ const Events = () => {
                         className="btn btn-outline"
                         onClick={() => handleViewDetail(event)}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
                         Chi tiết
                       </button>
+
                       {event.userRegistrationStatus === "pending" ? (
                         <button className="btn btn-warning" disabled>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                          </svg>
                           Chờ phê duyệt
                         </button>
                       ) : event.userRegistrationStatus === "approved" ? (
                         <button className="btn btn-success" disabled>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <polyline points="22 4 12 14.01 9 11.01" />
-                          </svg>
                           Đã phê duyệt
                         </button>
                       ) : event.userRegistrationStatus === "rejected" ? (
                         <button className="btn btn-secondary" disabled>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="15" y1="9" x2="9" y2="15" />
-                            <line x1="9" y1="9" x2="15" y2="15" />
-                          </svg>
                           Đã từ chối
                         </button>
                       ) : (
@@ -673,20 +506,6 @@ const Events = () => {
                           {event.status === "completed" ||
                           new Date(event.date) < new Date() ? (
                             <button className="btn btn-completed" disabled>
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
-                              </svg>
                               Đã hoàn thành
                             </button>
                           ) : (
@@ -699,22 +518,6 @@ const Events = () => {
                                 event.registered >= event.maxParticipants
                               }
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                <circle cx="9" cy="7" r="4" />
-                                <line x1="19" y1="8" x2="19" y2="14" />
-                                <line x1="22" y1="11" x2="16" y2="11" />
-                              </svg>
                               Đăng ký
                             </button>
                           )}
@@ -746,7 +549,6 @@ const Events = () => {
                 padding: "24px 24px 16px 24px",
                 fontSize: "22px",
                 fontWeight: "700",
-                color: "#1a1a1a",
                 borderBottom: "2px solid #e0e0e0",
                 background: "white",
                 borderRadius: "16px 16px 0 0",
@@ -755,83 +557,30 @@ const Events = () => {
               {selectedEvent.title}
             </h2>
 
-            <div
-              className="modal-body"
-              ref={(el) => {
-                if (el) {
-                  el.scrollTop = 0;
-                }
-              }}
-            >
-              <div
-                className="detail-section"
-                style={{ display: "block", width: "100%", paddingTop: "8px" }}
-              >
-                <div
-                  className="detail-info-grid"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: "16px",
-                    width: "100%",
-                  }}
-                >
-                  <div className="detail-info-item">
-                    <strong>🏢 Tổ chức:</strong>
-                    <span>{selectedEvent.organization || "Chưa cập nhật"}</span>
-                  </div>
-                  <div className="detail-info-item">
-                    <strong>📅 Ngày:</strong>
-                    <span>{formatDate(selectedEvent.date)}</span>
-                  </div>
-                  <div className="detail-info-item">
-                    <strong>📍 Địa điểm:</strong>
-                    <span>{selectedEvent.location || "Chưa cập nhật"}</span>
-                  </div>
-                  <div className="detail-info-item">
-                    <strong>🎯 Lĩnh vực:</strong>
-                    <span>{getCategoryName(selectedEvent.category)}</span>
-                  </div>
-                  <div className="detail-info-item">
-                    <strong>⏰ Số giờ:</strong>
-                    <span>{selectedEvent.hours || 0} giờ tình nguyện</span>
-                  </div>
-                  <div className="detail-info-item">
-                    <strong>👥 Số người:</strong>
-                    <span>
-                      {selectedEvent.registered || 0}/
-                      {selectedEvent.maxParticipants || 0} người
-                    </span>
-                  </div>
+            <div className="modal-body">
+              <div className="detail-section">
+                <div className="detail-info-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                   <div className="detail-info-item"><strong>🏢 Tổ chức:</strong> {selectedEvent.organization}</div>
+                   <div className="detail-info-item"><strong>📅 Ngày:</strong> {formatDate(selectedEvent.date)}</div>
+                   <div className="detail-info-item"><strong>📍 Địa điểm:</strong> {selectedEvent.location}</div>
+                   <div className="detail-info-item"><strong>🎯 Lĩnh vực:</strong> {getCategoryName(selectedEvent.category)}</div>
                 </div>
               </div>
-
               <div className="detail-section">
                 <h3>Mô tả</h3>
-                <p>{selectedEvent.description || "Chưa có mô tả"}</p>
+                <p>{selectedEvent.description}</p>
               </div>
-
-              {selectedEvent.requirements &&
-                selectedEvent.requirements.length > 0 && (
+              {selectedEvent.requirements && (
                   <div className="detail-section">
-                    <h3>Yêu cầu</h3>
-                    <ul className="detail-list">
-                      {selectedEvent.requirements.map((req, index) => (
-                        <li key={index}>{req}</li>
-                      ))}
-                    </ul>
+                      <h3>Yêu cầu</h3>
+                      <ul>{selectedEvent.requirements.map((r, i) => <li key={i}>{r}</li>)}</ul>
                   </div>
-                )}
-
-              {selectedEvent.benefits && selectedEvent.benefits.length > 0 && (
-                <div className="detail-section">
-                  <h3>Quyền lợi</h3>
-                  <ul className="detail-list">
-                    {selectedEvent.benefits.map((benefit, index) => (
-                      <li key={index}>{benefit}</li>
-                    ))}
-                  </ul>
-                </div>
+              )}
+               {selectedEvent.benefits && (
+                  <div className="detail-section">
+                      <h3>Quyền lợi</h3>
+                      <ul>{selectedEvent.benefits.map((b, i) => <li key={i}>{b}</li>)}</ul>
+                  </div>
               )}
             </div>
 
@@ -847,22 +596,6 @@ const Events = () => {
                   selectedEvent.registered >= selectedEvent.maxParticipants
                 }
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <line x1="19" y1="8" x2="19" y2="14" />
-                  <line x1="22" y1="11" x2="16" y2="11" />
-                </svg>
                 Đăng ký ngay
               </button>
             </div>
@@ -878,27 +611,11 @@ const Events = () => {
               <h3>Xác nhận đăng ký</h3>
             </div>
             <div className="modal-body">
-              <p>
-                Bạn có chắc muốn đăng ký tham gia sự kiện{" "}
-                <strong>"{pendingRegistration.title}"</strong>?
-              </p>
-              <p className="modal-body-subtitle">
-                Đăng ký của bạn sẽ được chuyển đến quản lý sự kiện để phê duyệt.
-              </p>
+              <p>Bạn có chắc muốn đăng ký sự kiện <strong>"{pendingRegistration.title}"</strong>?</p>
             </div>
             <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={handleCancelRegistration}
-              >
-                Hủy
-              </button>
-              <button
-                className="btn-primary"
-                onClick={handleConfirmRegistration}
-              >
-                Xác nhận đăng ký
-              </button>
+              <button className="btn-secondary" onClick={handleCancelRegistration}>Hủy</button>
+              <button className="btn-primary" onClick={handleConfirmRegistration}>Xác nhận</button>
             </div>
           </div>
         </div>
