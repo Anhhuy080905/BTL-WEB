@@ -762,11 +762,6 @@ const EventManagement = () => {
                         onClick={() => handleViewRegistrations(event)}
                         title="Xem danh sách đăng ký"
                       >
-                        <Link 
-                          to={`/events/${event.slug}`}
-                          className="btn btn-info"
-                          title="Xem chi tiết sự kiện"
-                        ></Link>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="18"
@@ -796,6 +791,28 @@ const EventManagement = () => {
                           </span>
                         )}
                       </button>
+                      <Link
+                        to={`/events/${event.slug}`}
+                        className="btn btn-outline"
+                        title="Xem chi tiết sự kiện (SEO-friendly URL)"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4" />
+                          <path d="M12 8h.01" />
+                        </svg>
+                        Xem chi tiết
+                      </Link>
                       <button
                         className="btn btn-outline"
                         onClick={() => openEditModal(event)}
