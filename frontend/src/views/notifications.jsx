@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import notificationService from "../services/notificationService";
 import "./notifications.css";
 
@@ -105,12 +103,10 @@ const Notifications = () => {
   if (loading) {
     return (
       <div className="notifications-container">
-        <Navigation />
         <div className="notifications-loading">
           <div className="spinner"></div>
           <p>Đang tải thông báo...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -120,8 +116,6 @@ const Notifications = () => {
       <Helmet>
         <title>Thông Báo - VolunteerHub</title>
       </Helmet>
-
-      <Navigation />
 
       <div className="notifications-wrapper">
         <div className="notifications-header">
@@ -208,8 +202,6 @@ const Notifications = () => {
           )}
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

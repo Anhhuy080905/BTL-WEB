@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
-import Toast from "../components/Toast.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import { useToast } from "../hooks/useToast";
@@ -133,12 +130,10 @@ const MyEvents = () => {
   if (loading) {
     return (
       <div className="my-events-container">
-        <Navigation />
         <div className="events-loading">
           <div className="spinner"></div>
           <p>Đang tải sự kiện...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -154,8 +149,6 @@ const MyEvents = () => {
           content="Hoạt Động & Sự Kiện - VolunteerHub"
         />
       </Helmet>
-
-      <Navigation />
 
       <div className="my-events-wrapper">
         {/* Hero Section */}
@@ -584,21 +577,6 @@ const MyEvents = () => {
           </div>
         </div>
       )}
-
-      {/* Toast Notifications */}
-      <div className="toast-container">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            duration={toast.duration}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
-
-      <Footer />
     </div>
   );
 };

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import { adminService } from "../services/adminService";
@@ -309,12 +307,10 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="profile-container">
-        <Navigation />
         <div className="profile-loading">
           <div className="spinner"></div>
           <p>Đang tải thông tin...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -329,8 +325,6 @@ const Profile = () => {
         <title>Thông Tin Cá Nhân - VolunteerHub</title>
         <meta property="og:title" content="Thông Tin Cá Nhân - VolunteerHub" />
       </Helmet>
-
-      <Navigation />
 
       <div className="profile-wrapper">
         <div className="profile-content">
@@ -793,8 +787,6 @@ const Profile = () => {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 };

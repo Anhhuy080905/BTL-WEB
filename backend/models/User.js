@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema(
 
     pushSubscriptions: {
       type: Object,
-      default: null
+      default: null,
     },
   },
   {

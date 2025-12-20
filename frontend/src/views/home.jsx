@@ -3,8 +3,6 @@ import React, { useState, useEffect } from "react";
 import Script from "dangerous-html/react";
 import { Helmet } from "react-helmet";
 
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import EventCard from "../components/EventCard.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
@@ -146,7 +144,6 @@ const Home = (props) => {
         <title>VolunteerHub</title>
         <meta property="og:title" content="Mixed Attached Deer" />
       </Helmet>
-      <Navigation></Navigation>
       <div className="home-container2">
         <div className="home-container3">
           <Script
@@ -2531,9 +2528,6 @@ transform: translateY(0);}}
           </div>
         </div>
       )}
-
-      <Footer></Footer>
-      {/* ...existing code... */}
     </div>
   );
 };

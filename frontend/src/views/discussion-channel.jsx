@@ -187,10 +187,10 @@ const DiscussionChannel = () => {
         <h2>Không thể truy cập</h2>
         <p>{error}</p>
         <button
-          onClick={() => history.push("/my-events")}
+          onClick={() => history.push("/discussion-list")}
           className="back-button"
         >
-          Quay lại sự kiện của tôi
+          Quay lại danh sách thảo luận
         </button>
       </div>
     );
@@ -199,7 +199,10 @@ const DiscussionChannel = () => {
   return (
     <div className="discussion-channel">
       <div className="discussion-header">
-        <button onClick={() => history.push("/my-events")} className="back-btn">
+        <button
+          onClick={() => history.push("/discussion-list")}
+          className="back-btn"
+        >
           ← Quay lại
         </button>
         <div className="discussion-title">

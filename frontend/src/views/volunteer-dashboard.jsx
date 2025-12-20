@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
-import Navigation from "../components/navigation.jsx";
-import Footer from "../components/footer.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import EventCard from "../components/EventCard.jsx";
@@ -108,12 +106,10 @@ const VolunteerDashboard = () => {
   if (loading) {
     return (
       <div className={styles["volunteer-dashboard-root"]}>
-        <Navigation />
         <main className={styles["dashboard-loading"]}>
           <div className={styles.spinner} />
           <p>Đang tải thông tin Dashboard...</p>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -223,8 +219,6 @@ const VolunteerDashboard = () => {
         <title>Volunteer Dashboard - VolunteerHub</title>
       </Helmet>
 
-      <Navigation />
-
       <main
         className={`${styles["volunteer-dashboard-container"]} ${styles["with-sidebar"]}`}
       >
@@ -318,8 +312,6 @@ const VolunteerDashboard = () => {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 };

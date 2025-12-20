@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useHistory, useLocation } from "react-router-dom";
-import Navigation from "../components/navigation";
-import Footer from "../components/footer";
 import Notification from "../components/Notification";
 import { postsService } from "../services/postsService";
 import { eventsService } from "../services/eventsService";
@@ -482,7 +480,6 @@ const DiscussionListFB = () => {
   if (!currentUser) {
     return (
       <div className="discussion-list-container">
-        <Navigation />
         <div
           style={{
             display: "flex",
@@ -501,8 +498,6 @@ const DiscussionListFB = () => {
 
   return (
     <div className="discussion-list-container">
-      <Navigation />
-
       <div className="discussion-content">
         {/* Left Sidebar - Shortcuts */}
         <aside className="left-sidebar">
@@ -1020,9 +1015,6 @@ const DiscussionListFB = () => {
           <div className="sidebar-section">
             <h3>
               <span>Sự Kiện Của Bạn</span>
-              <span style={{ color: "#1877f2", cursor: "pointer" }}>
-                Xem tất cả
-              </span>
             </h3>
             <div className="event-list">
               {Object.values(events).map((event) => (
@@ -1490,8 +1482,6 @@ const DiscussionListFB = () => {
           onClose={() => setNotification(null)}
         />
       )}
-
-      <Footer />
     </div>
   );
 };

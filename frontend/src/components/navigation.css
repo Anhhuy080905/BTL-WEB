@@ -49,3 +49,49 @@
   background: #f7fafc;
   border-color: #cbd5e0;
 }
+
+/* Active navigation link styles */
+.navigation-link {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.navigation-link.active {
+  color: #3182ce;
+  font-weight: 600;
+}
+
+.navigation-link.active::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3182ce, #2c5aa0);
+  border-radius: 2px 2px 0 0;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    width: 0;
+    left: 50%;
+  }
+  to {
+    width: 100%;
+    left: 0;
+  }
+}
+
+.navigation-link.active .navigation-link-icon {
+  color: #3182ce;
+}
+
+/* Mobile navigation active styles */
+.navigation-mobile-link.active {
+  color: #3182ce;
+  background-color: rgba(49, 130, 206, 0.1);
+  font-weight: 600;
+  border-left: 4px solid #3182ce;
+}
