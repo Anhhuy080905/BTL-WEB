@@ -24,16 +24,6 @@ export const profileUpdateSchema = Yup.object({
       return age >= 0;
     }),
 
-  // Nếu event_manager muốn sửa tên tổ chức
-  organization: Yup.string()
-    .min(3, 'Tên tổ chức phải có ít nhất 3 ký tự')
-    .max(100, 'Tên tổ chức không được quá 100 ký tự')
-    .when('role', {
-      is: 'event_manager',
-      then: schema => schema.required('Vui lòng nhập tên tổ chức'),
-      otherwise: schema => schema.notRequired()
-    }),
-
   avatar: Yup.mixed()
     .nullable()
     .test('fileSize', 'Ảnh đại diện tối đa 2MB', value => {
@@ -42,7 +32,8 @@ export const profileUpdateSchema = Yup.object({
     .test('fileType', 'Chỉ chấp nhận file ảnh jpg, png', value => {
       return !value || ['image/jpeg', 'image/png'].includes(value.type);
     })
-});
+})
+;
 
 export const changePasswordSchema = Yup.object({
   currentPassword: Yup.string()

@@ -5,10 +5,7 @@ export const registerSchema = Yup.object({
     .required('Vui lòng nhập tên đăng nhập')
     .min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự')
     .max(20, 'Tên đăng nhập không được quá 20 ký tự')
-    .matches(/^[a-zA-Z0-9_-]+$/, 'Tên đăng nhập chỉ chứa chữ, số, gạch dưới và gạch ngang')
-    .test('no-all-numbers', 'Tên đăng nhập không được chỉ chứa số', value => {
-      return value ? !/^\d+$/.test(value) : true;
-    }),
+    .matches(/^[a-zA-Z0-9_-]+$/, 'Tên đăng nhập chỉ chứa chữ, số, gạch dưới và gạch ngang'),
 
   email: Yup.string()
     .required('Vui lòng nhập email')
@@ -31,12 +28,7 @@ export const registerSchema = Yup.object({
   fullName: Yup.string()
     .required('Vui lòng nhập họ tên')
     .min(3, 'Họ tên phải có ít nhất 3 ký tự')
-    .max(50, 'Họ tên không được quá 50 ký tự')
-    .test('valid-name', 'Họ tên phải có ít nhất 2 từ và không chứa số', value => {
-      if (!value) return true;
-      const words = value.trim().split(/\s+/);
-      return words.length >= 1 && /^[a-zA-ZÀ-ỹ\s]+$/.test(value);
-    }),
+    .max(50, 'Họ tên không được quá 50 ký tự'),
 
   phone: Yup.string()
     .transform(value => value?.replace(/\s+/g, ''))

@@ -12,7 +12,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 const Login = (props) => {
   const history = useHistory();
   const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);;
+  const [showPassword, setShowPassword] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
@@ -29,7 +29,7 @@ const Login = (props) => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: yupResolver(loginSchema),
     mode: "onChange",
