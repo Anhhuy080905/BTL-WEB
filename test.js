@@ -5,49 +5,60 @@ import Notification from "../components/Notification";
 import { authAPI } from "../services/api";
 import { subscribePush } from "../utils/pushNotification";
 import "./login.css";
-import { loginSchema } from "../validation/authSchema";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
 
 const Login = (props) => {
   const history = useHistory();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [notification, setNotification] = useState(null);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [notification, setNotification] = useState(null);
 
-  const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth login
-    setNotification({
-      type: "info",
-      title: "Thông báo",
-      message: "Tính năng đăng nhập với Google sẽ được cập nhật sớm!",
-    });
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Username validation
+    if (!email) {
+      newErrors.email = "Vui lòng nhập tên đăng nhập";
+    }
+    // Không validate format vì có thể là username hoặc email
+
+    // Password validation
+    if (!password) {
+      newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: yupResolver(loginSchema),
-    mode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-      rememberMe: false,
-    },
-  });
+  const handleSubmit = async (e) => {
+    // Luôn ngăn chặn hành vi mặc định của form
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
-  const onSubmit = async (data) => {
     try {
-      const submitData = {
-        email: data.email,   
-        password: data.password,
-      };
+      console.log("=== LOGIN SUBMIT ===");
 
-      const response = await authAPI.login(submitData);
+      if (!validateForm()) {
+        console.log("=== VALIDATION FAILED ===");
+        return;
+      }
+
+      setLoading(true);
+      setErrors({});
+
+      const response = await authAPI.login({ email, password });
+
       if (response.success) {
         console.log(
           "✅ Login thành công, bắt đầu đăng ký push notification..."
@@ -80,16 +91,36 @@ const Login = (props) => {
           window.location.href = "/";
         }, 1500);
       }
-      
     } catch (error) {
-      const message = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại!";
-      setNotification({
-        type: "error",
-        title: "Đăng nhập thất bại!",
-        message,
-      });
-      setTimeout(() => setNotification(null), 3000);
+      console.error("Login error:", error);
+
+      let message = "Đăng nhập thất bại. Vui lòng thử lại!";
+      if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+
+      console.log("=== SHOWING ERROR NOTIFICATION ===", message);
+
+      // Hiển thị error notification
+      setErrorMessage(message);
+      setShowErrorNotification(true);
+
+      // Tự động đóng sau 3 giây
+      setTimeout(() => {
+        setShowErrorNotification(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    // TODO: Implement Google OAuth login
+    setNotification({
+      type: "info",
+      title: "Thông báo",
+      message: "Tính năng đăng nhập với Google sẽ được cập nhật sớm!",
+    });
   };
 
   return (
@@ -178,17 +209,29 @@ const Login = (props) => {
               Chào mừng bạn trở lại với VolunteerHub
             </p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSubmit(e);
+              }}
+              className="login-form"
+            >
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   Tên đăng nhập
                 </label>
                 <input
-                  {...register("email")}
-                  className={errors.email ? "error" : ""}
-                  placeholder="Nhập tên đăng nhập hoặc email"
+                  type="text"
+                  id="email"
+                  className={`form-input ${errors.email ? "error" : ""}`}
+                  placeholder="Nhập tên đăng nhập"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
-                {errors.email && <span className="error-message">{errors.email.message}</span>}
+                {errors.email && (
+                  <span className="error-message">{errors.email}</span>
+                )}
               </div>
 
               <div className="form-group">
@@ -198,9 +241,11 @@ const Login = (props) => {
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
-                    {...register("password")}
-                    className={errors.password ? "error" : ""}
-                    placeholder="Nhập mật khẩu"
+                    id="password"
+                    className={`form-input ${errors.password ? "error" : ""}`}
+                    placeholder="Nhập mật khẩu của bạn"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
@@ -240,12 +285,18 @@ const Login = (props) => {
                     )}
                   </button>
                 </div>
-                {errors.password && <span className="error-message">{errors.password.message}</span>}
+                {errors.password && (
+                  <span className="error-message">{errors.password}</span>
+                )}
               </div>
 
               <div className="form-options">
                 <label className="checkbox-label">
-                  <input type="checkbox" {...register("rememberMe")} />
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
                   <span>Ghi nhớ đăng nhập</span>
                 </label>
                 <Link to="/forgot-password" className="forgot-password-link">
@@ -253,9 +304,9 @@ const Login = (props) => {
                 </Link>
               </div>
 
-              <button type="submit" className="login-button" disabled={isSubmitting}>
-                {isSubmitting ? "Đang đăng nhập..." : "Đăng Nhập"}
-                {!isSubmitting && (
+              <button type="submit" className="login-button" disabled={loading}>
+                {loading ? "Đang đăng nhập..." : "Đăng Nhập"}
+                {!loading && (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"

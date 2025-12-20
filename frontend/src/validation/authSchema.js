@@ -62,12 +62,12 @@ export const registerSchema = Yup.object({
 });
 
 export const loginSchema = Yup.object({
-  identifier: Yup.string()
+  email: Yup.string()
     .required('Vui lòng nhập email hoặc tên đăng nhập'),
     // .min(3, 'Phải có ít nhất 3 ký tự'),
   password: Yup.string()
-    .required('Vui lòng nhập mật khẩu'),
-    // .min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+    .required('Vui lòng nhập mật khẩu')
+    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
   rememberMe: Yup.boolean()
 });
 
