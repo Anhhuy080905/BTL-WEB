@@ -245,19 +245,14 @@ exports.addComment = async (req, res) => {
       user: req.user._id,
       content,
       images: images || [],
-    }
+    };
 
-    post.comments.push(
-      newComment
-    );
+    post.comments.push(newComment);
 
     await post.save();
 
-    const justAddedComment = post.comments[post.comments.length - 1]
-    console.log(
-      "Comment saved with images:",
-      justAddedComment.images
-    );
+    const justAddedComment = post.comments[post.comments.length - 1];
+    console.log("Comment saved with images:", justAddedComment.images);
 
     // Tạo thông báo cho chủ bài viết (nếu không phải tự comment)
     if (post.user.toString() !== req.user._id.toString()) {
@@ -276,22 +271,17 @@ exports.addComment = async (req, res) => {
         link: `/discussion-list?postId=${post._id}`,
       });
 
-      await sendPushToUser(post.user, {
-        title: "Có bình luận mới",
-        body: `${req.user.username || req.user.fullName} đã bình luận bài viết của bạn`,
-        url: `/discussion-list?postId=${post._id}`
-      });
-
-      if (parentCommentId) {
-        const parentComment = posts.comments.id(parentCommentId)
-        if (parentComment) {
-          await sendPushToUser(parentComment.user, {
-            title: "Có phản hồi mới",
-            body: `${commenterName} đã trả lời bình luận của bạn`,
-            url: `/discussion-list?postId=${post._id}`
-          })
-        }
-      }
+      // Gửi Web Push Notification
+      await sendPushToUser(
+        post.user,
+        "💬 Có bình luận mới!",
+        `${
+          req.user.username || req.user.fullName
+        } đã bình luận: "${content.substring(0, 50)}${
+          content.length > 50 ? "..." : ""
+        }"`,
+        `/discussion-list?postId=${post._id}`
+      );
     }
 
     await post.populate([

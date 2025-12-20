@@ -17,6 +17,8 @@ const getDefaultImageByCategory = (category) => {
     youth: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400",
     elderly:
       "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=400",
+    disabled:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400",
     healthcare:
       "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400",
     other: "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400",
@@ -333,11 +335,6 @@ exports.updateEvent = async (req, res) => {
       }
     );
 
-    await sendPushToEventParticipants(
-      event._id,
-      NotificationTemplates.eventCompleted(event)
-    );
-
     res.json({
       success: true,
       message: "Cập nhật sự kiện thành công",
@@ -497,6 +494,16 @@ const performEventRegistration = async (req, res, event) => {
           relatedUserId: req.user._id,
           link: `/event-management`,
         });
+
+        // Gửi Web Push Notification cho Manager
+        await sendPushToUser(
+          event.createdBy,
+          "👤 Có đăng ký mới!",
+          `${
+            req.user.username || req.user.fullName || "Một người dùng"
+          } đã đăng ký tham gia sự kiện "${event.title}"`,
+          `/event-management`
+        );
       }
     } catch (notifError) {
       console.error("Lỗi tạo notification cho quản lý:", notifError);
@@ -558,19 +565,20 @@ const performEventUnregistration = async (req, res, event) => {
     event.participants.splice(participantIndex, 1);
     event.registered -= 1;
 
-    // Gửi push notification (sửa lỗi biến cũ)
+    // Gửi thông báo push (không block nếu lỗi)
     try {
       await sendPushToUser(req.user._id, {
         title: "Đã hủy đăng ký",
-        body: "Bạn đã hủy đăng ký sự kiện này",
-        url: `/events/${event.slug || event._id}`, // ưu tiên slug nếu có
+        body: `Bạn đã hủy đăng ký sự kiện "${event.title}"`,
+        url: `/events/${req.params.id}`,
       });
-    } catch (pushErr) {
-      // Không block nếu push lỗi
-      console.error("Lỗi gửi push khi hủy đăng ký:", pushErr);
+    } catch (pushError) {
+      // Bỏ qua lỗi push notification
+      console.log("Push notification error (ignored):", pushError.message);
     }
 
-    await event.save();
+    // Lưu không validate lại toàn bộ để tránh lỗi với sự kiện đã qua
+    await event.save({ validateBeforeSave: false });
 
     return res.json({
       success: true,
@@ -783,7 +791,7 @@ exports.reviewRegistration = async (req, res) => {
     participant.reviewedAt = new Date();
     participant.reviewedBy = req.user._id;
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho tình nguyện viên
     await createNotification({
@@ -801,6 +809,18 @@ exports.reviewRegistration = async (req, res) => {
       eventId: event._id,
       link: `/my-events`,
     });
+
+    // Gửi Web Push Notification
+    await sendPushToUser(
+      userId,
+      status === "approved"
+        ? "✅ Đăng ký được phê duyệt!"
+        : "❌ Đăng ký bị từ chối",
+      status === "approved"
+        ? `Đăng ký của bạn cho sự kiện "${event.title}" đã được phê duyệt. Hãy tham gia đúng giờ!`
+        : `Rất tiếc, đăng ký của bạn cho sự kiện "${event.title}" đã bị từ chối.`,
+      `/my-events`
+    );
 
     // Populate để trả về thông tin đầy đủ
     await event.populate("participants.user", "username email");
@@ -840,6 +860,7 @@ exports.getEventRegistrations = async (req, res) => {
 
     // Check quyền
     if (
+      event.createdBy &&
       event.createdBy._id.toString() !== req.user._id.toString() &&
       req.user.role !== "admin"
     ) {
@@ -921,6 +942,14 @@ exports.checkInParticipant = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể check-in",
+      });
+    }
+
     // Tìm participant
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
@@ -952,7 +981,7 @@ exports.checkInParticipant = async (req, res) => {
     participant.checkedIn = true;
     participant.checkInTime = new Date();
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho tình nguyện viên
     await createNotification({
@@ -1006,6 +1035,14 @@ exports.undoCheckIn = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể thay đổi",
+      });
+    }
+
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
     );
@@ -1020,7 +1057,7 @@ exports.undoCheckIn = async (req, res) => {
     participant.checkedIn = false;
     participant.checkInTime = null;
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
@@ -1061,6 +1098,14 @@ exports.markAsCompleted = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể thay đổi",
+      });
+    }
+
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
     );
@@ -1091,7 +1136,7 @@ exports.markAsCompleted = async (req, res) => {
     participant.completed = true;
     participant.completedAt = new Date();
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho tình nguyện viên
     await createNotification({
@@ -1103,13 +1148,15 @@ exports.markAsCompleted = async (req, res) => {
       link: `/my-events`,
     });
 
-    await event.populate("participants.user", "username email");
+    // Gửi Web Push Notification
+    await sendPushToUser(
+      userId,
+      "🎉 Hoàn thành sự kiện!",
+      `Chúc mừng! Bạn đã hoàn thành sự kiện "${event.title}". Cảm ơn sự đóng góp của bạn!`,
+      `/my-events`
+    );
 
-    await sendPushToUser(participantIds, {
-      title: "Sự kiện đã kết thúc",
-      body: `Cảm ơn bạn đã tham gia "${event.name}"! Hẹn gặp lại.`,
-      url: `/event/${eventId}`,
-    });
+    await event.populate("participants.user", "username email");
 
     res.json({
       success: true,
@@ -1151,6 +1198,14 @@ exports.undoCompleted = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể thay đổi",
+      });
+    }
+
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
     );
@@ -1165,7 +1220,7 @@ exports.undoCompleted = async (req, res) => {
     participant.completed = false;
     participant.completedAt = null;
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     res.json({
       success: true,

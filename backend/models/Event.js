@@ -63,6 +63,7 @@ const eventSchema = new mongoose.Schema(
         "education",
         "youth",
         "elderly",
+        "disabled",
         "healthcare",
         "other",
       ],

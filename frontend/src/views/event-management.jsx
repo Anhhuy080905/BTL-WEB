@@ -74,6 +74,7 @@ const EventManagement = () => {
     message: "",
     onConfirm: null,
   });
+  const [loadingEventId, setLoadingEventId] = useState(null);
 
   const showConfirm = (message, onConfirm) => {
     setConfirmDialog({ show: true, message, onConfirm });
@@ -303,11 +304,36 @@ const EventManagement = () => {
   };
 
   const handleViewRegistrations = async (event) => {
+    const eventId = event._id || event.id;
+
+    // Ngăn multiple calls cho cùng 1 event
+    if (loadingEventId === eventId) {
+      return;
+    }
+
     try {
-      setSelectedEventForReview(event);
-      const response = await eventsService.getEventRegistrations(
-        event._id || event.id
-      );
+      console.log("handleViewRegistrations called with event:", event);
+
+      if (!event || !eventId) {
+        console.error("Invalid event object:", event);
+        setNotification({
+          type: "error",
+          title: "Lỗi",
+          message: "Không tìm thấy thông tin sự kiện",
+        });
+        return;
+      }
+
+      setLoadingEventId(eventId);
+      const response = await eventsService.getEventRegistrations(eventId);
+      console.log("Event completed status:", event.completed);
+      console.log("Response data:", response);
+
+      // Cập nhật selectedEventForReview với thông tin mới nhất từ events list
+      const latestEvent =
+        events.find((e) => (e._id || e.id) === eventId) || event;
+      setSelectedEventForReview(latestEvent);
+
       setRegistrations(response.data);
       setRegistrationsStats(response.statistics);
       setShowRegistrationsModal(true);
@@ -319,6 +345,8 @@ const EventManagement = () => {
           "Có lỗi khi tải danh sách đăng ký: " +
           (error.response?.data?.message || error.message),
       });
+    } finally {
+      setLoadingEventId(null);
     }
   };
 
@@ -767,6 +795,7 @@ const EventManagement = () => {
                       <button
                         className="btn btn-info"
                         onClick={() => handleViewRegistrations(event)}
+                        disabled={loadingEventId === (event._id || event.id)}
                         title="Xem danh sách đăng ký"
                       >
                         <svg
@@ -1058,6 +1087,22 @@ const EventManagement = () => {
           >
             <div className="modal-header">
               <h2>Quản lý đăng ký - {selectedEventForReview.title}</h2>
+              {selectedEventForReview.completed && (
+                <div
+                  style={{
+                    backgroundColor: "#ffc107",
+                    color: "#000",
+                    padding: "8px 16px",
+                    borderRadius: "4px",
+                    marginTop: "10px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                  }}
+                >
+                  ⚠️ Sự kiện này đã hoàn thành. Không thể thay đổi trạng thái
+                  đăng ký.
+                </div>
+              )}
             </div>
 
             <div className="registrations-stats">
@@ -1103,157 +1148,142 @@ const EventManagement = () => {
             <div className="registrations-tabs">
               <div className="tab-content">
                 {/* Danh sách chờ duyệt */}
-                {registrations.pending.length > 0 && (
+                {registrations.pending.filter((reg) => reg.user).length > 0 && (
                   <div className="registration-section">
                     <h3 className="section-title">
-                      ⏳ Chờ phê duyệt ({registrations.pending.length})
+                      ⏳ Chờ phê duyệt (
+                      {registrations.pending.filter((reg) => reg.user).length})
                     </h3>
                     <div className="registrations-list">
-                      {registrations.pending.map((reg) => (
-                        <div
-                          key={reg._id}
-                          className="registration-item pending"
-                        >
-                          <div className="registration-info">
-                            <div className="user-avatar">
-                              {reg.user?.username?.charAt(0).toUpperCase() ||
-                                "U"}
+                      {registrations.pending
+                        .filter((reg) => reg.user)
+                        .map((reg) => (
+                          <div
+                            key={reg._id}
+                            className="registration-item pending"
+                          >
+                            <div className="registration-info">
+                              <div className="user-avatar">
+                                {reg.user?.username?.charAt(0).toUpperCase() ||
+                                  "U"}
+                              </div>
+                              <div className="user-details">
+                                <div className="user-name">
+                                  {reg.user?.username || "N/A"}
+                                </div>
+                                <div className="user-email">
+                                  {reg.user?.email || "N/A"}
+                                </div>
+                                <div className="registration-date">
+                                  Đăng ký:{" "}
+                                  {new Date(reg.registeredAt).toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="user-details">
-                              <div className="user-name">
-                                {reg.user?.username || "N/A"}
-                              </div>
-                              <div className="user-email">
-                                {reg.user?.email || "N/A"}
-                              </div>
-                              <div className="registration-date">
-                                Đăng ký:{" "}
-                                {new Date(reg.registeredAt).toLocaleString(
-                                  "vi-VN"
-                                )}
-                              </div>
+                            <div className="registration-actions">
+                              {!selectedEventForReview.completed ? (
+                                <>
+                                  <button
+                                    className="btn btn-success btn-sm"
+                                    onClick={() =>
+                                      handleApproveRegistration(reg.user._id)
+                                    }
+                                  >
+                                    ✓ Phê duyệt
+                                  </button>
+                                  <button
+                                    className="btn btn-danger btn-sm"
+                                    onClick={() =>
+                                      handleRejectRegistration(reg.user._id)
+                                    }
+                                  >
+                                    ✕ Từ chối
+                                  </button>
+                                </>
+                              ) : (
+                                <span
+                                  className="text-muted"
+                                  style={{
+                                    fontSize: "12px",
+                                    fontStyle: "italic",
+                                  }}
+                                >
+                                  Sự kiện đã hoàn thành
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <div className="registration-actions">
-                            <button
-                              className="btn btn-success btn-sm"
-                              onClick={() =>
-                                handleApproveRegistration(reg.user._id)
-                              }
-                            >
-                              ✓ Phê duyệt
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() =>
-                                handleRejectRegistration(reg.user._id)
-                              }
-                            >
-                              ✕ Từ chối
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 )}
 
                 {/* Danh sách đã duyệt */}
-                {registrations.approved.length > 0 && (
+                {registrations.approved.filter((reg) => reg.user).length >
+                  0 && (
                   <div className="registration-section">
                     <h3 className="section-title">
-                      ✓ Đã phê duyệt ({registrations.approved.length})
+                      ✓ Đã phê duyệt (
+                      {registrations.approved.filter((reg) => reg.user).length})
                     </h3>
                     <div className="registrations-list">
-                      {registrations.approved.map((reg) => (
-                        <div
-                          key={reg._id}
-                          className="registration-item approved"
-                        >
-                          <div className="registration-info">
-                            <div className="user-avatar">
-                              {reg.user?.username?.charAt(0).toUpperCase() ||
-                                "U"}
-                            </div>
-                            <div className="user-details">
-                              <div className="user-name">
-                                {reg.user?.username || "N/A"}
+                      {registrations.approved
+                        .filter((reg) => reg.user)
+                        .map((reg) => (
+                          <div
+                            key={reg._id}
+                            className="registration-item approved"
+                          >
+                            <div className="registration-info">
+                              <div className="user-avatar">
+                                {reg.user?.username?.charAt(0).toUpperCase() ||
+                                  "U"}
                               </div>
-                              <div className="user-email">
-                                {reg.user?.email || "N/A"}
-                              </div>
-                              <div className="registration-date">
-                                Phê duyệt:{" "}
-                                {reg.reviewedAt
-                                  ? new Date(reg.reviewedAt).toLocaleString(
-                                      "vi-VN"
-                                    )
-                                  : "N/A"}
-                              </div>
-                              {reg.checkedIn && (
+                              <div className="user-details">
+                                <div className="user-name">
+                                  {reg.user?.username || "N/A"}
+                                </div>
+                                <div className="user-email">
+                                  {reg.user?.email || "N/A"}
+                                </div>
                                 <div className="registration-date">
-                                  ✓ Check-in:{" "}
-                                  {reg.checkInTime
-                                    ? new Date(reg.checkInTime).toLocaleString(
+                                  Phê duyệt:{" "}
+                                  {reg.reviewedAt
+                                    ? new Date(reg.reviewedAt).toLocaleString(
                                         "vi-VN"
                                       )
                                     : "N/A"}
                                 </div>
-                              )}
-                              {reg.completed && (
-                                <div className="registration-date">
-                                  ★ Hoàn thành:{" "}
-                                  {reg.completedAt
-                                    ? new Date(reg.completedAt).toLocaleString(
-                                        "vi-VN"
-                                      )
-                                    : "N/A"}
-                                </div>
+                              </div>
+                            </div>
+                            <div className="registration-actions">
+                              {reg.checkedIn ? (
+                                <>
+                                  <span className="status-badge status-checkedin">
+                                    Đã check-in
+                                  </span>
+                                  <button
+                                    className="btn btn-warning btn-sm"
+                                    onClick={() =>
+                                      handleUndoCheckIn(reg.user._id)
+                                    }
+                                  >
+                                    ↩ Hủy check-in
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={() => handleCheckIn(reg.user._id)}
+                                >
+                                  📝 Check-in
+                                </button>
                               )}
                             </div>
                           </div>
-                          <div className="registration-actions">
-                            {!reg.checkedIn && (
-                              <button
-                                className="btn btn-info btn-sm"
-                                onClick={() => handleCheckIn(reg.user._id)}
-                              >
-                                ✓ Check-in
-                              </button>
-                            )}
-                            {reg.checkedIn && !reg.completed && (
-                              <>
-                                <button
-                                  className="btn btn-warning btn-sm"
-                                  onClick={() =>
-                                    handleUndoCheckIn(reg.user._id)
-                                  }
-                                >
-                                  ↶ Hủy check-in
-                                </button>
-                                <button
-                                  className="btn btn-success btn-sm"
-                                  onClick={() =>
-                                    handleMarkCompleted(reg.user._id)
-                                  }
-                                >
-                                  ★ Hoàn thành
-                                </button>
-                              </>
-                            )}
-                            {reg.completed && (
-                              <button
-                                className="btn btn-secondary btn-sm"
-                                onClick={() =>
-                                  handleUndoCompleted(reg.user._id)
-                                }
-                              >
-                                ↶ Hủy hoàn thành
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 )}

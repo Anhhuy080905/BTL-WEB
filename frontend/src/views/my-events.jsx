@@ -3,10 +3,12 @@ import { Helmet } from "react-helmet";
 import { useHistory } from "react-router-dom";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
+import { useToast } from "../hooks/useToast";
 import "./my-events.css";
 
 const MyEvents = () => {
   const history = useHistory();
+  const { toasts, showSuccess, showError, removeToast } = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("joined"); // joined, created, pending
@@ -17,6 +19,8 @@ const MyEvents = () => {
   });
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [eventToCancel, setEventToCancel] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -98,19 +102,28 @@ const MyEvents = () => {
     document.body.style.overflow = "auto";
   };
 
-  const handleCancelRegistration = async (eventId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy tham gia sự kiện này?")) {
-      return;
-    }
+  const handleCancelRegistration = (eventId) => {
+    setEventToCancel(eventId);
+    setShowConfirmModal(true);
+  };
+
+  const confirmCancelRegistration = async () => {
+    if (!eventToCancel) return;
 
     try {
-      await eventsService.unregisterFromEvent(eventId);
-      alert("Đã hủy tham gia sự kiện thành công!");
+      await eventsService.unregisterFromEvent(eventToCancel);
+      showSuccess("Đã hủy tham gia sự kiện thành công!");
+      setShowConfirmModal(false);
+      setEventToCancel(null);
       // Reload data
       fetchData();
     } catch (error) {
       console.error("Error canceling registration:", error);
-      alert(error.response?.data?.message || "Không thể hủy tham gia sự kiện");
+      showError(
+        error.response?.data?.message || "Không thể hủy tham gia sự kiện"
+      );
+      setShowConfirmModal(false);
+      setEventToCancel(null);
     }
   };
 
@@ -523,6 +536,42 @@ const MyEvents = () => {
             <div className="modal-footer">
               <button className="btn btn-outline" onClick={handleCloseModal}>
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {showConfirmModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowConfirmModal(false)}
+        >
+          <div
+            className="modal-content confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Xác nhận hủy tham gia</h2>
+            </div>
+            <div className="modal-body">
+              <div className="confirm-icon">⚠️</div>
+              <p>Bạn có chắc chắn muốn hủy tham gia sự kiện này?</p>
+              <p className="confirm-note">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Không, giữ lại
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={confirmCancelRegistration}
+              >
+                Có, hủy tham gia
               </button>
             </div>
           </div>
