@@ -797,7 +797,10 @@ const EventManagement = () => {
                           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                         </svg>
                         <span>
-                          {event.approvalStatus === "rejected" ? 0 : event.registered}/{event.maxParticipants} người
+                          {event.approvalStatus === "rejected"
+                            ? 0
+                            : event.registered}
+                          /{event.maxParticipants} người
                         </span>
                       </div>
                       <div className="info-item">

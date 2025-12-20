@@ -616,10 +616,10 @@ exports.unregisterFromEvent = async (req, res) => {
 
     // Lấy thông tin participant trước khi xóa
     const participant = event.participants[participantIndex];
-    
+
     // Xóa khỏi danh sách participants
     event.participants.splice(participantIndex, 1);
-    
+
     // Chỉ giảm registered nếu participant đã được approve
     if (participant.status === "approved") {
       event.registered -= 1;
@@ -1490,11 +1490,11 @@ exports.rejectEvent = async (req, res) => {
     event.approvedBy = req.user._id;
     event.approvedAt = new Date();
     event.rejectionReason = reason || "Không đáp ứng yêu cầu";
-    
+
     // Xóa tất cả participants khi từ chối sự kiện
     event.participants = [];
     event.registered = 0;
-    
+
     await event.save();
 
     // Gửi notification cho event manager
