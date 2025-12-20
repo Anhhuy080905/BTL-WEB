@@ -91,6 +91,7 @@ router.put(
   reviewRegistration
 );
 
+router.get("/slug/:slug", optionalProtect, getEvent)
 // Routes cho event cụ thể (phải đặt cuối cùng vì dùng /:id)
 router.get("/:id", optionalProtect, getEvent);
 router.post("/:id/register", protect, registerForEvent);

@@ -96,6 +96,7 @@ const eventSchema = new mongoose.Schema(
     slug: { 
       type: String, 
       unique: true, 
+      index: true
     },
     participants: [
       {
@@ -164,11 +165,47 @@ eventSchema.pre('save', async function(next) {
   }
   next();
 });
+
 eventSchema.statics.findBySlug = function(slug) {
   return this.findOne({ slug })
     .populate('createdBy', 'fullName email organization')
     .populate('registrations.user', 'fullName email avatar');
 };
+
+eventSchema.pre('findOneAndUpdate', async function(next) {
+  const update = this.getUpdate();
+  
+  if (update.title) {
+    let slug = slugify(update.title, {
+      lower: true,
+      strict: true,
+      locale: 'vi',
+      remove: /[*+~.()'"!:@]/g
+    });
+    
+    // Kiểm tra trùng lặp
+    let slugExists = await this.model.findOne({ 
+      slug: slug,
+      _id: { $ne: update._id } 
+    });
+    
+    let counter = 1;
+    let originalSlug = slug;
+    
+    while (slugExists) {
+      slug = `${originalSlug}-${counter}`;
+      slugExists = await this.model.findOne({ 
+        slug: slug,
+        _id: { $ne: update._id } 
+      });
+      counter++;
+    }
+    
+    update.slug = slug;
+  }
+  
+  next();
+});
 
 // Index để tăng performance
 eventSchema.index({ category: 1, status: 1 });

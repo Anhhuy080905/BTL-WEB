@@ -5,7 +5,7 @@ import Toast from "../components/Toast.jsx";
 import { authAPI } from "../services/api";
 import { eventsService } from "../services/eventsService";
 import "./events.css";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, Link } from "react-router-dom";
 
 const Events = () => {
   const history = useHistory();
@@ -81,7 +81,7 @@ const Events = () => {
         const correctSlug = foundEvent.slug || "";
         if (slug !== correctSlug) {
             const eventId = foundEvent._id || foundEvent.id;
-            history.replace(`/events//${correctSlug}`);
+            history.replace(`/events/${correctSlug}`);
         }
       }
     }
@@ -133,7 +133,7 @@ const Events = () => {
     document.body.style.overflow = "hidden";
 
     // Thay đổi URL thành dạng đẹp (không reload trang)
-    history.replace(`/events/${eventId}/${event.slug || ""}`);
+    history.replace(`/events/${event.slug || ""}`);
   };
 
   const getCategoryName = (category) => {
