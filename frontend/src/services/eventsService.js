@@ -282,6 +282,40 @@ export const eventsService = {
     }
   },
 
+  // Phê duyệt sự kiện (Admin only)
+  approveEvent: async (eventId) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/${eventId}/approve`,
+        {},
+        {
+          headers: getAuthHeader(),
+        }
+      );
+      notifyListeners();
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Từ chối sự kiện (Admin only)
+  rejectEvent: async (eventId, reason) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/${eventId}/reject`,
+        { reason },
+        {
+          headers: getAuthHeader(),
+        }
+      );
+      notifyListeners();
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Subscribe để nhận thông báo khi data thay đổi
   subscribe: (callback) => {
     listeners.add(callback);

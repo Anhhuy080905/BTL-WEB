@@ -108,6 +108,9 @@ app.use("/api/posts", require("./routes/postRoutes"));
 // User routes (Admin only)
 app.use("/api/users", require("./routes/userRoutes"));
 
+// Admin migration routes
+app.use("/api/admin", require("./routes/adminMigrationRoutes"));
+
 // Error handler middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

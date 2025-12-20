@@ -18,6 +18,9 @@ const notificationSchema = new mongoose.Schema(
         "completed", // Đã hoàn thành
         "post_like", // Ai đó đã thích bài viết
         "post_comment", // Ai đó đã bình luận bài viết
+        "event_approval_request", // Admin nhận yêu cầu phê duyệt sự kiện
+        "event_approved", // Event Manager: sự kiện được phê duyệt
+        "event_rejected", // Event Manager: sự kiện bị từ chối
       ],
       required: true,
     },
@@ -32,7 +35,7 @@ const notificationSchema = new mongoose.Schema(
     event: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Event",
-      required: true,
+      required: false, // Không bắt buộc vì một số notification không liên quan event
     },
     post: {
       // Bài viết liên quan (cho like, comment)
