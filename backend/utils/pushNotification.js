@@ -43,17 +43,19 @@ const sendToMany = async (subscriptions, title, body, data = {}) => {
 const sendPushToUser = async (userId, title, body, url = null) => {
   try {
     const user = await User.findById(userId).select("pushSubscriptions");
-    if (!user?.pushSubscriptions) return;
+    if (!user?.pushSubscriptions) {
+      console.log(`No push subscription for user ${userId}`);
+      return;
+    }
 
-    const payload = {
-      title,
-      body,
+    const data = {
       icon: "/logo192.png",
       badge: "/logo192.png",
-      data: url ? { url } : undefined,
+      url: url || undefined,
     };
 
-    const result = await sendNotification(user.pushSubscriptions, payload);
+    console.log(`Sending push to user ${userId}: ${title}`);
+    const result = await sendNotification(user.pushSubscriptions, title, body, data);
 
     // Nếu subscription expired → xóa
     if (result?.expired) {
@@ -62,7 +64,7 @@ const sendPushToUser = async (userId, title, body, url = null) => {
       });
     }
   } catch (err) {
-    // Bỏ qua lỗi push notification (không log)
+    console.error("Push notification error:", err.message);
   }
 };
 

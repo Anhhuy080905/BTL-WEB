@@ -531,7 +531,7 @@ exports.registerForEvent = async (req, res) => {
 // Hủy đăng ký sự kiện
 exports.unregisterFromEvent = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id).populate("createdBy");
 
     if (!event) {
       return res.status(404).json({
@@ -556,16 +556,27 @@ exports.unregisterFromEvent = async (req, res) => {
     event.participants.splice(participantIndex, 1);
     event.registered -= 1;
 
-    // Gửi thông báo push (không block nếu lỗi)
+    // Gửi thông báo cho manager (không block nếu lỗi)
     try {
-      await sendPushToUser(req.user._id, {
-        title: "Đã hủy đăng ký",
-        body: `Bạn đã hủy đăng ký sự kiện "${event.title}"`,
-        url: `/events/${req.params.id}`,
+      // Tạo notification trong database cho manager
+      await createNotification({
+        userId: event.createdBy._id,
+        type: "registration_pending",
+        title: "Volunteer hủy đăng ký",
+        message: `${req.user.fullName || req.user.username} đã hủy đăng ký sự kiện "${event.title}"`,
+        eventId: event._id,
       });
-    } catch (pushError) {
-      // Bỏ qua lỗi push notification
-      console.log("Push notification error (ignored):", pushError.message);
+
+      // Gửi push notification cho manager
+      await sendPushToUser(
+        event.createdBy._id,
+        "Volunteer hủy đăng ký",
+        `${req.user.fullName || req.user.username} đã hủy đăng ký sự kiện "${event.title}"`,
+        `/events/${req.params.id}`
+      );
+    } catch (notifError) {
+      // Bỏ qua lỗi notification
+      console.log("Notification error (ignored):", notifError.message);
     }
 
     // Lưu không validate lại toàn bộ để tránh lỗi với sự kiện đã qua
