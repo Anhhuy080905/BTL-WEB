@@ -326,11 +326,6 @@ exports.updateEvent = async (req, res) => {
       }
     );
 
-    await sendPushToEventParticipants(
-      event._id,
-      NotificationTemplates.eventCompleted(event)
-    );
-
     res.json({
       success: true,
       message: "Cập nhật sự kiện thành công",
@@ -503,10 +498,13 @@ exports.registerForEvent = async (req, res) => {
           link: `/event-management`,
         });
 
-        await sendPushToUser(userId, {
-          title: "Đăng ký đã được duyệt!",
-          body: `Chúc mừng! Bạn đã được tham gia sự kiện "${event.name}".`,
-          url: `/event/${eventId}`,
+        // Gửi push notification cho người quản lý
+        await sendPushToUser(event.createdBy, {
+          title: "Có người đăng ký sự kiện",
+          body: `${
+            req.user.username || req.user.fullName || "Một người dùng"
+          } đã đăng ký tham gia sự kiện "${event.title}"`,
+          url: `/event-management`,
         });
       }
     } catch (notifError) {
@@ -555,13 +553,20 @@ exports.unregisterFromEvent = async (req, res) => {
     event.participants.splice(participantIndex, 1);
     event.registered -= 1;
 
-    await sendPushToUser(userId, {
-      title: "Đã hủy đăng ký",
-      body: "Bạn đã hủy đăng ký sự kiện này",
-      url: `/event/${eventId}`,
-    });
+    // Gửi thông báo push (không block nếu lỗi)
+    try {
+      await sendPushToUser(req.user._id, {
+        title: "Đã hủy đăng ký",
+        body: `Bạn đã hủy đăng ký sự kiện "${event.title}"`,
+        url: `/events/${req.params.id}`,
+      });
+    } catch (pushError) {
+      // Bỏ qua lỗi push notification
+      console.log("Push notification error (ignored):", pushError.message);
+    }
 
-    await event.save();
+    // Lưu không validate lại toàn bộ để tránh lỗi với sự kiện đã qua
+    await event.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
@@ -753,7 +758,7 @@ exports.reviewRegistration = async (req, res) => {
     participant.reviewedAt = new Date();
     participant.reviewedBy = req.user._id;
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho tình nguyện viên
     await createNotification({
@@ -810,6 +815,7 @@ exports.getEventRegistrations = async (req, res) => {
 
     // Check quyền
     if (
+      event.createdBy &&
       event.createdBy._id.toString() !== req.user._id.toString() &&
       req.user.role !== "admin"
     ) {
@@ -891,6 +897,14 @@ exports.checkInParticipant = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể check-in",
+      });
+    }
+
     // Tìm participant
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
@@ -922,7 +936,7 @@ exports.checkInParticipant = async (req, res) => {
     participant.checkedIn = true;
     participant.checkInTime = new Date();
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho tình nguyện viên
     await createNotification({
@@ -976,6 +990,14 @@ exports.undoCheckIn = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể thay đổi",
+      });
+    }
+
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
     );
@@ -990,7 +1012,7 @@ exports.undoCheckIn = async (req, res) => {
     participant.checkedIn = false;
     participant.checkInTime = null;
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
@@ -1031,6 +1053,14 @@ exports.markAsCompleted = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể thay đổi",
+      });
+    }
+
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
     );
@@ -1061,7 +1091,7 @@ exports.markAsCompleted = async (req, res) => {
     participant.completed = true;
     participant.completedAt = new Date();
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho tình nguyện viên
     await createNotification({
@@ -1121,6 +1151,14 @@ exports.undoCompleted = async (req, res) => {
       });
     }
 
+    // Kiểm tra sự kiện đã hoàn thành chưa
+    if (event.completed) {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã hoàn thành, không thể thay đổi",
+      });
+    }
+
     const participant = event.participants.find(
       (p) => p.user.toString() === userId
     );
@@ -1135,7 +1173,7 @@ exports.undoCompleted = async (req, res) => {
     participant.completed = false;
     participant.completedAt = null;
 
-    await event.save();
+    await event.save({ validateBeforeSave: false });
 
     res.json({
       success: true,

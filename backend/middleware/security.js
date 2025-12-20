@@ -26,10 +26,10 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate limiter cho API chung - 100 requests trong 15 phút
+// Rate limiter cho API chung - 300 requests trong 15 phút
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 100, // 100 requests
+  max: 300, // 300 requests
   message: {
     success: false,
     message: "Quá nhiều requests. Vui lòng thử lại sau.",

@@ -13,14 +13,14 @@ const sendNotification = async (subscription, title, body, data = {}) => {
 
   try {
     await webpush.sendNotification(subscription, payload);
-    console.log("Push sent:", title);
+    // Bỏ log thành công
   } catch (error) {
-    console.error("Push error:", error);
-
+    // Bỏ qua lỗi push notification (không log)
     if (error.statusCode === 410 || error.statusCode === 404) {
       return { expired: true };
     }
-    throw error;
+    // Không throw error nữa để tránh hiển thị lỗi
+    return { expired: false, error: true };
   }
   return { expired: false };
 };
@@ -62,7 +62,7 @@ const sendPushToUser = async (userId, title, body, url = null) => {
       });
     }
   } catch (err) {
-    console.error("sendPushToUser error:", err);
+    // Bỏ qua lỗi push notification (không log)
   }
 };
 
