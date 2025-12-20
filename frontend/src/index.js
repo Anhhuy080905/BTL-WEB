@@ -59,6 +59,15 @@ const App = () => {
           <Route component={Home} exact path="/" />
           <Route component={About} exact path="/about" />
           <Route component={Events} exact path="/events" />
+          {/* Redirect old event detail links to event management */}
+          <Route
+            exact
+            path="/events/:id"
+            render={() => {
+              window.location.href = "/event-management";
+              return null;
+            }}
+          />
           <Route component={EventsManager} exact path="/events-manager" />
           <Route component={Login} exact path="/login" />
           <Route component={Register} exact path="/register" />
@@ -72,6 +81,15 @@ const App = () => {
           <Route component={MyEvents} exact path="/my-events" />
           <Route component={EventManagement} exact path="/event-management" />
           <Route component={AdminDashboard} exact path="/admin-dashboard" />
+          {/* Redirect old admin event links to admin dashboard */}
+          <Route
+            exact
+            path="/admin/events/:id"
+            render={() => {
+              window.location.href = "/admin-dashboard?tab=events";
+              return null;
+            }}
+          />
           <Route component={DiscussionListFB} exact path="/discussion-list" />
           <Route
             component={DiscussionChannel}

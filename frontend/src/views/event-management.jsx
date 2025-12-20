@@ -99,7 +99,9 @@ const EventManagement = () => {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const eventsData = await eventsService.getAllEvents();
+      // Sử dụng getMyCreatedEvents để lấy sự kiện của event_manager
+      // (bao gồm cả pending, approved, rejected)
+      const eventsData = await eventsService.getMyCreatedEvents();
       console.log("Loaded events:", eventsData);
       setEvents(eventsData);
     } catch (error) {
@@ -242,8 +244,9 @@ const EventManagement = () => {
         });
         setNotification({
           type: "success",
-          title: "Thành công",
-          message: "Tạo sự kiện mới thành công!",
+          title: "Tạo sự kiện thành công! ⏳",
+          message:
+            "Sự kiện của bạn đang chờ admin phê duyệt. Bạn sẽ nhận được thông báo khi sự kiện được phê duyệt hoặc từ chối.",
         });
       }
 
@@ -699,8 +702,35 @@ const EventManagement = () => {
                     <span className="event-category-badge">
                       {getCategoryName(event.category)}
                     </span>
+                    {/* Hiển thị trạng thái phê duyệt */}
+                    {event.approvalStatus === "pending" && (
+                      <span className="approval-badge approval-pending">
+                        ⏳ Chờ duyệt
+                      </span>
+                    )}
+                    {event.approvalStatus === "approved" && (
+                      <span className="approval-badge approval-approved">
+                        ✅ Đã duyệt
+                      </span>
+                    )}
+                    {event.approvalStatus === "rejected" && (
+                      <span className="approval-badge approval-rejected">
+                        ❌ Bị từ chối
+                      </span>
+                    )}
                   </div>
                   <div className="event-content">
+                    {event.approvalStatus === "pending" && (
+                      <div className="pending-approval-notice">
+                        <span className="notice-icon">⏳</span>
+                        <span>Đang chờ admin phê duyệt</span>
+                      </div>
+                    )}
+                    {event.rejectionReason && (
+                      <div className="rejection-reason">
+                        <strong>Lý do từ chối:</strong> {event.rejectionReason}
+                      </div>
+                    )}
                     <h3 className="event-title">{event.title}</h3>
 
                     <div className="event-info-grid">
@@ -767,7 +797,7 @@ const EventManagement = () => {
                           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                         </svg>
                         <span>
-                          {event.registered}/{event.maxParticipants} người
+                          {event.approvalStatus === "rejected" ? 0 : event.registered}/{event.maxParticipants} người
                         </span>
                       </div>
                       <div className="info-item">
@@ -909,6 +939,15 @@ const EventManagement = () => {
           >
             <div className="modal-header">
               <h2>{editingEvent ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}</h2>
+              {!editingEvent && (
+                <div className="approval-info-banner">
+                  <span className="info-icon">ℹ️</span>
+                  <span>
+                    Sự kiện mới sẽ cần được admin phê duyệt trước khi xuất hiện
+                    công khai.
+                  </span>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleSubmit} className="event-form">

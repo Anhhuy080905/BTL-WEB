@@ -18,6 +18,8 @@ const {
   markAsCompleted,
   undoCompleted,
   exportEvents,
+  approveEvent,
+  rejectEvent,
 } = require("../controllers/eventController");
 const { protect, authorize, optionalProtect } = require("../middleware/auth");
 
@@ -88,6 +90,10 @@ router.put(
   authorize("event_manager", "admin"),
   reviewRegistration
 );
+
+// Routes phê duyệt sự kiện (chỉ admin)
+router.put("/:id/approve", protect, authorize("admin"), approveEvent);
+router.put("/:id/reject", protect, authorize("admin"), rejectEvent);
 
 // Routes cho event cụ thể (phải đặt cuối cùng vì dùng /:id)
 router.get("/:id", optionalProtect, getEventById);

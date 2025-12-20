@@ -55,7 +55,12 @@ const sendPushToUser = async (userId, title, body, url = null) => {
     };
 
     console.log(`Sending push to user ${userId}: ${title}`);
-    const result = await sendNotification(user.pushSubscriptions, title, body, data);
+    const result = await sendNotification(
+      user.pushSubscriptions,
+      title,
+      body,
+      data
+    );
 
     // Nếu subscription expired → xóa
     if (result?.expired) {
@@ -68,4 +73,27 @@ const sendPushToUser = async (userId, title, body, url = null) => {
   }
 };
 
-module.exports = { sendNotification, sendToMany, sendPushToUser };
+// Notification Templates
+const NotificationTemplates = {
+  eventApprovalRequest: (eventTitle, creatorName) => ({
+    title: "🔔 Yêu cầu phê duyệt sự kiện",
+    body: `${creatorName} đã tạo sự kiện "${eventTitle}". Vui lòng xem xét phê duyệt.`,
+  }),
+
+  eventApproved: (eventTitle) => ({
+    title: "✅ Sự kiện đã được phê duyệt",
+    body: `Sự kiện "${eventTitle}" của bạn đã được admin phê duyệt và xuất hiện công khai.`,
+  }),
+
+  eventRejected: (eventTitle, reason) => ({
+    title: "❌ Sự kiện bị từ chối",
+    body: `Sự kiện "${eventTitle}" của bạn đã bị từ chối. Lý do: ${reason}`,
+  }),
+};
+
+module.exports = {
+  sendNotification,
+  sendToMany,
+  sendPushToUser,
+  NotificationTemplates,
+};

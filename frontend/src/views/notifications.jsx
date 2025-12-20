@@ -155,11 +155,10 @@ const Notifications = () => {
                     }
                     // If notification has postId, navigate to discussion-list with modal
                     if (notification.post) {
-                      history.push(
-                        `/discussion-list?postId=${notification.post}`
-                      );
+                      window.location.href = `/discussion-list?postId=${notification.post}`;
                     } else if (notification.link) {
-                      history.push(notification.link);
+                      // Always use window.location.href to force reload and fetch latest data
+                      window.location.href = notification.link;
                     }
                   }}
                 >

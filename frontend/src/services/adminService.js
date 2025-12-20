@@ -209,4 +209,20 @@ export const adminService = {
       throw error;
     }
   },
+
+  // ========== MIGRATION ==========
+
+  // Migrate old events to have approvalStatus
+  migrateApprovalStatus: async () => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/admin/migrate-approval-status`,
+        {},
+        getAuthHeader()
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

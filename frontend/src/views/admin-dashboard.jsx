@@ -45,6 +45,13 @@ const AdminDashboard = () => {
   useEffect(() => {
     checkAdminAccess();
     fetchData();
+
+    // Đọc query parameter để auto-switch tab
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get("tab");
+    if (tabParam && ["overview", "users", "events"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
   }, []);
 
   const checkAdminAccess = () => {
@@ -327,6 +334,70 @@ const AdminDashboard = () => {
         });
       }
     });
+  };
+
+  const handleApproveEvent = async (eventId) => {
+    showConfirm("Bạn có chắc muốn phê duyệt sự kiện này?", async () => {
+      try {
+        await eventsService.approveEvent(eventId);
+
+        // Cập nhật state events
+        setEvents((prevEvents) =>
+          prevEvents.map((event) =>
+            (event._id || event.id) === eventId
+              ? { ...event, approvalStatus: "approved" }
+              : event
+          )
+        );
+
+        setNotification({
+          type: "success",
+          title: "Thành công!",
+          message: "Đã phê duyệt sự kiện thành công!",
+        });
+      } catch (error) {
+        setNotification({
+          type: "error",
+          title: "Lỗi!",
+          message:
+            error.response?.data?.message || "Không thể phê duyệt sự kiện",
+        });
+      }
+    });
+  };
+
+  const handleRejectEvent = async (eventId) => {
+    const reason = prompt("Nhập lý do từ chối:");
+    if (reason === null) return; // User cancelled
+
+    try {
+      await eventsService.rejectEvent(eventId, reason);
+
+      // Cập nhật state events
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          (event._id || event.id) === eventId
+            ? {
+                ...event,
+                approvalStatus: "rejected",
+                rejectionReason: reason,
+              }
+            : event
+        )
+      );
+
+      setNotification({
+        type: "success",
+        title: "Thành công!",
+        message: "Đã từ chối sự kiện thành công!",
+      });
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Lỗi!",
+        message: error.response?.data?.message || "Không thể từ chối sự kiện",
+      });
+    }
   };
 
   const filteredUsers = users.filter(
@@ -814,15 +885,14 @@ const AdminDashboard = () => {
                   <div key={event._id} className="event-admin-card">
                     <div className="event-admin-header">
                       <h3>{event.title}</h3>
-                      <span className={`status-badge status-${event.status}`}>
-                        {event.status === "upcoming"
-                          ? "Sắp diễn ra"
-                          : event.status === "completed"
-                          ? "Đã hoàn thành"
-                          : event.status}
-                      </span>
                     </div>
                     <div className="event-admin-body">
+                      {event.rejectionReason && (
+                        <div className="rejection-reason-admin">
+                          <strong>Lý do từ chối:</strong>{" "}
+                          {event.rejectionReason}
+                        </div>
+                      )}
                       <p>📍 {event.location}</p>
                       <p>
                         📅 {new Date(event.date).toLocaleDateString("vi-VN")}
@@ -833,10 +903,52 @@ const AdminDashboard = () => {
                       </p>
                       <p>
                         👨‍💼 Người tạo:{" "}
-                        {event.creator?.fullName || event.creator?.username}
+                        {event.createdBy?.fullName ||
+                          event.createdBy?.username ||
+                          "N/A"}
                       </p>
+                      <div className="header-badges">
+                        <span className={`status-badge status-${event.status}`}>
+                          {event.status === "upcoming"
+                            ? "Sắp diễn ra"
+                            : event.status === "completed"
+                            ? "Đã hoàn thành"
+                            : event.status}
+                        </span>
+                        {event.approvalStatus === "pending" && (
+                          <span className="approval-badge approval-pending">
+                            ⏳ Chờ duyệt
+                          </span>
+                        )}
+                        {event.approvalStatus === "approved" && (
+                          <span className="approval-badge approval-approved">
+                            ✅ Đã duyệt
+                          </span>
+                        )}
+                        {event.approvalStatus === "rejected" && (
+                          <span className="approval-badge approval-rejected">
+                            ❌ Bị từ chối
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="event-admin-actions">
+                      {event.approvalStatus === "pending" && (
+                        <>
+                          <button
+                            className="btn btn-success-sm"
+                            onClick={() => handleApproveEvent(event._id)}
+                          >
+                            ✓ Phê duyệt
+                          </button>
+                          <button
+                            className="btn btn-warning-sm"
+                            onClick={() => handleRejectEvent(event._id)}
+                          >
+                            ✕ Từ chối
+                          </button>
+                        </>
+                      )}
                       <button
                         className="btn btn-danger-sm"
                         onClick={() => handleDeleteEvent(event._id)}

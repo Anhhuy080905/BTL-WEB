@@ -159,9 +159,8 @@ const NotificationBell = () => {
               </div>
             ) : (
               notifications.map((notification) => (
-                <Link
+                <div
                   key={notification._id}
-                  to={getNotificationLink(notification)}
                   className={`notification-bell-item ${
                     !notification.read ? "unread" : ""
                   }`}
@@ -170,7 +169,10 @@ const NotificationBell = () => {
                       handleMarkAsRead(notification._id);
                     }
                     setIsOpen(false);
+                    // Use window.location.href to force reload and fetch latest data
+                    window.location.href = getNotificationLink(notification);
                   }}
+                  style={{ cursor: "pointer" }}
                 >
                   <div className="notification-bell-icon">
                     {getNotificationIcon(notification.type)}
@@ -189,7 +191,7 @@ const NotificationBell = () => {
                       {formatTime(notification.createdAt)}
                     </div>
                   </div>
-                </Link>
+                </div>
               ))
             )}
           </div>

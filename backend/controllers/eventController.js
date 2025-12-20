@@ -28,9 +28,37 @@ const getDefaultImageByCategory = (category) => {
 // Lấy tất cả sự kiện
 exports.getAllEvents = async (req, res) => {
   try {
-    const { category, status, search, timeRange, startDate, endDate } =
-      req.query;
+    const {
+      category,
+      status,
+      search,
+      timeRange,
+      startDate,
+      endDate,
+      approvalStatus,
+    } = req.query;
     let query = {};
+
+    // Filter theo approvalStatus
+    // Public/không đăng nhập/volunteer/event_manager -> chỉ hiển thị approved hoặc null (backward compatibility)
+    // Admin -> xem tất cả, có thể filter
+    if (
+      !req.user ||
+      req.user.role === "volunteer" ||
+      req.user.role === "event_manager"
+    ) {
+      // Chỉ hiển thị sự kiện đã approved hoặc không có approvalStatus (sự kiện cũ)
+      query.$or = [
+        { approvalStatus: "approved" },
+        { approvalStatus: { $exists: false } },
+        { approvalStatus: null },
+      ];
+    } else if (req.user.role === "admin") {
+      // Admin xem tất cả, có thể filter
+      if (approvalStatus) {
+        query.approvalStatus = approvalStatus;
+      }
+    }
 
     // Filter theo category
     if (category && category !== "all") {
@@ -249,6 +277,7 @@ exports.createEvent = async (req, res) => {
       ...req.body,
       createdBy: req.user._id,
       organization: req.user.username,
+      approvalStatus: "pending", // Mặc định là pending, cần admin duyệt
     };
 
     // Nếu không có image, set default image theo category
@@ -258,9 +287,41 @@ exports.createEvent = async (req, res) => {
 
     const event = await Event.create(eventData);
 
+    // Gửi notification cho tất cả admin
+    const User = require("../models/User");
+    const admins = await User.find({ role: "admin" });
+
+    for (const admin of admins) {
+      // Tạo notification
+      await createNotification({
+        userId: admin._id,
+        type: "event_approval_request",
+        title: "Yêu cầu phê duyệt sự kiện",
+        message: `Sự kiện mới "${event.title}" cần được phê duyệt bởi ${req.user.username}`,
+        eventId: event._id,
+        link: `/admin-dashboard?tab=events`,
+      });
+
+      // Gửi Web Push notification
+      try {
+        const template = NotificationTemplates.eventApprovalRequest(
+          event.title,
+          req.user.username
+        );
+        await sendPushToUser(
+          admin._id,
+          template.title,
+          template.body,
+          `/admin-dashboard?tab=events`
+        );
+      } catch (pushError) {
+        console.error("Error sending push to admin:", pushError);
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: "Tạo sự kiện thành công",
+      message: "Tạo sự kiện thành công. Đang chờ admin phê duyệt.",
       data: event,
     });
   } catch (error) {
@@ -461,12 +522,13 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
-    // Thêm người dùng vào danh sách participants
+    // Thêm người dùng vào danh sách participants với status pending
     event.participants.push({
       user: req.user._id,
       registeredAt: new Date(),
+      status: "pending",
     });
-    event.registered += 1;
+    // Không tăng registered ở đây, chỉ tăng khi manager approve
 
     // Save với validateBeforeSave: false để bỏ qua validation date
     await event.save({ validateBeforeSave: false });
@@ -552,9 +614,16 @@ exports.unregisterFromEvent = async (req, res) => {
       });
     }
 
+    // Lấy thông tin participant trước khi xóa
+    const participant = event.participants[participantIndex];
+    
     // Xóa khỏi danh sách participants
     event.participants.splice(participantIndex, 1);
-    event.registered -= 1;
+    
+    // Chỉ giảm registered nếu participant đã được approve
+    if (participant.status === "approved") {
+      event.registered -= 1;
+    }
 
     // Gửi thông báo cho manager (không block nếu lỗi)
     try {
@@ -563,7 +632,9 @@ exports.unregisterFromEvent = async (req, res) => {
         userId: event.createdBy._id,
         type: "registration_pending",
         title: "Volunteer hủy đăng ký",
-        message: `${req.user.fullName || req.user.username} đã hủy đăng ký sự kiện "${event.title}"`,
+        message: `${
+          req.user.fullName || req.user.username
+        } đã hủy đăng ký sự kiện "${event.title}"`,
         eventId: event._id,
       });
 
@@ -571,7 +642,9 @@ exports.unregisterFromEvent = async (req, res) => {
       await sendPushToUser(
         event.createdBy._id,
         "Volunteer hủy đăng ký",
-        `${req.user.fullName || req.user.username} đã hủy đăng ký sự kiện "${event.title}"`,
+        `${req.user.fullName || req.user.username} đã hủy đăng ký sự kiện "${
+          event.title
+        }"`,
         `/events/${req.params.id}`
       );
     } catch (notifError) {
@@ -771,6 +844,11 @@ exports.reviewRegistration = async (req, res) => {
     participant.status = status;
     participant.reviewedAt = new Date();
     participant.reviewedBy = req.user._id;
+
+    // Chỉ tăng registered khi approve
+    if (status === "approved") {
+      event.registered += 1;
+    }
 
     await event.save({ validateBeforeSave: false });
 
@@ -1316,6 +1394,146 @@ exports.exportEvents = async (req, res) => {
       success: false,
       message: "Không thể xuất dữ liệu sự kiện",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// Phê duyệt sự kiện (chỉ admin)
+exports.approveEvent = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id).populate(
+      "createdBy",
+      "username email"
+    );
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sự kiện",
+      });
+    }
+
+    if (event.approvalStatus === "approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã được phê duyệt rồi",
+      });
+    }
+
+    event.approvalStatus = "approved";
+    event.approvedBy = req.user._id;
+    event.approvedAt = new Date();
+    await event.save();
+
+    // Gửi notification cho event manager
+    await createNotification({
+      userId: event.createdBy._id,
+      type: "event_approved",
+      title: "Sự kiện đã được phê duyệt",
+      message: `Sự kiện "${event.title}" của bạn đã được phê duyệt bởi admin`,
+      eventId: event._id,
+      link: `/event-management`,
+    });
+
+    // Gửi Web Push notification
+    try {
+      const template = NotificationTemplates.eventApproved(event.title);
+      await sendPushToUser(
+        event.createdBy._id,
+        template.title,
+        template.body,
+        `/event-management`
+      );
+    } catch (pushError) {
+      console.error("Error sending push to event creator:", pushError);
+    }
+
+    res.json({
+      success: true,
+      message: "Phê duyệt sự kiện thành công",
+      data: event,
+    });
+  } catch (error) {
+    console.error("Error in approveEvent:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi phê duyệt sự kiện",
+      error: error.message,
+    });
+  }
+};
+
+// Từ chối sự kiện (chỉ admin)
+exports.rejectEvent = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const event = await Event.findById(req.params.id).populate(
+      "createdBy",
+      "username email"
+    );
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sự kiện",
+      });
+    }
+
+    if (event.approvalStatus === "rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "Sự kiện đã bị từ chối rồi",
+      });
+    }
+
+    event.approvalStatus = "rejected";
+    event.approvedBy = req.user._id;
+    event.approvedAt = new Date();
+    event.rejectionReason = reason || "Không đáp ứng yêu cầu";
+    
+    // Xóa tất cả participants khi từ chối sự kiện
+    event.participants = [];
+    event.registered = 0;
+    
+    await event.save();
+
+    // Gửi notification cho event manager
+    await createNotification({
+      userId: event.createdBy._id,
+      type: "event_rejected",
+      title: "Sự kiện bị từ chối",
+      message: `Sự kiện "${event.title}" của bạn đã bị từ chối. Lý do: ${event.rejectionReason}`,
+      eventId: event._id,
+      link: `/event-management`,
+    });
+
+    // Gửi Web Push notification
+    try {
+      const template = NotificationTemplates.eventRejected(
+        event.title,
+        event.rejectionReason
+      );
+      await sendPushToUser(
+        event.createdBy._id,
+        template.title,
+        template.body,
+        `/event-management`
+      );
+    } catch (pushError) {
+      console.error("Error sending push to event creator:", pushError);
+    }
+
+    res.json({
+      success: true,
+      message: "Từ chối sự kiện thành công",
+      data: event,
+    });
+  } catch (error) {
+    console.error("Error in rejectEvent:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi từ chối sự kiện",
+      error: error.message,
     });
   }
 };
